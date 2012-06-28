@@ -1,0 +1,29 @@
+PartsBasedDetector
+This project implements a Parts Based Detector in C++, described in the
+following paper by Deva Ramanan:
+
+    Yi Yang, Deva Ramanan, "Articulated Pose Estimation with 
+    Flexible Mixtures-of-Parts," CVPR 2011
+
+The project has the following dependencies:
+
+    OpenCV  REQUIRED (for image processing)
+    CMake   REQUIRED (for building)
+    Doxygen OPTIONAL (for documentation)
+    OpenMP  OPTIONAL (for multithreading)
+    CUDA    OPTIONAL (for GPU accelerated support)
+
+The project can be built in one of two modes:
+
+    A standalone binary (for testing functionality)
+    A shared library    (for use in existing applications)
+
+To configure the project, set the options at the top of CMakeLists.txt
+To build the project, follow the normal cmake routine from the root folder:
+
+    >> mkdir build
+    >> cd build
+    >> cmake ..
+    >> make
+
+This package is developed and maintained by Hilton Bristow, Willow Garage
