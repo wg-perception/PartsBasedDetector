@@ -61,7 +61,7 @@ std::vector<cv::Mat> HOGFeatures::pyramid(const cv::Mat& im) {
 	scales_.clear();
 
 	// calculate the scaling factorA
-	Size imsize = im.size();
+	Size_<float> imsize = im.size();
 	float sc     = exp( floor( log ( (float)min(im.rows, im.cols)/(30.0f*(float)binsize_) ) )/(nscales_ - 1) );
 	int interval = round( 1.0f / log2(sc) );
 
@@ -78,7 +78,7 @@ std::vector<cv::Mat> HOGFeatures::pyramid(const cv::Mat& im) {
 
 		// perform the subsequent power of two scaling
 		for (int j = i+interval; j < nscales_; j+=interval) {
-			scaled = pyrDown(scaled, scaled);
+			pyrDown(scaled, scaled);
 			feature = features(scaled);
 			copyMakeBorder(feature, padded, 1, 1, flen_, flen_, BORDER_CONSTANT, 1);
 			pyrafeatures.push_back(padded);

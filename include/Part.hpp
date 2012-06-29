@@ -39,13 +39,38 @@
 #ifndef PART_HPP_
 #define PART_HPP_
 
+#include <vector>
+#include <opencv2/core/core.hpp>
+typedef std::vector<std::vector<float> > vector2Df;
+
 /*
  *
  */
 class Part {
+private:
+	//! the part bias (recognition reliability)
+	vector2Df bias_;
+	//! the patch expert (SVM)
+	std::vector<cv::Mat> filter_;
+	//! the parent Part
+	Part& parent_;
+	//! the number of mixtures ( filter_.size() == nmixtures_ )
+	int nmixtures_;
+	//! the quadratic weights for each mixture
+	vector2Df w_;
+	//! the position of the part relative to its parent
+	cv::Point anchor_;
 public:
-	Part();
-	virtual ~Part();
+	Part(float bias, std::vector<cv::Mat> filter, Part parent) :
+		bias_(bias), filter_(filter), parent_(parent), nmixtures_(filter.size()) {}
+	virtual ~Part() {}
+	// get methods (this is a constant class, so set methods are not allowed)
+	const vector2Df& bias(void) const { return bias_; }
+	const std::vector<cv::Mat>& filter(void) const { return filter_; }
+	const Part& parent(void) const { return parent_; }
+	const int nmixtures(void) const { return nmixtures_; }
+	const vector2Df& w(void) const { return w_; }
+	const cv::Point anchor(void) const { return anchor_; }
 };
 
 #endif /* PART_HPP_ */

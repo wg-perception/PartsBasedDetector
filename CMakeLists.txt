@@ -1,4 +1,4 @@
-# MatlabIO CMakeLists.txt
+# PartsBasedDetector CMakeLists.txt
 cmake_minimum_required(VERSION 2.8)
 project(PartsBasedDetector)
 set(PROJECT_ROOT ${PROJECT_SOURCE_DIR})

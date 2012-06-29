@@ -31,11 +31,23 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  File:    Part.cpp
+ *  File:    ITree.hpp
  *  Author:  Hilton Bristow
  *  Created: Jun 28, 2012
  */
 
-#include "Part.hpp"
+#ifndef ITREE_HPP_
+#define ITREE_HPP_
 
+template<class T>
+class ITree {
+protected:
+	ITree();
+public:
+	virtual ~ITree() = 0;
+	virtual ITree& parent(void) = 0;
+	virtual T value(void) = 0;
+};
 
+ITree::~ITree(void) {}
+#endif /* ITREE_HPP_ */

@@ -41,6 +41,7 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include "Model.hpp"
+#include "Part.hpp"
 
 /*
  *
@@ -49,12 +50,13 @@ class DynamicProgram {
 private:
 	//! the threshold for a positive detection
 	double thresh_;
-	float distanceTransform(void);
+	void distanceTransform1D(const float* src, float* dst, int* ptr, int step, int n, float a, float b);
+	float distanceTransform(const cv::Mat& score_in, const std::vector<float> w, cv::Mat& score_out, cv::Mat& Ix, cv::Mat& Iy);
 public:
 	DynamicProgram();
 	virtual ~DynamicProgram();
 	// public methods
-	void min(Model model, std::vector<cv::Mat>& scores);
+	void min(std::vector<Part>& parts, std::vector<cv::Mat>& responses, int nscales);
 	void argmin(void);
 };
 
