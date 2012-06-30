@@ -38,24 +38,39 @@
 
 #include "Visualize.hpp"
 using namespace cv;
+using namespace std;
 
-Visualize::Visualize() {
-	// TODO Auto-generated constructor stub
-
-}
-
-Visualize::~Visualize() {
-	// TODO Auto-generated destructor stub
-}
-
-/*!
- *  \brief Visualize the candidate part locations overlaid on the image
- *  \param im the image
- *  \param candidates a vector of type Candidate, representing potential
+/*! @brief Visualize the candidate part locations overlaid on an image
+ *
+ * @param im the image
+ * @param candidates a vector of type Candidate, representing potential
+ * part locations
  */
 void Visualize::candidates(const cv::Mat& im, std::vector<Candidate> candidates) {
 
-	namedWindow(name_);
-	imshow(name_, im);
+	// create a new canvas that we can modify
+	Mat canvas;
+	im.copyTo(canvas);
 
+	// generate a set of colors to display. Do this in HSV then convert it
+	int ncolors = candidates[0].parts().size();
+	vector<Scalar> colors;
+	for (int n = 0; n < ncolors; ++n) {
+		Mat_<int> color = 0.5*Mat::ones(Size(1,1), CV_32FC3);
+		// Hue is in radians
+		color(0,0,0) = (2 * CV_PI) / ncolors * n;
+		cvtColor(color, color, CV_HSV2BGR);
+		colors.push_back(Scalar(color(0,0,0), color(0,0,1), color(0,0,2)));
+	}
+
+	// draw each candidate to the canvas
+	const int LINE_THICKNESS = 5;
+	for (int n = 0; n < candidates.size(); ++n) {
+		Candidate candidate = candidates[n];
+		for (int p = 0; p < candidate.parts().size(); ++p) {
+			rectangle(canvas, candidate.parts()[p], colors[p], LINE_THICKNESS);
+		}
+	}
+
+	imshow(name_, canvas);
 }

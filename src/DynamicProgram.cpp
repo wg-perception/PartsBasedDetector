@@ -139,24 +139,23 @@ void reduceMax(const vector<Mat>& in, Mat& maxv, Mat& maxi) {
  */
 static inline int square(int x) { return x*x; }
 
-/*! @brief Generalized distance transform
+/*! @brief Generalized 1D distance transform
  *
- * 1-Dimensional generalized distance transform based on the paper:
- * P. Felzenszwalb and D. Huttenlocher, "Distance Transforms of Sampled Functions,"
- * Cornell Technical Report, 2004
+ * This method performs the 1D distance transform across the rows of a matrix.
+ * It is called twice internally by distanceTransform(), once across the rows
+ * and once down the columns (transposed to rows)
  *
- * This is used to reduce the complexity of the dynamic program, namely when all
- * of the cost functions are quadratic
+ * Only quadratic distance functions are handled
+ * y = a.x^2 + b.x
  *
- * @param src
- * @param dst
- * @param ptr
- * @param step
- * @param n
- * @param a
- * @param b
+ * @param src pointer to the start of the source data
+ * @param dst pointer to the start of the destination data
+ * @param ptr pointer to indices
+ * @param n the total number of rows
+ * @param a the quadratic coefficient
+ * @param b the linear coefficient
  */
-void DynamicProgram::distanceTransform1D(const float* src, float* dst, int* ptr, int step, int n, float a, float b) {
+void DynamicProgram::distanceTransform1D(const float* src, float* dst, int* ptr, int n, float a, float b) {
 
 	int*   v = new int[n];
 	float* z = new float[n+1];
@@ -165,11 +164,11 @@ void DynamicProgram::distanceTransform1D(const float* src, float* dst, int* ptr,
 	z[0] = +numeric_limits<float>::infinity();
 	z[1] = -numeric_limits<float>::infinity();
 	for (int q = 1; q < n; ++q) {
-	    float s = ((src[q*step] - src[v[k]*step]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
+	    float s = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
 	    while (s <= z[k]) {
 			// Update pointer
 			k--;
-			s  = ((src[q*step] - src[v[k]*step]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
+			s  = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
 	    }
 	    k++;
 	    v[k]   = q;
@@ -180,8 +179,8 @@ void DynamicProgram::distanceTransform1D(const float* src, float* dst, int* ptr,
 	k = 0;
 	for (int q = 0; q < n; ++q) {
 		while (z[k+1] < q) k++;
-		dst[q*step] = a*square(q-v[k]) + b*(q-v[k]) + src[v[k]*step];
-		ptr[q*step] = v[k];
+		dst[q] = a*square(q-v[k]) + b*(q-v[k]) + src[v[k]];
+		ptr[q] = v[k];
 	}
 
 	delete [] v;
@@ -189,8 +188,23 @@ void DynamicProgram::distanceTransform1D(const float* src, float* dst, int* ptr,
 }
 
 
-
-float DynamicProgram::distanceTransform(const Mat& score_in, const vector<float> w, Mat& score_out, Mat& Ix, Mat& Iy) {
+/*! @brief Generalized distance transform
+ *
+ * 1-Dimensional generalized distance transform based on the paper:
+ * P. Felzenszwalb and D. Huttenlocher, "Distance Transforms of Sampled Functions,"
+ * Cornell Technical Report, 2004
+ *
+ * This is used to reduce the complexity of the dynamic program, namely when all
+ * of the cost functions are quadratic. The 2D distance transform is broken down
+ * into two 1D transforms since the operation is separable
+ *
+ * @param score_in the input score
+ * @param w the quadratic weights
+ * @param score_out the distance transformed score
+ * @param Ix the distances in the x direction
+ * @param Iy the distances in the y direction
+ */
+void DynamicProgram::distanceTransform(const Mat& score_in, const vector<float> w, Mat& score_out, Mat& Ix, Mat& Iy) {
 
 	// get the dimensionality of the score
 	int M = score_in.rows;
@@ -212,7 +226,7 @@ float DynamicProgram::distanceTransform(const Mat& score_in, const vector<float>
 
 	// compute the distance transform across the rows
 	for (int m = 0; m < M; ++m) {
-		distanceTransform1D(score_in.ptr<float>(m), score_tmp.ptr<float>(m), Ix.ptr<int>(m), 1, N, -ax, -bx);
+		distanceTransform1D(score_in.ptr<float>(m), score_tmp.ptr<float>(m), Ix.ptr<int>(m), N, -ax, -bx);
 	}
 
 	// transpose the intermediate matrices
@@ -220,7 +234,8 @@ float DynamicProgram::distanceTransform(const Mat& score_in, const vector<float>
 
 	// compute the distance transform down the columns
 	for (int n = 0; n < N; ++n) {
-		distanceTransform1D(score_tmp.ptr<float>(n), score_out.ptr<float>(n), Iy.ptr<int>(n), 1, M, -ay, -by);
+		distanceTransform1D(score_tmp.ptr<float>(n), score_out.ptr<float>(n), Iy.ptr<int>(n), M, -ay, -by);
+
 	}
 
 	// transpose back to the original layout
@@ -242,6 +257,89 @@ float DynamicProgram::distanceTransform(const Mat& score_in, const vector<float>
 }
 
 
+void DynamicProgram::minRecursive(const Part& self, const Part& parent, vector<Mat>& scores, int nparts, int scale) {
+
+	// if this is not a leaf node, request the child messages
+	if (!self.isLeaf()) {
+		for (int c = 0; c < self.children().size(); ++c) minRecursive(self.children()[c], self, scores, nparts, scale);
+	}
+
+	// intermediate results
+	vector<Mat> scoresi;
+	vector<Mat> Ixi;
+	vector<Mat> Iyi;
+	// final results
+	vector<Mat> Ix;
+	vector<Mat> Iy;
+	vector<Mat> Ik;
+
+	// calculate the score of each of the mixtures
+	int nmixtures = self.nmixtures();
+	int Ns = nparts*nmixtures*scale + nmixtures*self.pos();
+	int Np = nparts*nmixtures*scale + nmixtures*parent.pos();
+	for (int m = 0; m < nmixtures; ++m) {
+		// raw score outputs
+		Mat score_dt, Ix_dt, Iy_dt;
+		Mat score_in = scores[Ns+m];
+		// compute the distance transform
+		distanceTransform(score_in, self.w()[m], score_dt, Ix_dt, Iy_dt);
+
+		// get the anchor position
+		Point anchor = self.anchor();
+
+		// calculate a valid region of interest for the scores
+		int X = score_in.cols;
+		int Y = score_in.rows;
+		int xmin = std::max(anchor.x,   0);
+		int ymin = std::max(anchor.y,   0);
+		int xmax = std::min(anchor.x+X, X);
+		int ymax = std::min(anchor.y+Y, X);
+		int xoff = std::max(-anchor.x,  0);
+		int yoff = std::max(-anchor.y,  0);
+
+		// shift the score by the Part's offset from its parent
+		Mat score = -numeric_limits<float>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
+		Mat Ixm   = Mat::zeros(Ix_dt.size(), Ix_dt.type());
+		Mat Iym   = Mat::zeros(Iy_dt.size(), Iy_dt.type());
+		score(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = score_dt(Range(xmin, xmax), Range(ymin, ymax));
+		Ixm(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = Ix_dt(Range(xmin, xmax), Range(ymin, ymax));
+		Iym(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = Iy_dt(Range(xmin, xmax), Range(ymin, ymax));
+
+		// push the scores onto the intermediate vectors
+		scoresi.push_back(score);
+		Ixi.push_back(Ixm);
+		Iyi.push_back(Iym);
+	}
+
+	// at each parent location, for each parent mixture, compute the best child mixture
+	for (int m = 0; m < nmixtures; ++m) {
+		vector<float> bias = self.bias()[m];
+		vector<Mat> weighted;
+		Mat I;
+		// weight each of the child scores
+		for (int mm = 0; mm < nmixtures; ++mm) {
+			weighted.push_back(scores[mm] + bias[mm]);
+		}
+
+		// compute the max over the mixtures
+		Mat maxv, maxi;
+		reduceMax(weighted, maxv, maxi);
+
+		// choose the best indices
+		Mat Ixm, Iym;
+		reducePickIndex(Ixi, maxi, Ixm);
+		reducePickIndex(Iyi, maxi, Iym);
+		Ix.push_back(Ixm);
+		Iy.push_back(Iym);
+		Ik.push_back(maxi);
+		scores[Np+m] = maxv;
+		scores.push_back(maxv);
+	}
+}
+
+
+
+
 /*! @brief Get the min of a dynamic program
  *
  * Get the min of a dynamic program by starting at the leaf nodes,
@@ -258,87 +356,27 @@ float DynamicProgram::distanceTransform(const Mat& score_in, const vector<float>
  * @param responses the probability densities (pdfs) of part locations (fine to coarse)
  * @param nscales the number of spatial scales in the pyramid
  */
-void DynamicProgram::min(vector<Part>& parts, vector<Mat>& responses, int nscales) {
+void DynamicProgram::min(Part rootpart, vector<Mat>& responses, int nscales) {
 
 	// error checking
-	assert(responses.size() == parts.size() * parts[0].nmixtures() * nscales);
+	assert(responses.size() == (rootpart.ndescendants()+1 * rootpart.nmixtures() * nscales));
 
 	// walk from the leaves to the root of the tree, passing message to parent
 	int os = 0;
 	int scale = 0;
-	int nparts = parts.size();
-	int nmixtures = parts[0].nmixtures();
-	int Y = responses[nparts*nmixtures*scale].rows;
-	int X = responses[nparts*nmixtures*scale].cols;
-	for (int n = nparts-1; n >= 0; --n) {
-		// intermediate results
-		vector<Mat> scoresi;
-		vector<Mat> Ixi;
-		vector<Mat> Iyi;
-		// final results
-		vector<Mat> scores;
-		vector<Mat> Ix;
-		vector<Mat> Iy;
-		vector<Mat> Ik;
-		float msg;
-		const Part& self   = parts[n];
-		const Part& parent = self.parent();
-		assert(self.nmixtures() == parent.nmixtures());
+	const int nparts = rootpart.ndescendants()+1;
+	const int nmixtures = rootpart.nmixtures();
+	const int Y = responses[nparts*nmixtures*scale].rows;
+	const int X = responses[nparts*nmixtures*scale].cols;
 
-		// calculate the score of each of the mixtures
-		for (int m = 0; m < nmixtures; ++m) {
-			// raw score outputs
-			Mat scorer, Ixr, Iyr;
-			// compute the distance transform
-			distanceTransform(responses[(nparts*nmixtures*scale)+(nmixtures*n)+(m)], self.w()[m], scorer, Ixr, Iyr);
+}
 
-			// get the anchor position
-			Point anchor = self.anchor();
+/*! @brief Get the argmin of a dynamic program
+ *
+ * Get the minimum argument of a dynamic program by traversing down the tree of
+ * a dynamic program, returning the locations of the best nodes
+ */
+void DynamicProgram::argmin(vector<Candidate>& candidates) {
 
-			// calculate a valid region of interest for the scores
-			int xmin = std::max(anchor.x,   0);
-			int ymin = std::max(anchor.y,   0);
-			int xmax = std::min(anchor.x+X, X);
-			int ymax = std::min(anchor.y+Y, X);
-			int xoff = std::max(-anchor.x,  0);
-			int yoff = std::max(-anchor.y,  0);
 
-			Mat score = -numeric_limits<float>::infinity() * Mat::ones(scorer.size(), scorer.type());
-			Mat Ixm   = Mat::zeros(Ixr.size(), Ixr.type());
-			Mat Iym   = Mat::zeros(Iyr.size(), Iyr.type());
-			score(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = scorer(Range(xmin, xmax), Range(ymin, ymax));
-			Ixm(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = Ixr(Range(xmin, xmax), Range(ymin, ymax));
-			Iym(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = Iyr(Range(xmin, xmax), Range(ymin, ymax));
-
-			// push the scores onto the intermediate vectors
-			scoresi.push_back(score);
-			Ixi.push_back(Ixm);
-			Iyi.push_back(Iym);
-		}
-
-		// at each parent location, for each parent mixture, compute the best child mixture
-		for (int m = 0; m < nmixtures; ++m) {
-			vector<float> bias = self.bias()[m];
-			vector<Mat> weighted;
-			Mat I;
-			// weight each of the child scores
-			for (int mm = 0; mm < nmixtures; ++mm) {
-				weighted.push_back(scores[mm] + bias[mm]);
-			}
-
-			// compute the max over the mixtures
-			Mat maxv, maxi;
-			reduceMax(weighted, maxv, maxi);
-
-			// choose the best indices
-			Mat Ixm, Iym;
-			reducePickIndex(Ixi, maxi, Ixm);
-			reducePickIndex(Iyi, maxi, Iym);
-			Ix.push_back(Ixm);
-			Iy.push_back(Iym);
-			Ik.push_back(maxi);
-			scores.push_back(maxv);
-
-		}
-	}
 }

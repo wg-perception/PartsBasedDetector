@@ -41,36 +41,56 @@
 
 #include <vector>
 #include <opencv2/core/core.hpp>
+#include "ITree.hpp"
 typedef std::vector<std::vector<float> > vector2Df;
 
 /*
  *
  */
-class Part {
+class Part : public ITree<std::vector<cv::Mat> > {
 private:
+	// --------------------
+	// Part members
 	//! the part bias (recognition reliability)
 	vector2Df bias_;
 	//! the patch expert (SVM)
 	std::vector<cv::Mat> filter_;
-	//! the parent Part
-	Part& parent_;
 	//! the number of mixtures ( filter_.size() == nmixtures_ )
 	int nmixtures_;
 	//! the quadratic weights for each mixture
 	vector2Df w_;
 	//! the position of the part relative to its parent
 	cv::Point anchor_;
+	//! the linear Part position when indexing into vectors
+	int pos_;
+	// --------------------
+	// ITree members
+	//! the total number of children below this node
+	int ndescendants_;
+	//! the level of this node below the root
+	int level_;
+	//! the child parts
+	std::vector<Part&> children_;
 public:
-	Part(float bias, std::vector<cv::Mat> filter, Part parent) :
-		bias_(bias), filter_(filter), parent_(parent), nmixtures_(filter.size()) {}
+	Part(vector2Df bias, std::vector<cv::Mat> filter, int pos, std::vector<Part&> children, int level, int ndescendants) :
+		bias_(bias), filter_(filter), nmixtures_(filter.size()), pos_(pos),
+		children_(children), level_(level), ndescendants_(ndescendants) {}
 	virtual ~Part() {}
 	// get methods (this is a constant class, so set methods are not allowed)
 	const vector2Df& bias(void) const { return bias_; }
 	const std::vector<cv::Mat>& filter(void) const { return filter_; }
-	const Part& parent(void) const { return parent_; }
+	const std::vector<Part&> children(void) const { return children_; }
 	const int nmixtures(void) const { return nmixtures_; }
 	const vector2Df& w(void) const { return w_; }
 	const cv::Point anchor(void) const { return anchor_; }
+	const int pos(void) const { return pos_; }
+	// ITree methods
+	const int ndescendants(void) const { return ndescendants_; }
+	const int level(void) const { return level_; }
+	const std::vector<cv::Mat>& value(void) const { return filter_; }
+	const bool isLeaf(void) const { return ndescendants_ == 0; }
+
+	static Part constructPartHierarchy(vector2Df& filters, std::vector<int>& parents);
 };
 
 #endif /* PART_HPP_ */

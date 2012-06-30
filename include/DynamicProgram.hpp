@@ -40,6 +40,7 @@
 #define DYNAMICPROGRAM_HPP_
 #include <vector>
 #include <opencv2/core/core.hpp>
+#include "Candidate.hpp"
 #include "Model.hpp"
 #include "Part.hpp"
 
@@ -50,14 +51,15 @@ class DynamicProgram {
 private:
 	//! the threshold for a positive detection
 	double thresh_;
-	void distanceTransform1D(const float* src, float* dst, int* ptr, int step, int n, float a, float b);
-	float distanceTransform(const cv::Mat& score_in, const std::vector<float> w, cv::Mat& score_out, cv::Mat& Ix, cv::Mat& Iy);
+	void minRecursive(const Part& self, const Part& parent, std::vector<cv::Mat>& scores, int nparts, int scale);
+	void distanceTransform1D(const float* src, float* dst, int* ptr, int n, float a, float b);
 public:
 	DynamicProgram();
 	virtual ~DynamicProgram();
 	// public methods
-	void min(std::vector<Part>& parts, std::vector<cv::Mat>& responses, int nscales);
-	void argmin(void);
+	void min(Part rootpart, std::vector<cv::Mat>& responses, int nscales);
+	void argmin(std::vector<Candidate>& candidates);
+	void distanceTransform(const cv::Mat& score_in, const std::vector<float> w, cv::Mat& score_out, cv::Mat& Ix, cv::Mat& Iy);
 };
 
 #endif /* DYNAMICPROGRAM_HPP_ */

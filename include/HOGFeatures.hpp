@@ -67,4 +67,5 @@ public:
 	virtual std::vector<cv::Mat> pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters);
 };
 
+
 #endif /* HOGFEATURES_HPP_ */

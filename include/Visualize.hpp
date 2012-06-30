@@ -55,8 +55,8 @@ private:
 	// private methods
 	void drawBoundBox(cv::Mat& im, cv::Rect bounds, cv::Point3i color, int thickness);
 public:
-	Visualize();
-	virtual ~Visualize();
+	Visualize() {}
+	virtual ~Visualize() {}
 	// public methods
 	void candidates(const cv::Mat& im, std::vector<Candidate>);
 	void candidates(const cv::Mat& im, std::vector<Candidate>, int n);

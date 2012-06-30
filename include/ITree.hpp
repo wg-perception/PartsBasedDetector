@@ -38,15 +38,29 @@
 
 #ifndef ITREE_HPP_
 #define ITREE_HPP_
+#include <vector>
 
+/*! @class ITree
+ *  @brief Read only Tree Interface
+ *
+ *  This class defines a simple read-only tree interface. Invariants:
+ *  (1) Once the tree is constructed, it cannot be modified
+ *  (2) The tree can only be constructed from the leaves to the root
+ *  since a node constructor requires knowledge of the node children.
+ *  A head recursive constructor is a graceful way to construct the
+ *  tree
+ */
 template<class T>
 class ITree {
 protected:
 	ITree();
 public:
 	virtual ~ITree() = 0;
-	virtual ITree& parent(void) = 0;
-	virtual T value(void) = 0;
+	virtual const std::vector<ITree&> children(void) const = 0;
+	virtual const int level(void) const = 0;
+	virtual const int ndescendants(void) const = 0;
+	virtual const T& value(void) const = 0;
+	virtual const bool isLeaf(void) const = 0;
 };
 
 ITree::~ITree(void) {}

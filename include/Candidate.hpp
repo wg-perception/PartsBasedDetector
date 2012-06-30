@@ -38,18 +38,29 @@
 
 #ifndef CANDIDATE_HPP_
 #define CANDIDATE_HPP_
+#include <algorithm>
 #include <opencv2/core/core.hpp>
 /*
  *
  */
 class Candidate {
 private:
-	std::vector<cv::Point> parts_;
-	cv::Point root_;
+	std::vector<cv::Rect> parts_;
 	double score_;
 public:
 	Candidate();
 	virtual ~Candidate();
+	const std::vector<cv::Rect> parts(void) const { return parts_; }
+	const double score(void) const { return score_; }
+	static bool compare(Candidate c1, Candidate c2) { return c1.score() < c2.score(); }
+
+	/*! @brief Sort the candidates from best to worst, in place
+	 *
+	 * @param candidates the vector of candidates to sort
+	 */
+	static void sort(std::vector<Candidate>& candidates) {
+		std::sort(candidates.begin(), candidates.end(), compare);
+	}
 };
 
 #endif /* CANDIDATE_HPP_ */

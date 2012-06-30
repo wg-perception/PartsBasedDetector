@@ -38,4 +38,45 @@
 
 #include "Part.hpp"
 
+/*! @brief construct a tree of Parts
+ *
+ * Given a set of Part components (filters, parents, w, bias), recursively construct
+ * a tree of Parts
+ * @param filters
+ * @param parents
+ * @return
+ */
+static Part Part::constructPartHierarchy(vector2Df& filters, std::vector<int>& parents) {
 
+	static std::vector<int> find(std::vector<int> vals, int val) {
+		std::vector<int> idx;
+		for (int n = 0; n < vals.size(); ++n) if(vals[n] == val) idx.push_back(n);
+		return idx;
+	}
+	static Part constructPartHierarchyRecursive(vector2Df& filters, std::vector<int>& parents, int level, int self) {
+
+		// find all of the children who have self (current Part) as a parent
+		std::vector<int> cidx = find(parents, self);
+
+		// recursive termination criteria:
+		// this Part has no children. We are at a leaf node
+		if (cidx.size() == 0) return Part(vector2Df(), filters[self], self, std::vector<Part&>(), level, 0);
+
+		// otherwise, recursively create child Parts
+		std::vector<Part&> children;
+		int ndescendants = 0;
+		for (int n = 0; n < cidx.size(); ++n) {
+			Part child = constructPartHierarchyRecursive(filters, parents, level+1, cidx[n]);
+			ndescendants += (child.ndescendants()+1);
+			children.push_back(child);
+		}
+		return Part(vector2Df(), filters[self], self, children, level, ndescendants);
+	}
+
+	// error checking
+	assert(filters.size() == parents.size());
+
+	// construct the Part tree, from the root node
+	return constructPartHierarchyRecursive(filters, parents, 0, 0);
+
+}
