@@ -78,11 +78,11 @@ void reducePickIndex(const vector<Mat>& in, const Mat& idx, Mat& out) {
 	// perform the indexing
 	int M = in[0].rows;
 	int N = in[0].cols;
-	vector<float*> in_ptr(K);
+	vector<const float*> in_ptr(K);
 	if (in[0].isContinuous()) { N = M*N; M = 1; }
 	for (int m = 0; m < M; ++m) {
 		float* out_ptr = out.ptr<float>(m);
-		int*   idx_ptr = idx.ptr<int>(m);
+		const int*   idx_ptr = idx.ptr<int>(m);
 		for (int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<float>(m);
 		for (int n = 0; n < N; ++n) {
 			out_ptr[n] = in_ptr[idx_ptr[n]][n];
@@ -115,7 +115,7 @@ void reduceMax(const vector<Mat>& in, Mat& maxv, Mat& maxi) {
 	int M = in[0].rows;
 	int N = in[0].cols;
 
-	vector<float*> in_ptr(K);
+	vector<const float*> in_ptr(K);
 	if (in[0].isContinuous()) { N = M*N; M = 1; }
 	for (int m = 0; m < M; ++m) {
 		float* maxv_ptr = maxv.ptr<float>(m);
@@ -333,7 +333,6 @@ void DynamicProgram::minRecursive(const Part& self, const Part& parent, vector<M
 		Iy.push_back(Iym);
 		Ik.push_back(maxi);
 		scores[Np+m] = maxv;
-		scores.push_back(maxv);
 	}
 }
 

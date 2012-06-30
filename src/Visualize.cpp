@@ -36,6 +36,7 @@
  *  Created: Jun 21, 2012
  */
 
+#include <opencv2/imgproc/imgproc.hpp>
 #include "Visualize.hpp"
 using namespace cv;
 using namespace std;

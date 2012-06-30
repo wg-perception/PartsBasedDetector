@@ -52,16 +52,15 @@
  */
 template<class T>
 class ITree {
-protected:
-	ITree();
 public:
 	virtual ~ITree() = 0;
-	virtual const std::vector<ITree&> children(void) const = 0;
+	//virtual const std::vector<ITree<T> > children(void) const = 0;
 	virtual const int level(void) const = 0;
 	virtual const int ndescendants(void) const = 0;
-	virtual const T& value(void) const = 0;
+	virtual const T value(void) const = 0;
 	virtual const bool isLeaf(void) const = 0;
 };
 
-ITree::~ITree(void) {}
+template<class T>
+ITree<T>::~ITree(void) {}
 #endif /* ITREE_HPP_ */
