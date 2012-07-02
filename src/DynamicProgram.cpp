@@ -375,7 +375,7 @@ void DynamicProgram::min(Part rootpart, vector<Mat>& responses, int nscales) {
  * Get the minimum argument of a dynamic program by traversing down the tree of
  * a dynamic program, returning the locations of the best nodes
  */
-void DynamicProgram::argmin(vector<Candidate>& candidates) {
+vector<Candidate> DynamicProgram::argmin(void) {
 
-
+	return vector<Candidate>();
 }

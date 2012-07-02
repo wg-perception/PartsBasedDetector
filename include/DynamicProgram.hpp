@@ -58,7 +58,7 @@ public:
 	virtual ~DynamicProgram();
 	// public methods
 	void min(Part rootpart, std::vector<cv::Mat>& responses, int nscales);
-	void argmin(std::vector<Candidate>& candidates);
+	std::vector<Candidate> argmin(void);
 	void distanceTransform(const cv::Mat& score_in, const std::vector<float> w, cv::Mat& score_out, cv::Mat& Ix, cv::Mat& Iy);
 };
 

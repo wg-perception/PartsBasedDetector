@@ -49,7 +49,25 @@ PartsBasedDetector::~PartsBasedDetector() {
 	// TODO Auto-generated destructor stub
 }
 
-vector<Candidate> PartsBasedDetector::detect(const Model& model, const Mat& im) {
+vector<Candidate> PartsBasedDetector::detect(const Mat& im) {
+
+	// calculate a feature pyramid for the new image
+	vector<cv::Mat> pyramid = features_.pyramid(im);
+
+	// convolve the feature pyramid with the Part experts
+	// to get probability density for each Part
+	vector<cv::Mat> filters; //TODO: add Part.asVector() method or something
+	vector<cv::Mat> pdf = features_.pdf(pyramid, filters);
+
+	// use dynamic programming to predict the best detection candidates from the part responses
+	dp_.min(root_, pdf, features_.nscales());
+
+	// walk back down the tree to find the part locations
+	vector<Candidate> candidates = dp_.argmin();
 
 	return vector<Candidate>();
+}
+
+void PartsBasedDetector::distributeModel(const Model& model) {
+
 }

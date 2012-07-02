@@ -41,7 +41,8 @@
 #include <vector>
 #include <string>
 #include <opencv2/core/core.hpp>
-
+typedef std::vector<std::vector<cv::Mat> > vector2DMat;
+typedef std::vector<std::vector<float> >   vector2Df;
 /*
  *
  */
@@ -49,7 +50,9 @@ class Model {
 private:
 	// member variables
 	//! the filters (\a nparts_ * \a nmixtures_)
-	std::vector<cv::Mat> filters_;
+	vector2DMat filters_;
+	//! the bias of each Part
+	vector2Df bias_;
 	//! a unique string identifier for the model
 	std::string name_;
 	//! the connectivity of the parts, where each element is a reference to the part's parent
@@ -60,14 +63,14 @@ private:
 	int nmixtures_;
 	//! the number of scales at which to compute features
 	int nscales_;
+	//! the threshold for a positive detection
+	float thresh_;
+	//! the spatial pooling size when computing features
+	int binsize_;
 
 public:
 	Model();
 	virtual ~Model();
-	// public methods
-
-	// get and set methods
-	int nFilters(void) { return filters_.size(); }
 };
 
 #endif /* MODEL_HPP_ */

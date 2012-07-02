@@ -36,20 +36,42 @@
  *  Created: Jun 27, 2012
  */
 
+#include <cstdio>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include "PartsBasedDetector.hpp"
 #include "Candidate.hpp"
-#include "Model.hpp"
-#include <opencv2/core/core.hpp>
+#include "FileStorageModel.hpp"
+#include "Visualize.hpp"
 using namespace cv;
 using namespace std;
 
 int main(int argc, char** argv) {
 
-	Model model;
-	PartsBasedDetector pbd;
-	Mat im;
+	// check arguments
+	if (argc != 3) printf("Usage: PartsBasedDetector image_filename model_filename\n");
 
-	vector<Candidate> responses = pbd.detect(model, im);
+	// create the model object and deserialize it
+	FileStorageModel model;
+	model.deserialize(argv[1]);
+
+	// create the PartsBasedDetector and distribute the model parameters
+	PartsBasedDetector pbd;
+	pbd.distributeModel(model);
+
+	// load the image from file
+	Mat im = imread(argv[2]);
+
+	// detect potential candidates in the image
+	vector<Candidate> candidates = pbd.detect(im);
+
+	// display the best candidates
+	Visualize visualize;
+	if (candidates.size() > 0) {
+		Candidate::sort(candidates);
+		visualize.candidates(im, candidates);
+		waitKey();
+	}
 
 	return 0;
 }

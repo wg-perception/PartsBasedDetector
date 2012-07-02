@@ -91,6 +91,7 @@ public:
 	const int level(void) const { return level_; }
 	const std::vector<cv::Mat> value(void) const { return filter_; }
 	const bool isLeaf(void) const { return ndescendants_ == 0; }
+	const bool isRoot(void) const { return level_ == 0; }
 
 	static Part constructPartHierarchy(vector2DMat& filters, std::vector<int>& parents);
 };

@@ -44,16 +44,15 @@
  *
  */
 class IFeatures {
-protected:
-	IFeatures();
 public:
-	virtual ~IFeatures() = 0;
+	virtual ~IFeatures() {}
 	// get and set methods
 	virtual int binsize(void) = 0;
+	virtual int nscales(void) = 0;
 	// public methods
 	virtual std::vector<cv::Mat> pyramid(const cv::Mat& im) = 0;
 	virtual std::vector<cv::Mat> pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters) = 0;
 };
 
-IFeatures::~IFeatures() {}
+//IFeatures::~IFeatures() {}
 #endif /* FEATURES_HPP_ */

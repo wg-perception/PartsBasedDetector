@@ -60,9 +60,12 @@ private:
 	cv::Mat features(const cv::Mat& im) const;
 	template<typename T> cv::Mat convolve(const cv::Mat& feature, const cv::Mat& filter, int stride);
 public:
-	HOGFeatures() {};
+	HOGFeatures() {}
 	virtual ~HOGFeatures() {}
+	// get methods
 	virtual int binsize(void) { return binsize_; }
+	virtual int nscales(void) { return nscales_; }
+
 	virtual std::vector<cv::Mat> pyramid(const cv::Mat& im);
 	virtual std::vector<cv::Mat> pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters);
 };

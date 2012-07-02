@@ -42,16 +42,25 @@
 #include <opencv2/core/core.hpp>
 #include "Model.hpp"
 #include "Candidate.hpp"
+#include "HOGFeatures.hpp"
+#include "DynamicProgram.hpp"
 /*
  *
  */
 class PartsBasedDetector {
 private:
+	//! produces features, feature pyramids and compares features with Parts
+	HOGFeatures features_;
+	//! dynamic program to predict part positions and candidate likelihoods from raw scores
+	DynamicProgram dp_;
+	//! the tree of Parts
+	Part root_;
 public:
 	PartsBasedDetector();
 	virtual ~PartsBasedDetector();
 	// public methods
-	std::vector<Candidate> detect(const Model& model, const cv::Mat& im);
+	std::vector<Candidate> detect(const cv::Mat& im);
+	void distributeModel(const Model& model);
 };
 
 #endif /* PARTSBASEDDETECTOR_HPP_ */
