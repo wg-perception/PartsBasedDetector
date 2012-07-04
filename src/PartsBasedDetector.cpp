@@ -56,18 +56,36 @@ vector<Candidate> PartsBasedDetector::detect(const Mat& im) {
 
 	// convolve the feature pyramid with the Part experts
 	// to get probability density for each Part
-	vector<cv::Mat> filters; //TODO: add Part.asVector() method or something
+	vector<cv::Mat> filters;
+	root_.toVector(filters);
 	vector<cv::Mat> pdf = features_.pdf(pyramid, filters);
 
 	// use dynamic programming to predict the best detection candidates from the part responses
-	dp_.min(root_, pdf, features_.nscales());
+	Mat maxv, maxi;
+	dp_.min(root_, pdf, features_.nscales(), maxv, maxi);
 
 	// walk back down the tree to find the part locations
-	vector<Candidate> candidates = dp_.argmin();
+	vector<Candidate> candidates = dp_.argmin(root_, pdf, features_.nscales(), maxv, maxi);
 
-	return vector<Candidate>();
+	return candidates;
 }
 
-void PartsBasedDetector::distributeModel(const Model& model) {
+/*! @brief Distribute the model parameters to the PartsBasedDetector classes
+ *
+ * @param model the monolithic model containing the deserialization of all model parameters
+ */
+void PartsBasedDetector::distributeModel(Model& model) {
+
+	// the name of the Part detector
+	name_ = model.name();
+
+	// initialize the tree of Parts
+	root_ = Part::constructPartHierarchy(model.filters(), model.conn());
+
+	// initialize the Feature engine
+	features_ = HOGFeatures(model.binsize(), model.nscales(), model.flen());
+
+	// initialize the dynamic program
+	dp_ = DynamicProgram(model.thresh());
 
 }

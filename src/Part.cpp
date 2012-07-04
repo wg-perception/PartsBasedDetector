@@ -37,6 +37,21 @@
  */
 
 #include "Part.hpp"
+using namespace std;
+using namespace cv;
+
+
+
+
+void Part::toVector(vector<Mat>& vec) {
+	// if root, allocate space for all of the filters
+	if (isRoot()) vec.resize((ndescendants_+1) * nmixtures_);
+
+	// add my filters to the vector, then my children's, etc
+	int os = pos_ * nmixtures_;
+	for (int n = 0; n < nmixtures_; ++n) vec[os+n] = filters_[n];
+	for (int c = 0; c < children_.size(); ++c) children_[c].toVector(vec);
+}
 
 
 static std::vector<int> find(std::vector<int> vals, int val) {

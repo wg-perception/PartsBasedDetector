@@ -61,6 +61,7 @@ private:
 	template<typename T> cv::Mat convolve(const cv::Mat& feature, const cv::Mat& filter, int stride);
 public:
 	HOGFeatures() {}
+	HOGFeatures(int binsize, int nscales, int flen) : binsize_(binsize), nscales_(nscales), flen_(flen) {}
 	virtual ~HOGFeatures() {}
 	// get methods
 	virtual int binsize(void) { return binsize_; }

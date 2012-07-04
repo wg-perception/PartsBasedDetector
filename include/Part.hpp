@@ -55,7 +55,7 @@ private:
 	//! the part bias (recognition reliability)
 	vector2Df bias_;
 	//! the patch expert (SVM)
-	std::vector<cv::Mat> filter_;
+	std::vector<cv::Mat> filters_;
 	//! the number of mixtures ( filter_.size() == nmixtures_ )
 	int nmixtures_;
 	//! the quadratic weights for each mixture
@@ -74,22 +74,23 @@ private:
 	std::vector<Part> children_;
 public:
 	Part() {}
-	Part(vector2Df& bias, std::vector<cv::Mat>& filter, int pos, std::vector<Part>& children, int level, int ndescendants) :
-		bias_(bias), filter_(filter), nmixtures_(filter.size()), pos_(pos),
+	Part(vector2Df& bias, std::vector<cv::Mat>& filters, int pos, std::vector<Part>& children, int level, int ndescendants) :
+		bias_(bias), filters_(filters), nmixtures_(filters.size()), pos_(pos),
 		children_(children), level_(level), ndescendants_(ndescendants) {}
 	virtual ~Part() {}
 	// get methods (this is a constant class, so set methods are not allowed)
-	const vector2Df& bias(void) const { return bias_; }
-	const std::vector<cv::Mat> filter(void) const { return filter_; }
-	virtual const std::vector<Part> children(void) const { return children_; }
+	vector2Df& bias(void) { return bias_; }
+	std::vector<cv::Mat>& filter(void) { return filters_; }
+	virtual std::vector<Part>& children(void) { return children_; }
 	const int nmixtures(void) const { return nmixtures_; }
-	const vector2Df w(void) const { return w_; }
+	vector2Df& w(void) { return w_; }
 	const cv::Point anchor(void) const { return anchor_; }
 	const int pos(void) const { return pos_; }
+	void toVector(std::vector<cv::Mat>& vec);
 	// ITree methods
 	const int ndescendants(void) const { return ndescendants_; }
 	const int level(void) const { return level_; }
-	const std::vector<cv::Mat> value(void) const { return filter_; }
+	const std::vector<cv::Mat> value(void) const { return filters_; }
 	const bool isLeaf(void) const { return ndescendants_ == 0; }
 	const bool isRoot(void) const { return level_ == 0; }
 

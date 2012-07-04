@@ -47,7 +47,7 @@ typedef std::vector<std::vector<float> >   vector2Df;
  *
  */
 class Model {
-private:
+protected:
 	// member variables
 	//! the filters (\a nparts_ * \a nmixtures_)
 	vector2DMat filters_;
@@ -67,10 +67,22 @@ private:
 	float thresh_;
 	//! the spatial pooling size when computing features
 	int binsize_;
+	//! the length of the feature vector in each bin
+	int flen_;
 
 public:
 	Model();
 	virtual ~Model();
+	vector2DMat& filters(void) { return filters_; }
+	vector2Df& bias(void) { return bias_; }
+	std::string name(void) const { return name_; }
+	std::vector<int>& conn(void) { return conn_; }
+	int nparts(void) const { return nparts_; }
+	int nmixtures(void) const { return nmixtures_; }
+	float thresh(void) const { return thresh_; }
+	int binsize(void) const { return binsize_; }
+	int nscales(void) const { return nscales_; }
+	int flen(void) const { return flen_; }
 };
 
 #endif /* MODEL_HPP_ */

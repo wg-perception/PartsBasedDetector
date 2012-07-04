@@ -50,6 +50,16 @@ DynamicProgram::~DynamicProgram() {
 	// TODO Auto-generated destructor stub
 }
 
+void find(const Mat& binary, vector<Point> idx) {
+
+	int M = binary.rows;
+	int N = binary.cols;
+	for (int m = 0; m < M; ++m) {
+		const char* bin_ptr = binary.ptr<char>(m);
+		for (int n = 0; n < N; ++n) if (bin_ptr[n] > 0) idx.push_back(Point(n,m));
+	}
+}
+
 
 /*! @brief Reduce a vector of matrices via indexing
  *
@@ -257,7 +267,7 @@ void DynamicProgram::distanceTransform(const Mat& score_in, const vector<float> 
 }
 
 
-void DynamicProgram::minRecursive(const Part& self, const Part& parent, vector<Mat>& scores, int nparts, int scale) {
+void DynamicProgram::minRecursive(Part& self, Part& parent, vector<Mat>& scores, int nparts, int scale) {
 
 	// if this is not a leaf node, request the child messages
 	if (!self.isLeaf()) {
@@ -351,31 +361,75 @@ void DynamicProgram::minRecursive(const Part& self, const Part& parent, vector<M
  * 		(2) Shift by the anchor position of the part wrt the parent
  * 		(3) Downsample if necessary
  *
- * @param parts the parts
- * @param responses the probability densities (pdfs) of part locations (fine to coarse)
+ * @param rootpart the parts tree, referenced by the root
+ * @param scores the probability densities (pdfs) of part locations (fine to coarse)
  * @param nscales the number of spatial scales in the pyramid
+ * @param maxv the root score
+ * @param maxi the best mixture for each pixel in the root score
  */
-void DynamicProgram::min(Part rootpart, vector<Mat>& responses, int nscales) {
+void DynamicProgram::min(Part& rootpart, vector<Mat>& scores, int nscales, Mat& maxv, Mat& maxi) {
 
 	// error checking
-	assert(responses.size() == (rootpart.ndescendants()+1 * rootpart.nmixtures() * nscales));
+	assert(scores.size() == (rootpart.ndescendants()+1 * rootpart.nmixtures() * nscales));
 
-	// walk from the leaves to the root of the tree, passing message to parent
-	int os = 0;
-	int scale = 0;
-	const int nparts = rootpart.ndescendants()+1;
-	const int nmixtures = rootpart.nmixtures();
-	const int Y = responses[nparts*nmixtures*scale].rows;
-	const int X = responses[nparts*nmixtures*scale].cols;
+	// for each scale, update the scores through message passing
+	for (int n = 0; n < nscales; ++n) {
+		for (int c = 0; c < rootpart.children().size(); ++c)
+			minRecursive(rootpart.children()[c], rootpart, scores, rootpart.ndescendants()+1, n);
+
+		// weight each of the root mixtures by the root bias
+		vector<Mat> weighted;
+		float bias = 0;
+		for (int mm = 0; mm < rootpart.nmixtures(); ++mm) {
+			weighted.push_back(scores[mm] + bias);
+		}
+
+		// compute the max over the mixtures
+		reduceMax(weighted, maxv, maxi);
+
+	}
+}
+
+
+void DynamicProgram::argminRecursive(const Part& self, const Part& parent, vector<Mat>& scores, Candidate& candidate, int nparts, int nscales) {
+
+	// add self's position, relative to parent's position
+	// TODO: do this properly, from populated min() variables
+	vector<Mat> Ix;
+	vector<Mat> Iy;
+	vector<Mat> Ik;
 
 }
+
 
 /*! @brief Get the argmin of a dynamic program
  *
  * Get the minimum argument of a dynamic program by traversing down the tree of
  * a dynamic program, returning the locations of the best nodes
  */
-vector<Candidate> DynamicProgram::argmin(void) {
+vector<Candidate> DynamicProgram::argmin(Part& rootpart, vector<Mat>& scores, int nscales, Mat& maxv, Mat& maxi) {
 
-	return vector<Candidate>();
+	// common
+	int nparts = rootpart.ndescendants()+1;
+	int nmixtures = rootpart.nmixtures();
+
+	// threshold the raw score
+	Mat over_thresh = maxv > thresh_;
+	vector<Point> inds;
+	find(over_thresh, inds);
+
+	// for each point, backtrack through the score stack
+	vector<Candidate> candidates;
+	for (int n = 0; n < inds.size(); ++n) {
+		// create a new candidate
+		Point ind = inds[n];
+		Candidate candidate(nparts, scores[0].at<float>(ind));
+		// add the parent bounding box
+		candidate.addPart(Rect(ind.x, ind.y, 8, 8));
+		// recursively add the children
+		for (int c = 0; c < rootpart.children().size(); ++c) {
+			argminRecursive(rootpart.children()[c], rootpart, scores, candidate, nparts, nscales);
+		}
+	}
+	return candidates;
 }

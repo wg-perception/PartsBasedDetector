@@ -43,22 +43,34 @@
 #include "Candidate.hpp"
 #include "Model.hpp"
 #include "Part.hpp"
+#include "ITree.hpp"
 
-/*
+
+/*! @class DynamicProgram
+ *  @brief Dynamic Program to calculate the best holistic detection
  *
+ *  The Dynamic Program calculates the best holistic detection given a
+ *  set of part detections and a model of the parts' likely relationships
+ *  with their parents. The class has two primary methods: min() and argmin().
+ *
+ *  min() computes the best candidates by passing messages from the leaves
+ *  of the Part tree to the root. argmin() traverses back down the tree to
+ *  retrieve the actual Part locations
  */
 class DynamicProgram {
 private:
 	//! the threshold for a positive detection
 	double thresh_;
-	void minRecursive(const Part& self, const Part& parent, std::vector<cv::Mat>& scores, int nparts, int scale);
+	void minRecursive(Part& self, Part& parent, std::vector<cv::Mat>& scores, int nparts, int scale);
+	void argminRecursive(const Part& self, const Part& parent, std::vector<cv::Mat>& scores, Candidate& candidate, int nparts, int nscales);
 	void distanceTransform1D(const float* src, float* dst, int* ptr, int n, float a, float b);
 public:
 	DynamicProgram();
+	DynamicProgram(double thresh) : thresh_(thresh) {}
 	virtual ~DynamicProgram();
 	// public methods
-	void min(Part rootpart, std::vector<cv::Mat>& responses, int nscales);
-	std::vector<Candidate> argmin(void);
+	void min(Part& rootpart, std::vector<cv::Mat>& scores, int nscales, cv::Mat& maxv, cv::Mat& maxi);
+	std::vector<Candidate> argmin(Part& rootpart, std::vector<cv::Mat>& scores, int nscales, cv::Mat& maxv, cv::Mat& maxi);
 	void distanceTransform(const cv::Mat& score_in, const std::vector<float> w, cv::Mat& score_out, cv::Mat& Ix, cv::Mat& Iy);
 };
 

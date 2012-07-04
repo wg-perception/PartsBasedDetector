@@ -41,7 +41,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "PartsBasedDetector.hpp"
 #include "Candidate.hpp"
-#include "FileStorageModel.hpp"
+#include "MatlabIOModel.hpp"
 #include "Visualize.hpp"
 using namespace cv;
 using namespace std;
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
 	if (argc != 3) printf("Usage: PartsBasedDetector image_filename model_filename\n");
 
 	// create the model object and deserialize it
-	FileStorageModel model;
+	MatlabIOModel model;
 	model.deserialize(argv[1]);
 
 	// create the PartsBasedDetector and distribute the model parameters
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 	vector<Candidate> candidates = pbd.detect(im);
 
 	// display the best candidates
-	Visualize visualize;
+	Visualize visualize(model.name());
 	if (candidates.size() > 0) {
 		Candidate::sort(candidates);
 		visualize.candidates(im, candidates);

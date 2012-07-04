@@ -49,8 +49,11 @@ private:
 	double score_;
 public:
 	Candidate();
+	Candidate(int nparts, double score) : score_(score) { parts_.resize(nparts); }
 	virtual ~Candidate();
-	const std::vector<cv::Rect> parts(void) const { return parts_; }
+	std::vector<cv::Rect>& parts(void) { return parts_; }
+	void addPart(cv::Rect r) { parts_.push_back(r); }
+	void addPart(cv::Rect r, int idx) { if (parts_.size() < idx) parts_.resize(idx); parts_[idx] = r; }
 	const double score(void) const { return score_; }
 	static bool compare(Candidate c1, Candidate c2) { return c1.score() < c2.score(); }
 

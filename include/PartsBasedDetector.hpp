@@ -38,6 +38,7 @@
 
 #ifndef PARTSBASEDDETECTOR_HPP_
 #define PARTSBASEDDETECTOR_HPP_
+#include <string>
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include "Model.hpp"
@@ -49,6 +50,8 @@
  */
 class PartsBasedDetector {
 private:
+	//! the name of the Part detector
+	std::string name_;
 	//! produces features, feature pyramids and compares features with Parts
 	HOGFeatures features_;
 	//! dynamic program to predict part positions and candidate likelihoods from raw scores
@@ -60,7 +63,7 @@ public:
 	virtual ~PartsBasedDetector();
 	// public methods
 	std::vector<Candidate> detect(const cv::Mat& im);
-	void distributeModel(const Model& model);
+	void distributeModel(Model& model);
 };
 
 #endif /* PARTSBASEDDETECTOR_HPP_ */
