@@ -40,10 +40,15 @@
 #include <omp.h>
 #endif
 #include <math.h>
+#include <cstdio>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "HOGFeatures.hpp"
 using namespace std;
 using namespace cv;
+
+// declare all possible types of specialization (this is kinda sacrilege, but it's all we'll ever need...)
+HOGFeatures<float> hog_float;
+HOGFeatures<double> hog_double;
 
 /*! @brief Calculate features at multiple scales
  *
@@ -51,42 +56,61 @@ using namespace cv;
  * then progressively downsampled to coarser spatial
  * resolutions
  *
+ * This function supports multithreading via OpenMP
+ *
  * @param im the input image at native resolution
  * @return the pyramid of features, fine to coarse, each calculated via
  * features()
  */
-std::vector<cv::Mat> HOGFeatures::pyramid(const cv::Mat& im) {
+template<typename T>
+void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
 
-	vector<Mat> pyrafeatures;
+	vector<Mat> pyraimages;
+	pyraimages.resize(nscales_);
+	pyrafeatures.clear();
+	pyrafeatures.resize(nscales_);
+	pyraimages.resize(nscales_);
 	scales_.clear();
+	scales_.resize(nscales_);
 
-	// calculate the scaling factorA
+	// calculate the scaling factor
 	Size_<float> imsize = im.size();
-	float sc     = exp( floor( log ( (float)min(im.rows, im.cols)/(30.0f*(float)binsize_) ) )/(nscales_ - 1) );
-	int interval = round( 1.0f / log2(sc) );
+	int interval = ceil((float)nscales_ / 3.0);
+	float sc = pow(2.0, 1.0/(float)interval);
 
 	// perform the non-power of two scaling
-	Mat scaled;
-	Mat padded;
-	Mat feature;
+	#ifdef _OPENMP
+	#pragma omp parallel for
+	#endif
 	for (int i = 0; i < interval; ++i) {
+		Mat scaled;
 		resize(im, scaled, imsize * (1.0f/pow(sc,i)));
-		feature = features(scaled);
-		copyMakeBorder(feature, padded, 1, 1, flen_, flen_, BORDER_CONSTANT, 1);
-		pyrafeatures.push_back(padded);
-		scales_.push_back(1.0f/pow(sc,i));
-
-		// perform the subsequent power of two scaling
+		pyraimages[i] = scaled;
+		// perform subsequent power of two scaling
 		for (int j = i+interval; j < nscales_; j+=interval) {
-			pyrDown(scaled, scaled);
-			feature = features(scaled);
-			copyMakeBorder(feature, padded, 1, 1, flen_, flen_, BORDER_CONSTANT, 1);
-			pyrafeatures.push_back(padded);
-			scales_.push_back(0.5 * scales_[j-interval]);
+			Mat scaled2;
+			pyrDown(scaled, scaled2);
+			pyraimages[j] = scaled2;
 		}
 	}
 
-	return pyrafeatures;
+	// perform the actual feature computation, in parallel if possible
+	#ifdef _OPENMP
+	#pragma omp parallel for
+	#endif
+	for (int n = 0; n < nscales_; ++n) {
+		Mat feature;
+		Mat padded;
+		switch (im.depth()) {
+			case CV_32F: features<float>(pyraimages[n], feature); break;
+			case CV_64F: features<double>(pyraimages[n], feature); break;
+			case CV_8U:  features<uint8_t>(pyraimages[n], feature); break;
+			case CV_16U: features<uint16_t>(pyraimages[n], feature); break;
+			default: CV_Error(CV_StsUnsupportedFormat, "Unsupported image type"); break;
+		}
+		copyMakeBorder(feature, padded, 1, 1, flen_, flen_, BORDER_CONSTANT, 1);
+		pyrafeatures[n] = padded;
+	}
 }
 
 /*! @brief compute the HOG features for an image
@@ -103,93 +127,150 @@ std::vector<cv::Mat> HOGFeatures::pyramid(const cv::Mat& im) {
  * @param im the input image (must be color of type CV_8UC3)
  * @return the HOG features as a 2D matrix
  */
-Mat HOGFeatures::features(const Mat& im) const {
+template<typename T> template<typename IT>
+void HOGFeatures<T>::features(const Mat& im, Mat& featm) const {
 
 	// compute the size of the output matrix
+	bool color  = (im.channels() == 3);
 	Size imsize = im.size();
 	Size blocks = imsize;
-	Size outsize = imsize;
-	blocks.height = floor(blocks.height / binsize_);
-	blocks.width  = floor(blocks.width  / binsize_);
-	outsize.width = outsize.width * flen_;
+	blocks.height = round((float)blocks.height / (float)binsize_);
+	blocks.width  = round((float)blocks.width  / (float)binsize_);
+	Size outsize;
+	outsize.width  = max(blocks.width-2,  0);
+	outsize.height = max(blocks.height-2, 0);
+	Size visible   = blocks*binsize_;
 
-	Mat histm = Mat::zeros(outsize, CV_32FC1);
-	Mat normm = Mat::zeros(blocks, CV_32FC1);
+	Mat histm = Mat::zeros(Size(blocks.width*norient_, blocks.height),  DataType<T>::type);
+	Mat normm = Mat::zeros(Size(blocks.width,          blocks.height),  DataType<T>::type);
+	featm     = Mat::zeros(Size(outsize.width*flen_,   outsize.height), DataType<T>::type);
 
-	// eps to avoid division by zero
+	// epsilon to avoid division by zero
 	const double eps = 0.0001;
 
 	// unit vectors to compute gradient orientation
-	double uu[9] = {1.000, 0.9397, 0.7660, 0.5000, 0.1736, -0.1736, -0.5000, -0.7660, -0.9397};
-	double vv[9] = {0.000, 0.3420, 0.6428, 0.8660, 0.9848,  0.9848,  0.8660,  0.6428,  0.3420};
+	const T uu[9] = {1.000, 0.9397, 0.7660, 0.5000, 0.1736, -0.1736, -0.5000, -0.7660, -0.9397};
+	const T vv[9] = {0.000, 0.3420, 0.6428, 0.8660, 0.9848,  0.9848,  0.8660,  0.6428,  0.3420};
 
 	// calculate the zero offset
-	Size offset((imsize.height - blocks.height*binsize_)/2, (imsize.width - blocks.width*binsize_)/2);
-	const float* src = im.ptr<float>(0);
-	float* hist = histm.ptr<float>(0);
-#ifdef _OPENMP
-	omp_set_num_threads(omp_get_num_procs());
-	#pragma omp parallel for
-#endif
-	for (int i = 1; i < blocks.height-1; ++i) {
-		for (int j = 1; j < blocks.width-1; ++j) {
+	const IT* src = im.ptr<IT>(0);
+	T* hist = histm.ptr<T>(0);
+	T* norm = normm.ptr<T>(0);
+	T* feat = featm.ptr<T>(0);
 
-			// blue color channel
-			const float* s = src + (i+offset.height)*imsize.height + (j+offset.width);
-			float dy = *(s+imsize.width) - *(s-imsize.width);
-			float dx = *(s+1) - *(s-1);
-			float  v = dx*dx + dy*dy;
+	for (int y = 1; y < visible.height-1; ++y) {
+		for (int x = 1; x < visible.width-1; ++x) {
 
-			// green color channel
-			s += imsize.width*imsize.height;
-			float dyg = *(s+imsize.width) - *(s-imsize.width);
-			float dxg = *(s+1) - *(s-1);
-			float  vg = dxg*dxg + dyg*dyg;
+			// first image channel
+			const IT* s = src + min(x, im.cols-2) + min(y, im.rows-2)*imsize.width;
+			T dy = *(s+imsize.width) - *(s-imsize.width);
+			T dx = *(s+1) - *(s-1);
+			T  v = dx*dx + dy*dy;
 
-			// red color channel
-			s += imsize.width*imsize.height;
-			float dyr = *(s+imsize.width) - *(s-imsize.width);
-			float dxr = *(s+1) - *(s-1);
-			float  vr = dxr*dxr + dyr*dyr;
+			if (color) {
+				// second image channel
+				s += imsize.width*imsize.height;
+				T dyg = *(s+imsize.width) - *(s-imsize.width);
+				T dxg = *(s+1) - *(s-1);
+				T  vg = dxg*dxg + dyg*dyg;
 
-			// pick the channel with the strongest gradient
-			if (vg > v) { v = vg; dx = dxg; dy = dyg; }
-			if (vr > v) { v = vr; dx = dxr; dy = dyr; }
+				// third image channel
+				s += imsize.width*imsize.height;
+				T dyr = *(s+imsize.width) - *(s-imsize.width);
+				T dxr = *(s+1) - *(s-1);
+				T  vr = dxr*dxr + dyr*dyr;
+
+				// pick the channel with the strongest gradient
+				if (vg > v) { v = vg; dx = dxg; dy = dyg; }
+				if (vr > v) { v = vr; dx = dxr; dy = dyr; }
+			}
 
 			// snap to one of 18 orientations
-			float best_dot = 0;
+			T best_dot = 0;
 			int best_o = 0;
-			for (int o = 0; o < 9; ++o) {
-				float dot = uu[o]*dx + vv[o]*dy;
+			for (int o = 0; o < norient_/2; ++o) {
+				T dot = uu[o]*dx + vv[o]*dy;
 				if (dot > best_dot) { best_dot = dot; best_o = o; }
 				else if (-dot > best_dot) { best_dot = -dot; best_o = o+9; }
 			}
 
 			// add to 4 histograms around pixel using linear interpolation
-			float ip = ((float)i+0.5)/(float)binsize_ - 0.5;
-			float jp = ((float)j+0.5)/(float)binsize_ - 0.5;
-			int iip = (int)floor(ip);
-			int ijp = (int)floor(jp);
-			float vi0 = ip-iip;
-			float vj0 = jp-ijp;
-			float vi1 = 1.0-vi0;
-			float vj1 = 1.0-vj0;
+			T yp = ((T)y+0.5)/(T)binsize_ - 0.5;
+			T xp = ((T)x+0.5)/(T)binsize_ - 0.5;
+			int iyp = (int)floor(yp);
+			int ixp = (int)floor(xp);
+			T vy0 = yp-iyp;
+			T vx0 = xp-ixp;
+			T vy1 = 1.0-vy0;
+			T vx1 = 1.0-vx0;
 			v = sqrt(v);
 
-			if (iip >= 0 && ijp >= 0) *(hist + (iip*blocks.width + ijp)*flen_ + best_o) = vi1*vj1*v;
-			if (iip >= 0 && ijp <= blocks.width) *(hist + (iip*blocks.width + ijp+1)*flen_ + best_o) = vj1*vi0*v;
-			if (iip <= blocks.height && ijp >= 0) *(hist + ((iip+1)*blocks.width + ijp)*flen_ + best_o) = vi1*vj0*v;
-			if (iip <= blocks.height && ijp <= blocks.width) *(hist + ((iip+1)*blocks.width + ijp+1)*flen_ + best_o) = vi1*vj1*v;
+			if (iyp >= 0 && ixp >= 0) 							*(hist + (iyp*blocks.width + ixp)*norient_ + best_o) = vy1*vx1*v;
+			if (iyp >= 0 && ixp+1 < blocks.width) 				*(hist + (iyp*blocks.width + ixp+1)*norient_ + best_o) = vx1*vy0*v;
+			if (iyp+1 < blocks.height && ixp >= 0) 				*(hist + ((iyp+1)*blocks.width + ixp)*norient_ + best_o) = vy1*vx0*v;
+			if (iyp+1 < blocks.height && ixp+1 < blocks.width)	*(hist + ((iyp+1)*blocks.width + ixp+1)*norient_ + best_o) = vy0*vx0*v;
 		}
 	}
 
 	// compute the energy in each block by summing over orientations
-	float* norm = normm.ptr<float>(0);
 	for (int i = 0; i < blocks.height*blocks.width; ++i) {
-		for (int o = 0; o < 9; ++o) norm[i] += pow(hist[i*flen_+o] + hist[i*flen_+o+9], 2);
+		for (int o = 0; o < 9; ++o) norm[i] += pow(hist[i*norient_+o] + hist[i*norient_+norient_/2+o], 2);
 	}
 
-	return histm;
+	// compute the features
+	for (int y = 0; y < outsize.height; ++y) {
+		for (int x = 0; x < outsize.width; ++x) {
+			T* dst = feat + (y*outsize.width + x)*flen_;
+			T* src, *p, n1, n2, n3, n4;
+
+			p  = norm + (y+1)*outsize.width + (x+1);
+			n1 = 1.0f / sqrt(*p + *(p+1) + *(p+outsize.width) + *(p+outsize.width+1) + eps);
+			p  = norm + y*outsize.width + (x+1);
+			n2 = 1.0f / sqrt(*p + *(p+1) + *(p+outsize.width) + *(p+outsize.width+1) + eps);
+			p  = norm + (y+1)*outsize.width + x;
+			n3 = 1.0f / sqrt(*p + *(p+1) + *(p+outsize.width) + *(p+outsize.width+1) + eps);
+			p  = norm + y*outsize.width + x;
+			n4 = 1.0f / sqrt(*p + *(p+1) + *(p+outsize.width) + *(p+outsize.width+1) + eps);
+
+			T t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+
+			// contrast-sensitive features
+			src = hist + ((y+1)*blocks.width + (x+1))*norient_;
+			for (int o = 0; o < norient_; ++o) {
+				T h1 = min(*src * n1, (T)0.2);
+				T h2 = min(*src * n2, (T)0.2);
+				T h3 = min(*src * n3, (T)0.2);
+				T h4 = min(*src * n4, (T)0.2);
+				*(dst++) = 0.5 * (h1 + h2 + h3 + h4);
+				src++;
+				t1 += h1;
+				t2 += h2;
+				t3 += h3;
+				t4 += h4;
+			}
+
+			// contrast-insensitive features
+			src = hist + ((y+1)*blocks.width + (x+1))*norient_;
+			for (int o = 0; o < norient_/2; ++o) {
+				T sum = *src + *(src+norient_/2);
+				T h1 = min(sum * n1, (T)0.2);
+				T h2 = min(sum * n2, (T)0.2);
+				T h3 = min(sum * n3, (T)0.2);
+				T h4 = min(sum * n4, (T)0.2);
+				*(dst++) = 0.5 * (h1 + h2 + h3 + h4);
+				src++;
+			}
+
+			//texture features
+			*(dst++) = 0.2357 * t1;
+			*(dst++) = 0.2357 * t2;
+			*(dst++) = 0.2357 * t3;
+			*(dst++) = 0.2357 * t4;
+
+			// truncation feature
+			*dst = 0;
+		}
+	}
 }
 
 /*! @brief Convolve two matrices, with a stride of greater than one
@@ -209,10 +290,10 @@ Mat HOGFeatures::features(const Mat& im) const {
  * @return the response (pdf)
  */
 template<typename T>
-Mat HOGFeatures::convolve(const Mat& feature, const Mat& filter, int stride) {
+void HOGFeatures<T>::convolve(const Mat& feature, const Mat& filter, Mat& pdf, int stride) {
 
 	// error checking
-	assert(feature.type() == feature.type());
+	assert(feature.depth() == filter.depth());
 	assert(feature.cols % stride == 0 && filter.cols % stride == 0);
 
 	// really basic convolution algorithm with a stride greater than one
@@ -220,15 +301,12 @@ Mat HOGFeatures::convolve(const Mat& feature, const Mat& filter, int stride) {
 	const int N = feature.cols - filter.cols + stride;
 	const int H = filter.rows;
 	const int W = filter.cols;
-	Mat response(Size(M, N), feature.type());
+	pdf.create(Size(M, N), feature.type());
 	const T* feat_ptr = feature.ptr<T>(0);
 	const T* filt_ptr = filter.ptr<T>(0);
 	const T* filt_start = filter.ptr<T>(0);
-	T* resp_ptr = response.ptr<T>(0);
-#ifdef _OPENMP
-	omp_set_num_threads(omp_get_num_procs());
-	#pragma omp parallel for
-#endif
+	T* pdf_ptr = pdf.ptr<T>(0);
+
 	for (int m = 0; m < M; ++m) {
 		for (int n = 0; n < N; n+=stride) {
 			T accum = 0;
@@ -240,10 +318,9 @@ Mat HOGFeatures::convolve(const Mat& feature, const Mat& filter, int stride) {
 				}
 				feat_ptr = feature.ptr<T>(m+h) + n;
 			}
-			*(resp_ptr++) = accum;
+			*(pdf_ptr++) = accum;
 		}
 	}
-	return response;
 }
 
 /*! @brief Calculate the responses of a set of features to a set of filter experts
@@ -256,23 +333,24 @@ Mat HOGFeatures::convolve(const Mat& feature, const Mat& filter, int stride) {
  * @param filters the filters representing the parts across mixtures
  * @return a vector of responses (pdfs)
  */
-vector<Mat> HOGFeatures::pdf(const vector<Mat>& features, const vector<Mat>& filters) {
+template<typename T>
+void HOGFeatures<T>::pdf(const vector<Mat>& features, const vector<Mat>& filters, vector<Mat>& responses) {
 
 	// preallocate the output
 	int M = features.size();
 	int N = filters.size();
-	vector<Mat> responses;
-	responses.reserve(M*N);
-
+	responses.clear();
+	responses.resize(M*N);
 	// iterate
-	Mat feature = features[0];
-	Mat filter = filters[0];
-	for (int m = 0; m < M; ++m) {
-		for (int n = 0; n < N; ++n) {
-			Mat response = convolve<float>(feature, filter, flen_);
-			responses.push_back(response);
-		}
+#ifdef _OPENMP
+	omp_set_num_threads(omp_get_num_procs());
+	#pragma omp parallel for
+#endif
+	for (int i = 0; i < M*N; ++i) {
+		int n = i%N;
+		int m = floor(i/N);
+		Mat response;
+		convolve(features[m], filters[n], response, flen_);
+		responses[i] = response;
 	}
-	return responses;
-
 }

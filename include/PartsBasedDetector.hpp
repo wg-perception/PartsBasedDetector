@@ -41,6 +41,8 @@
 #include <string>
 #include <vector>
 #include <opencv2/core/core.hpp>
+#include "Part.hpp"
+#include "Parts.hpp"
 #include "Model.hpp"
 #include "Candidate.hpp"
 #include "HOGFeatures.hpp"
@@ -53,11 +55,12 @@ private:
 	//! the name of the Part detector
 	std::string name_;
 	//! produces features, feature pyramids and compares features with Parts
-	HOGFeatures features_;
+	HOGFeatures<float> features_;
 	//! dynamic program to predict part positions and candidate likelihoods from raw scores
 	DynamicProgram dp_;
 	//! the tree of Parts
 	Part root_;
+	Parts* parts_;
 public:
 	PartsBasedDetector();
 	virtual ~PartsBasedDetector();

@@ -52,13 +52,15 @@ PartsBasedDetector::~PartsBasedDetector() {
 vector<Candidate> PartsBasedDetector::detect(const Mat& im) {
 
 	// calculate a feature pyramid for the new image
-	vector<cv::Mat> pyramid = features_.pyramid(im);
+	vector<Mat> pyramid;
+	features_.pyramid(im, pyramid);
 
 	// convolve the feature pyramid with the Part experts
 	// to get probability density for each Part
-	vector<cv::Mat> filters;
+	vector<Mat> filters;
+	vector<Mat> pdf;
 	root_.toVector(filters);
-	vector<cv::Mat> pdf = features_.pdf(pyramid, filters);
+	features_.pdf(pyramid, filters, pdf);
 
 	// use dynamic programming to predict the best detection candidates from the part responses
 	Mat maxv, maxi;
@@ -83,7 +85,7 @@ void PartsBasedDetector::distributeModel(Model& model) {
 	root_ = Part::constructPartHierarchy(model.filters(), model.conn());
 
 	// initialize the Feature engine
-	features_ = HOGFeatures(model.binsize(), model.nscales(), model.flen());
+	features_ = HOGFeatures<float>(model.binsize(), model.nscales(), model.flen(), model.norient());
 
 	// initialize the dynamic program
 	dp_ = DynamicProgram(model.thresh());

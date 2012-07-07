@@ -69,6 +69,8 @@ protected:
 	int binsize_;
 	//! the length of the feature vector in each bin
 	int flen_;
+	//! the number of orientations pin HOG feature bin
+	int norient_;
 
 public:
 	Model();
@@ -83,6 +85,7 @@ public:
 	int binsize(void) const { return binsize_; }
 	int nscales(void) const { return nscales_; }
 	int flen(void) const { return flen_; }
+	int norient(void) const { return norient_; }
 };
 
 #endif /* MODEL_HPP_ */

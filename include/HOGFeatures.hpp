@@ -45,6 +45,7 @@
 /*
  *
  */
+template<typename T>
 class HOGFeatures : public IFeatures {
 private:
 	//! the spatial binning size
@@ -53,23 +54,25 @@ private:
 	int nscales_;
 	//! the length of the feature at each bin (histogram size)
 	int flen_;
+	//! the number of orientations to bin
+	int norient_;
 	//! the scales of the features
 	std::vector<float> scales_;
 
 	// private methods
-	cv::Mat features(const cv::Mat& im) const;
-	template<typename T> cv::Mat convolve(const cv::Mat& feature, const cv::Mat& filter, int stride);
+	template<typename IT> void features(const cv::Mat& im, cv::Mat& feature) const;
+	void convolve(const cv::Mat& feature, const cv::Mat& filter, cv::Mat& pdf, int stride);
 public:
 	HOGFeatures() {}
-	HOGFeatures(int binsize, int nscales, int flen) : binsize_(binsize), nscales_(nscales), flen_(flen) {}
+	HOGFeatures(int binsize, int nscales, int flen, int norient) :
+		binsize_(binsize), nscales_(nscales), flen_(flen), norient_(norient) { assert(norient_%2 == 0); }
 	virtual ~HOGFeatures() {}
 	// get methods
 	virtual int binsize(void) { return binsize_; }
 	virtual int nscales(void) { return nscales_; }
 
-	virtual std::vector<cv::Mat> pyramid(const cv::Mat& im);
-	virtual std::vector<cv::Mat> pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters);
+	virtual void pyramid(const cv::Mat& im, std::vector<cv::Mat>& pyrafeatures);
+	virtual void pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters, std::vector<cv::Mat>& responses);
 };
-
 
 #endif /* HOGFEATURES_HPP_ */

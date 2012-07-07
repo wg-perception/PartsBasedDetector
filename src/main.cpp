@@ -51,6 +51,34 @@ int main(int argc, char** argv) {
 	// check arguments
 	if (argc != 3) printf("Usage: PartsBasedDetector image_filename model_filename\n");
 
+	// load an image from file
+	Mat image = imread(argv[2]);
+
+	// create some random filters
+	vector<Mat> filters;
+	for (int n = 0; n < 60; ++n) {
+		Mat filter(Size(5*32, 5), CV_64FC1);
+		randn(filter, 0, 0.1);
+		filters.push_back(filter);
+	}
+
+	// create the HOG features
+	HOGFeatures<double> hog(8, 5, 32, 18);
+
+	// create a pyramid of features
+	double t = (double)getTickCount();
+	int N = 10;
+	for (int n = 0; n < N; ++n) {
+		vector<Mat> pyramid;
+		vector<Mat> responses;
+		hog.pyramid(image, pyramid);
+		hog.pdf(pyramid, filters, responses);
+	}
+	printf("Total pyramid time: %f\n", ((double)getTickCount() - t)/getTickFrequency()/N);
+
+
+
+	return 0;
 	// create the model object and deserialize it
 	MatlabIOModel model;
 	model.deserialize(argv[1]);
