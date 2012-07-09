@@ -367,38 +367,114 @@ void DynamicProgram::minRecursive(Part& self, Part& parent, vector<Mat>& scores,
  * @param maxv the root score
  * @param maxi the best mixture for each pixel in the root score
  */
-void DynamicProgram::min(Part& rootpart, vector<Mat>& scores, int nscales, Mat& maxv, Mat& maxi) {
+void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vector4DMat& Iy, vector4DMat& Ik, vector2DMat& rootv, vector2DMat& rooti) {
 
-	// error checking
-	assert(scores.size() == (rootpart.ndescendants()+1 * rootpart.nmixtures() * nscales));
+	// initialize the outputs, preallocate vectors to make them thread safe
+	// TODO: better initialisation of Ix, Iy, Ik
+	int nscales = scores.size();
+	Ix.resize(nscales);
+	Iy.resize(nscales);
+	Ik.resize(nscales);
+	rootv.resize(nscales, vectorMat(parts.ncomponents()));
+	rooti.resize(nscales, vectorMat(parts.ncomponents()));
 
-	// for each scale, update the scores through message passing
+	// for each scale, and each component, update the scores through message passing
+	#ifdef _OPENMP
+	#pragma omp parallel for
+	#endif
 	for (int n = 0; n < nscales; ++n) {
-		for (int c = 0; c < rootpart.children().size(); ++c)
-			minRecursive(rootpart.children()[c], rootpart, scores, rootpart.ndescendants()+1, n);
+		vector3DMat Ixn; Ixn.resize(parts.ncomponents());
+		vector3DMat Iyn; Iyn.resize(parts.ncomponents());
+		vector3DMat Ikn; Ikn.resize(parts.ncomponents());
 
-		// weight each of the root mixtures by the root bias
-		vector<Mat> weighted;
-		float bias = 0;
-		for (int mm = 0; mm < rootpart.nmixtures(); ++mm) {
-			weighted.push_back(scores[mm] + bias);
+		for (int c = 0; c < parts.ncomponents(); ++c) {
+			vector2DMat Ixnc; Ixnc.resize(parts.nparts(c));
+			vector2DMat Iync; Iync.resize(parts.nparts(c));
+			vector2DMat Iknc; Iknc.resize(parts.nparts(c));
+
+			for (int p = parts.nparts(c)-1; p > 0; --p) {
+
+				// get the component part (which may have multiple mixtures associated with it)
+				ComponentPart cpart = parts.component(c, p);
+				Ixnc[p].resize(cpart.nmixtures());
+				Iync[p].resize(cpart.nmixtures());
+				Iknc[p].resize(cpart.nmixtures());
+
+				// intermediate results for mixtures of this part
+				vector<Mat> scoresp;
+				vector<Mat> Ixp;
+				vector<Mat> Iyp;
+
+				for (int m = 0; m < cpart.nmixtures(); ++m) {
+					// raw score outputs
+					Mat score_dt, Ix_dt, Iy_dt;
+					Mat score_in = cpart.score(scores[n], m);
+					// compute the distance transform
+					distanceTransform(score_in, cpart.defw(m), score_dt, Ix_dt, Iy_dt);
+
+					// get the anchor position
+					Point anchor = cpart.anchor(m);
+
+					// calculate a valid region of interest for the scores
+					int X = score_in.cols;
+					int Y = score_in.rows;
+					int xmin = std::max(anchor.x,   0);
+					int ymin = std::max(anchor.y,   0);
+					int xmax = std::min(anchor.x+X, X);
+					int ymax = std::min(anchor.y+Y, X);
+					int xoff = std::max(-anchor.x,  0);
+					int yoff = std::max(-anchor.y,  0);
+
+					// shift the score by the Part's offset from its parent
+					Mat score = -numeric_limits<float>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
+					Mat Ixm   = Mat::zeros(Ix_dt.size(), Ix_dt.type());
+					Mat Iym   = Mat::zeros(Iy_dt.size(), Iy_dt.type());
+					score(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = score_dt(Range(xmin, xmax), Range(ymin, ymax));
+					Ixm(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = Ix_dt(Range(xmin, xmax), Range(ymin, ymax));
+					Iym(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = Iy_dt(Range(xmin, xmax), Range(ymin, ymax));
+
+					// push the scores onto the intermediate vectors
+					scoresp.push_back(score);
+					Ixp.push_back(Ixm);
+					Iyp.push_back(Iym);
+				}
+
+				for (int m = 0; m < cpart.nmixtures(); ++m) {
+					vector<Mat> weighted;
+					// weight each of the child scores
+					for (int mm = 0; mm < cpart.nmixtures(); ++mm) {
+						weighted.push_back(scoresp[mm] + cpart.bias(m));
+					}
+
+					// compute the max over the mixtures
+					Mat maxv, maxi;
+					reduceMax(weighted, maxv, maxi);
+
+					// choose the best indices
+					Mat Ixm, Iym;
+					reducePickIndex(Ixp, maxi, Ixm);
+					reducePickIndex(Iyp, maxi, Iym);
+					Ixnc[p][m] = Ixm;
+					Iync[p][m] = Iym;
+					Iknc[p][m] = maxi;
+
+					// update the parent's score
+					if (!cpart.isRoot()) cpart.parent().score(scores[n],m) = maxv;
+				}
+			}
+			// add bias to the root score and find the best mixture
+			ComponentPart root = parts.component(c);
+			float bias = root.bias(0);
+			vector<Mat> weighted;
+			// weight each of the child scores
+			for (int m = 0; m < root.nmixtures(); ++m) {
+				weighted.push_back(root.score(scores[n],m) + bias);
+			}
+			reduceMax(weighted, rootv[n][c], rooti[n][c]);
+			Ixn[c] = Ixnc; Iyn[c] = Iync; Ikn[c] = Iknc;
 		}
-
-		// compute the max over the mixtures
-		reduceMax(weighted, maxv, maxi);
-
+		Ix[n] = Ixn; Iy[n] = Iyn; Ik[n] = Ikn;
 	}
-}
-
-
-void DynamicProgram::argminRecursive(const Part& self, const Part& parent, vector<Mat>& scores, Candidate& candidate, int nparts, int nscales) {
-
-	// add self's position, relative to parent's position
-	// TODO: do this properly, from populated min() variables
-	vector<Mat> Ix;
-	vector<Mat> Iy;
-	vector<Mat> Ik;
-
 }
 
 
@@ -407,29 +483,66 @@ void DynamicProgram::argminRecursive(const Part& self, const Part& parent, vecto
  * Get the minimum argument of a dynamic program by traversing down the tree of
  * a dynamic program, returning the locations of the best nodes
  */
-vector<Candidate> DynamicProgram::argmin(Part& rootpart, vector<Mat>& scores, int nscales, Mat& maxv, Mat& maxi) {
+void DynamicProgram::argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat Ik, vector<Candidate>& candidates) {
 
-	// common
-	int nparts = rootpart.ndescendants()+1;
-	int nmixtures = rootpart.nmixtures();
+	// for each scale, and each component, traverse back down the tree to retrieve the part positions
+	int nscales = scales.size();
+	#ifdef _OPENMP
+	#pragma omp parallel for
+	#endif
+	for (int n = 0; n < nscales; ++n) {
+		float scale = scales[n];
+		for (int c = 0; c < parts.ncomponents(); ++c) {
 
-	// threshold the raw score
-	Mat over_thresh = maxv > thresh_;
-	vector<Point> inds;
-	find(over_thresh, inds);
+			// get the scores and indices for this tree of parts
+			const vector2DMat& Iknc = Ik[n][c];
+			const vector2DMat& Ixnc = Ix[n][c];
+			const vector2DMat& Iync = Iy[n][c];
+			int nparts = parts.nparts(c);
 
-	// for each point, backtrack through the score stack
-	vector<Candidate> candidates;
-	for (int n = 0; n < inds.size(); ++n) {
-		// create a new candidate
-		Point ind = inds[n];
-		Candidate candidate(nparts, scores[0].at<float>(ind));
-		// add the parent bounding box
-		candidate.addPart(Rect(ind.x, ind.y, 8, 8));
-		// recursively add the children
-		for (int c = 0; c < rootpart.children().size(); ++c) {
-			argminRecursive(rootpart.children()[c], rootpart, scores, candidate, nparts, nscales);
+			// threshold the root score
+			Mat over_thresh = rootv[n][c] > thresh_;
+			Mat rootmix     = rooti[n][c];
+			vectorPoint inds;
+			find(over_thresh, inds);
+
+			for (int i = 0; i < inds.size(); ++i) {
+				Candidate candidate;
+				vectori     xv(nparts);
+				vectori     yv(nparts);
+				vectori     mv(nparts);
+				for (int p = 0; p < nparts; ++p) {
+					ComponentPart part = parts.component(c, p);
+					// calculate the child's points from the parent's points
+					int x, y, m;
+					if (part.isRoot()) {
+						x = xv[0] = inds[i].x;
+						y = yv[0] = inds[i].y;
+						m = mv[0] = rootmix.at<int>(inds[i]);
+					} else {
+						int idx = part.parent().self();
+						x = xv[idx];
+						y = yv[idx];
+						m = mv[idx];
+						xv[p] = Ixnc[p][m].at<int>(x,y);
+						yv[p] = Iync[p][m].at<int>(x,y);
+						mv[p] = Iknc[p][m].at<int>(x,y);
+					}
+
+					// calculate the bounding rectangle and add it to the Candidate
+					Point ptwo = Point(2,2);
+					Point pone = Point(1,1);
+					Point xy1 = (Point(x,y)-ptwo)*scale + pone;
+					Point xy2 = xy1 + Point(part.xsize(m), part.ysize(m))*scale - pone;
+					candidate.addPart(Rect(xy1, xy2));
+				}
+				#ifdef _OPENMP
+				#pragma omp critical(addcandidate)
+				#endif
+				{
+					candidates.push_back(candidate);
+				}
+			}
 		}
 	}
-	return candidates;
 }

@@ -59,8 +59,7 @@ private:
 	//! dynamic program to predict part positions and candidate likelihoods from raw scores
 	DynamicProgram dp_;
 	//! the tree of Parts
-	Part root_;
-	Parts* parts_;
+	Parts parts_;
 public:
 	PartsBasedDetector();
 	virtual ~PartsBasedDetector();

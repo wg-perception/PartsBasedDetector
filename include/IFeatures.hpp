@@ -40,6 +40,7 @@
 #define FEATURES_HPP_
 #include <vector>
 #include <opencv2/core/core.hpp>
+#include "types.hpp"
 /*
  *
  */
@@ -51,7 +52,7 @@ public:
 	virtual int nscales(void) = 0;
 	// public methods
 	virtual void pyramid(const cv::Mat& im, std::vector<cv::Mat>& pyrafeatures) = 0;
-	virtual void pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters, std::vector<cv::Mat>& responses) = 0;
+	virtual void pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters, vector2DMat& responses) = 0;
 };
 
 //IFeatures::~IFeatures() {}

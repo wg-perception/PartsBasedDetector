@@ -41,18 +41,37 @@
 #include <vector>
 #include <string>
 #include <opencv2/core/core.hpp>
-typedef std::vector<std::vector<cv::Mat> > vector2DMat;
-typedef std::vector<std::vector<float> >   vector2Df;
+#include "types.hpp"
 /*
  *
  */
 class Model {
 protected:
 	// member variables
-	//! the filters (\a nparts_ * \a nmixtures_)
-	vector2DMat filters_;
-	//! the bias of each Part
-	vector2Df bias_;
+	// common monolithic part components
+	//! the filter weights
+	vectorMat 	filtersw_;
+	//! the filer indices
+	vectori   	filtersi_;
+	//! the deformation weights
+	vector2Df 	defw_;
+	//! the deformation indices
+	vectori   	defi_;
+	//! the bias weights
+	vectorf   	biasw_;
+	//! the bias indices
+	vectori   	biasi_;
+	//! the anchors (part position relative to parent)
+	vectorPoint anchors_;
+	// component accessors
+	//! indexing schema for the bias (weights and indices)
+	vector3Di 	biasid_;
+	//! indexing schema for the filters (weights and indices)
+	vector3Di 	filterid_;
+	//! indexing schema for the deformation (weights, indices and anchors
+	vector3Di 	defid_;
+	//!indexing schema for the parent (for biasid_, filterid_ and defid_)
+	vector2Di 	parentid_;
 	//! a unique string identifier for the model
 	std::string name_;
 	//! the connectivity of the parts, where each element is a reference to the part's parent
@@ -75,9 +94,18 @@ protected:
 public:
 	Model();
 	virtual ~Model();
-	vector2DMat& filters(void) { return filters_; }
-	vector2Df& bias(void) { return bias_; }
-	std::string name(void) const { return name_; }
+	vectorMat& filters(void) { return filtersw_; }
+	vectori& filtersi(void) { return filtersi_; }
+	vector2Df& def(void) { return defw_; }
+	vectori& defi(void) { return defi_; }
+	vectorf& bias(void) { return biasw_; }
+	vectori& biasi(void) { return biasi_; }
+	vectorPoint& anchors(void) { return anchors_; }
+	vector3Di& filterid(void) { return filterid_; }
+	vector3Di& biasid(void) { return biasid_; }
+	vector3Di& defid(void) { return defid_; }
+	vector2Di& parentid(void) { return parentid_; }
+	std::string name(void) { return name_; }
 	std::vector<int>& conn(void) { return conn_; }
 	int nparts(void) const { return nparts_; }
 	int nmixtures(void) const { return nmixtures_; }

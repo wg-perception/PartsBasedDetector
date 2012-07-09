@@ -43,6 +43,7 @@
 #include "Candidate.hpp"
 #include "MatlabIOModel.hpp"
 #include "Visualize.hpp"
+#include "types.hpp"
 using namespace cv;
 using namespace std;
 
@@ -70,7 +71,7 @@ int main(int argc, char** argv) {
 	int N = 10;
 	for (int n = 0; n < N; ++n) {
 		vector<Mat> pyramid;
-		vector<Mat> responses;
+		vector2DMat responses;
 		hog.pyramid(image, pyramid);
 		hog.pdf(pyramid, filters, responses);
 	}

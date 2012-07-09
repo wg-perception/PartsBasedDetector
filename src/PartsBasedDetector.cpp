@@ -58,16 +58,17 @@ vector<Candidate> PartsBasedDetector::detect(const Mat& im) {
 	// convolve the feature pyramid with the Part experts
 	// to get probability density for each Part
 	vector<Mat> filters;
-	vector<Mat> pdf;
-	root_.toVector(filters);
+	vector2DMat pdf;
 	features_.pdf(pyramid, filters, pdf);
 
 	// use dynamic programming to predict the best detection candidates from the part responses
-	Mat maxv, maxi;
-	dp_.min(root_, pdf, features_.nscales(), maxv, maxi);
+	vector4DMat Ix, Iy, Ik;
+	vector2DMat rootv, rooti;
+	dp_.min(parts_, pdf, Ix, Iy, Ik, rootv, rooti);
 
 	// walk back down the tree to find the part locations
-	vector<Candidate> candidates = dp_.argmin(root_, pdf, features_.nscales(), maxv, maxi);
+	vector<Candidate> candidates;
+	dp_.argmin(parts_, rootv, rooti, features_.scales(), Ix, Iy, Ik, candidates);
 
 	return candidates;
 }
@@ -82,7 +83,8 @@ void PartsBasedDetector::distributeModel(Model& model) {
 	name_ = model.name();
 
 	// initialize the tree of Parts
-	root_ = Part::constructPartHierarchy(model.filters(), model.conn());
+	parts_ = Parts(model.filters(), model.filtersi(), model.def(), model.defi(), model.bias(), model.biasi(),
+			model.anchors(), model.biasid(), model.filterid(), model.defid(), model.parentid());
 
 	// initialize the Feature engine
 	features_ = HOGFeatures<float>(model.binsize(), model.nscales(), model.flen(), model.norient());

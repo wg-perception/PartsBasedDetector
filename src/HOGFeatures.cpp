@@ -59,8 +59,8 @@ HOGFeatures<double> hog_double;
  * This function supports multithreading via OpenMP
  *
  * @param im the input image at native resolution
- * @return the pyramid of features, fine to coarse, each calculated via
- * features()
+ * @param pyrafeatures the pyramid of features, fine to coarse, each
+ * calculated via features()
  */
 template<typename T>
 void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
@@ -125,7 +125,7 @@ void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
  * The function supports multithreading via OpenMP
  *
  * @param im the input image (must be color of type CV_8UC3)
- * @return the HOG features as a 2D matrix
+ * @param the HOG features as a 2D matrix
  */
 template<typename T> template<typename IT>
 void HOGFeatures<T>::features(const Mat& im, Mat& featm) const {
@@ -286,8 +286,8 @@ void HOGFeatures<T>::features(const Mat& im, Mat& featm) const {
  *
  * @param feature the feature matrix
  * @param filter the filter (SVM)
+ * @param pdf the response to return
  * @param stride the SVM weight length
- * @return the response (pdf)
  */
 template<typename T>
 void HOGFeatures<T>::convolve(const Mat& feature, const Mat& filter, Mat& pdf, int stride) {
@@ -331,16 +331,15 @@ void HOGFeatures<T>::convolve(const Mat& feature, const Mat& filter, Mat& pdf, i
  * (pdf) of part location
  * @param features the input features (at different scales, and by extension, size)
  * @param filters the filters representing the parts across mixtures
- * @return a vector of responses (pdfs)
+ * @param responses the vector of responses (pdfs) to return
  */
 template<typename T>
-void HOGFeatures<T>::pdf(const vector<Mat>& features, const vector<Mat>& filters, vector<Mat>& responses) {
+void HOGFeatures<T>::pdf(const vector<Mat>& features, const vector<Mat>& filters, vector2DMat& responses) {
 
 	// preallocate the output
 	int M = features.size();
 	int N = filters.size();
-	responses.clear();
-	responses.resize(M*N);
+	responses.resize(M, vectorMat(N));
 	// iterate
 #ifdef _OPENMP
 	omp_set_num_threads(omp_get_num_procs());
@@ -351,6 +350,6 @@ void HOGFeatures<T>::pdf(const vector<Mat>& features, const vector<Mat>& filters
 		int m = floor(i/N);
 		Mat response;
 		convolve(features[m], filters[n], response, flen_);
-		responses[i] = response;
+		responses[m][n] = response;
 	}
 }
