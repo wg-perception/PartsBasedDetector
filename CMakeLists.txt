@@ -18,7 +18,7 @@ configure_file(${PROJECT_SOURCE_DIR}/doc/Doxyfile.in ${PROJECT_SOURCE_DIR}/doc/D
 add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/doc/Doxyfile)
 
 # add OpenMP support
-find_package(OpenMP)
+#find_package(OpenMP)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   ${OpenMP_C_FLAGS}")
 
@@ -29,7 +29,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 include_directories("include")
 
 # GLOB the source files
-set(SRC_FILES   src/Candidate.cpp src/DepthConsistency.cpp src/DynamicProgram.cpp
+set(SRC_FILES   src/DepthConsistency.cpp src/DynamicProgram.cpp
                 src/HOGFeatures.cpp src/main.cpp src/Model.cpp src/Part.cpp
                 src/PartsBasedDetector.cpp src/StereoCameraModel.cpp
                 src/Visualize.cpp

@@ -65,6 +65,12 @@ HOGFeatures<double> hog_double;
 template<typename T>
 void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
 
+	// calculate the scaling factor
+	Size_<float> imsize = im.size();
+	nscales_  = 1 + floor(log(min(imsize.height, imsize.width)/(5.0f*(float)binsize_))/log(sfactor_));
+	printf("nscales: %d\n", nscales_);
+	printf("binsize: %d\n", binsize_);
+
 	vector<Mat> pyraimages;
 	pyraimages.resize(nscales_);
 	pyrafeatures.clear();
@@ -73,24 +79,20 @@ void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
 	scales_.clear();
 	scales_.resize(nscales_);
 
-	// calculate the scaling factor
-	Size_<float> imsize = im.size();
-	int interval = ceil((float)nscales_ / 3.0);
-	float sc = pow(2.0, 1.0/(float)interval);
-
 	// perform the non-power of two scaling
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for (int i = 0; i < interval; ++i) {
+	for (int i = 0; i < interval_; ++i) {
 		Mat scaled;
-		resize(im, scaled, imsize * (1.0f/pow(sc,i)));
+		resize(im, scaled, imsize * (1.0f/pow(sfactor_,i)));
 		pyraimages[i] = scaled;
 		// perform subsequent power of two scaling
-		for (int j = i+interval; j < nscales_; j+=interval) {
+		for (int j = i+interval_; j < nscales_; j+=interval_) {
 			Mat scaled2;
 			pyrDown(scaled, scaled2);
 			pyraimages[j] = scaled2;
+			scaled2.copyTo(scaled);
 		}
 	}
 
@@ -108,7 +110,8 @@ void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
 			case CV_16U: features<uint16_t>(pyraimages[n], feature); break;
 			default: CV_Error(CV_StsUnsupportedFormat, "Unsupported image type"); break;
 		}
-		copyMakeBorder(feature, padded, 1, 1, flen_, flen_, BORDER_CONSTANT, 1);
+		printf("Image size: %d, %d, %d\n", n, pyraimages[n].rows, pyraimages[n].cols);
+		copyMakeBorder(feature, padded, 3, 3, 3*flen_, 3*flen_, BORDER_CONSTANT, 0);
 		pyrafeatures[n] = padded;
 	}
 }
@@ -301,7 +304,7 @@ void HOGFeatures<T>::convolve(const Mat& feature, const Mat& filter, Mat& pdf, i
 	const int N = feature.cols - filter.cols + stride;
 	const int H = filter.rows;
 	const int W = filter.cols;
-	pdf.create(Size(M, N), feature.type());
+	pdf.create(Size(N, M), feature.type());
 	const T* feat_ptr = feature.ptr<T>(0);
 	const T* filt_ptr = filter.ptr<T>(0);
 	const T* filt_start = filter.ptr<T>(0);

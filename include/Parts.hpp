@@ -249,6 +249,8 @@ public:
 		assert(c < biasid_.size() && c < filterid_.size() && c < parentid_.size());
 		return filterid_[c].size();
 	}
+	//! all filters for all components and parts
+	const vectorMat& filters(void) const { return filtersw_; }
 };
 
 #endif /* PARTS_HPP_ */

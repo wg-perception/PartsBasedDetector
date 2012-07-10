@@ -64,7 +64,7 @@ public:
 	PartsBasedDetector();
 	virtual ~PartsBasedDetector();
 	// public methods
-	std::vector<Candidate> detect(const cv::Mat& im);
+	void detect(const cv::Mat& im, std::vector<Candidate>& candidates);
 	void distributeModel(Model& model);
 };
 

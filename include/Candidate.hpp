@@ -48,9 +48,9 @@ private:
 	std::vector<cv::Rect> parts_;
 	double score_;
 public:
-	Candidate();
+	Candidate() {}
 	Candidate(int nparts, double score) : score_(score) { parts_.resize(nparts); }
-	virtual ~Candidate();
+	virtual ~Candidate() {}
 	std::vector<cv::Rect>& parts(void) { return parts_; }
 	void addPart(cv::Rect r) { parts_.push_back(r); }
 	void addPart(cv::Rect r, int idx) { if (parts_.size() < idx) parts_.resize(idx); parts_[idx] = r; }

@@ -39,6 +39,7 @@
 #ifndef HOGFEATURES_HPP_
 #define HOGFEATURES_HPP_
 #include <vector>
+#include <cstdio>
 #include <opencv2/core/core.hpp>
 #include "IFeatures.hpp"
 #include "types.hpp"
@@ -59,6 +60,10 @@ private:
 	int norient_;
 	//! the scales of the features
 	std::vector<float> scales_;
+	//! the scaling factor between successive levels in the pyramid
+	float sfactor_;
+	//! the interval between half resolution scales
+	int interval_;
 
 	// private methods
 	template<typename IT> void features(const cv::Mat& im, cv::Mat& feature) const;
@@ -66,7 +71,14 @@ private:
 public:
 	HOGFeatures() {}
 	HOGFeatures(int binsize, int nscales, int flen, int norient) :
-		binsize_(binsize), nscales_(nscales), flen_(flen), norient_(norient) { assert(norient_%2 == 0); }
+		binsize_(binsize), nscales_(nscales), flen_(flen), norient_(norient) {
+		// TODO: don't hard code this. Compute more intuitively from scales rather than interval
+		interval_ = nscales_;
+		sfactor_  = pow(2.0f, 1.0f/(float)interval_);
+		printf("HOG scaling: %d, %f\n", interval_, sfactor_);
+		assert(norient_%2 == 0);
+
+	}
 	virtual ~HOGFeatures() {}
 	// get methods
 	virtual int binsize(void) { return binsize_; }

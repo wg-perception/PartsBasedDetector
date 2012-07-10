@@ -55,6 +55,7 @@ int main(int argc, char** argv) {
 	// load an image from file
 	Mat image = imread(argv[2]);
 
+	/*
 	// create some random filters
 	vector<Mat> filters;
 	for (int n = 0; n < 60; ++n) {
@@ -72,6 +73,8 @@ int main(int argc, char** argv) {
 	for (int n = 0; n < N; ++n) {
 		vector<Mat> pyramid;
 		vector2DMat responses;
+		printf("Image size: %d, %d\n", image.rows, image.cols);
+
 		hog.pyramid(image, pyramid);
 		hog.pdf(pyramid, filters, responses);
 	}
@@ -80,6 +83,8 @@ int main(int argc, char** argv) {
 
 
 	return 0;
+	*/
+
 	// create the model object and deserialize it
 	MatlabIOModel model;
 	model.deserialize(argv[1]);
@@ -92,7 +97,8 @@ int main(int argc, char** argv) {
 	Mat im = imread(argv[2]);
 
 	// detect potential candidates in the image
-	vector<Candidate> candidates = pbd.detect(im);
+	vector<Candidate> candidates;
+	pbd.detect(im, candidates);
 
 	// display the best candidates
 	Visualize visualize(model.name());

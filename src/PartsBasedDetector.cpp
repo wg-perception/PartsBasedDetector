@@ -37,6 +37,7 @@
  */
 
 #include "PartsBasedDetector.hpp"
+#include <cstdio>
 using namespace cv;
 using namespace std;
 
@@ -49,17 +50,20 @@ PartsBasedDetector::~PartsBasedDetector() {
 	// TODO Auto-generated destructor stub
 }
 
-vector<Candidate> PartsBasedDetector::detect(const Mat& im) {
+void PartsBasedDetector::detect(const Mat& im, vector<Candidate>& candidates) {
 
 	// calculate a feature pyramid for the new image
 	vector<Mat> pyramid;
 	features_.pyramid(im, pyramid);
+	for (int n = 0; n < pyramid.size(); ++n) printf("pyramid size: %d, %d\n", pyramid[n].rows, pyramid[n].cols/32);
 
 	// convolve the feature pyramid with the Part experts
 	// to get probability density for each Part
 	vector<Mat> filters;
 	vector2DMat pdf;
-	features_.pdf(pyramid, filters, pdf);
+	features_.pdf(pyramid, parts_.filters(), pdf);
+	for (int n = 0; n < pdf.size(); ++n) printf("pdf size: %d, %d\n", pdf[n][0].rows, pdf[n][0].cols/32);
+
 
 	// use dynamic programming to predict the best detection candidates from the part responses
 	vector4DMat Ix, Iy, Ik;
@@ -67,10 +71,8 @@ vector<Candidate> PartsBasedDetector::detect(const Mat& im) {
 	dp_.min(parts_, pdf, Ix, Iy, Ik, rootv, rooti);
 
 	// walk back down the tree to find the part locations
-	vector<Candidate> candidates;
 	dp_.argmin(parts_, rootv, rooti, features_.scales(), Ix, Iy, Ik, candidates);
 
-	return candidates;
 }
 
 /*! @brief Distribute the model parameters to the PartsBasedDetector classes
@@ -82,12 +84,18 @@ void PartsBasedDetector::distributeModel(Model& model) {
 	// the name of the Part detector
 	name_ = model.name();
 
+	// initialize the Feature engine
+	features_ = HOGFeatures<float>(model.binsize(), model.nscales(), model.flen(), model.norient());
+
+	// make sure the filters are of the correct precision for the Feature engine
+	int nfilters = model.filters().size();
+	for (int n = 0; n < nfilters; ++n) {
+		model.filters()[n].convertTo(model.filters()[n], DataType<float>::type);
+	}
+
 	// initialize the tree of Parts
 	parts_ = Parts(model.filters(), model.filtersi(), model.def(), model.defi(), model.bias(), model.biasi(),
 			model.anchors(), model.biasid(), model.filterid(), model.defid(), model.parentid());
-
-	// initialize the Feature engine
-	features_ = HOGFeatures<float>(model.binsize(), model.nscales(), model.flen(), model.norient());
 
 	// initialize the dynamic program
 	dp_ = DynamicProgram(model.thresh());
