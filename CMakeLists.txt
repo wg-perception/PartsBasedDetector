@@ -13,9 +13,9 @@ find_library(MatlabIO_LIBRARIES MatlabIO PATHS /u/hbristow/willow/PartsBasedDete
 
 
 # add Doxygen support
-find_package(Doxygen)
-configure_file(${PROJECT_SOURCE_DIR}/doc/Doxyfile.in ${PROJECT_SOURCE_DIR}/doc/Doxyfile @ONLY)
-add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/doc/Doxyfile)
+#find_package(Doxygen)
+#configure_file(${PROJECT_SOURCE_DIR}/doc/Doxyfile.in ${PROJECT_SOURCE_DIR}/doc/Doxyfile @ONLY)
+#add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/doc/Doxyfile)
 
 # add OpenMP support
 #find_package(OpenMP)
@@ -42,11 +42,11 @@ add_executable(${PROJECT_NAME} ${SRC_FILES})
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${OpenCV_LIBS} ${ZLIB_LIBRARIES} ${MatlabIO_LIBRARIES})
 
 # build the doxygen pdf
-add_custom_command(COMMAND make 
-    OUTPUT ${PROJECT_SOURCE_DIR}/doc/latex
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/doc/latex
-)
+#add_custom_command(COMMAND make 
+#    OUTPUT ${PROJECT_SOURCE_DIR}/doc/latex
+#    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/doc/latex
+#)
 
 # install the targets
 install(FILES ${PROJECT_SOURCE_DIR}/build/${PROJECT_NAME} DESTINATION ${PROJECT_SOURCE_DIR}/bin)
-install(FILES ${PROJECT_SOURCE_DIR}/doc/latex/refman.pdf DESTINATION ${PROJECT_SOURCE_DIR}/doc/latex/MatlabIO.pdf)
+#install(FILES ${PROJECT_SOURCE_DIR}/doc/latex/refman.pdf DESTINATION ${PROJECT_SOURCE_DIR}/doc/latex/MatlabIO.pdf)

@@ -59,10 +59,15 @@ void PartsBasedDetector::detect(const Mat& im, vector<Candidate>& candidates) {
 
 	// convolve the feature pyramid with the Part experts
 	// to get probability density for each Part
-	vector<Mat> filters;
 	vector2DMat pdf;
 	features_.pdf(pyramid, parts_.filters(), pdf);
-	for (int n = 0; n < pdf.size(); ++n) printf("pdf size: %d, %d\n", pdf[n][0].rows, pdf[n][0].cols/32);
+	for (int n = 0; n < pdf.size(); ++n) printf("pdf size: %d, %d\n", pdf[n][0].rows, pdf[n][0].cols);
+	for (int m = 0; m < 10; ++m) {
+		for (int n = 0; n < 10; ++n) {
+			printf("%f ", pdf[0][0].at<float>(m,n*32));
+		}
+		printf("\n");
+	}
 
 
 	// use dynamic programming to predict the best detection candidates from the part responses
@@ -91,6 +96,15 @@ void PartsBasedDetector::distributeModel(Model& model) {
 	int nfilters = model.filters().size();
 	for (int n = 0; n < nfilters; ++n) {
 		model.filters()[n].convertTo(model.filters()[n], DataType<float>::type);
+	}
+
+	// print out one of the filters
+	printf("Filter components: \n");
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			printf("%f ", model.filters()[0].at<float>(i,j+4));
+		}
+		printf("\n");
 	}
 
 	// initialize the tree of Parts
