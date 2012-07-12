@@ -51,6 +51,25 @@ using namespace cv;
 HOGFeatures<float> hog_float;
 HOGFeatures<double> hog_double;
 
+template<typename T>
+void HOGFeatures<T>::boundaryOcclusionFeature(Mat& feature, const int flen, const int padsize) {
+
+	const int M = feature.rows;
+	const int N = feature.cols;
+	const int fmstart = padsize-1;
+	const int fnstart = padsize*flen-1;
+	const int fmstop  = M - padsize;
+	const int fnstop  = N - (padsize)*flen;
+
+	for (int m = 0; m < M; ++m) {
+		for (int n = 0; n < N; n+=flen) {
+			if (m > fmstart && m < fmstop && n > fnstart && n < fnstop) continue;
+			feature.at<T>(m,n+flen-1) = 1;
+		}
+	}
+}
+
+
 /*! @brief Calculate features at multiple scales
  *
  * Features are calculated first at native resolution,
@@ -124,6 +143,7 @@ void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
 		}
 		printf("Image size: %d, %d, %d\n", n, pyraimages[n].rows, pyraimages[n].cols);
 		copyMakeBorder(feature, padded, 3, 3, 3*flen_, 3*flen_, BORDER_CONSTANT, 0);
+		boundaryOcclusionFeature(padded, flen_, 3);
 		pyrafeatures[n] = padded;
 	}
 }
@@ -343,26 +363,24 @@ void HOGFeatures<T>::convolve(const Mat& feature, const Mat& filter, Mat& pdf, i
 	const int H = filter.rows;
 	const int W = filter.cols;
 	pdf.create(Size(N/stride, M), feature.type());
-	T const * const filt_start = filter.ptr<T>(0);
-	T const *         filt_ptr = filter.ptr<T>(0);
-	T const *         feat_ptr = feature.ptr<T>(0);
 
 	for (int m = 0; m < M; ++m) {
 		T* pdf_ptr = pdf.ptr<T>(m);
 		for (int n = 0; n < N; n+=stride) {
 			T accum = 0;
-			filt_ptr = filt_start;
-			feat_ptr = feature.ptr<T>(m) + n;
 			for (int h = 0; h < H; ++h) {
-				while (filt_ptr < filt_start+h*W) {
+				const T* filt_ptr = filter.ptr<T>(h);
+				const T* feat_ptr = feature.ptr<T>(m+h) + n;
+				T const * const filt_end = filt_ptr + W;
+				while (filt_ptr < filt_end) {
 					accum += *(filt_ptr++) * *(feat_ptr++);
 				}
-				feat_ptr = feature.ptr<T>(m+h) + n;
 			}
 			*(pdf_ptr++) = accum;
 		}
 	}
 }
+
 
 /*! @brief Calculate the responses of a set of features to a set of filter experts
  *

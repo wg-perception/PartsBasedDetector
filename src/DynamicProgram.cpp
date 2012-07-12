@@ -36,6 +36,7 @@
  *  Created: Jun 21, 2012
  */
 
+#include <cstdio>
 #include <limits>
 #include "DynamicProgram.hpp"
 using namespace cv;
@@ -113,6 +114,7 @@ void reducePickIndex(const vector<Mat>& in, const Mat& idx, Mat& out) {
  */
 void reduceMax(const vector<Mat>& in, Mat& maxv, Mat& maxi) {
 
+	// TODO: flatten the input into a multi-channel matrix for faster indexing
 	// error checking
 	int K = in.size();
 	assert(K > 1);
@@ -134,7 +136,7 @@ void reduceMax(const vector<Mat>& in, Mat& maxv, Mat& maxi) {
 		for (int n = 0; n < N; ++n) {
 			float v = -numeric_limits<float>::infinity();
 			int i = 0;
-			for (int k = 0; k < K; ++k) if (in_ptr[k][n] > v) { i = n; v = in_ptr[k][n]; }
+			for (int k = 0; k < K; ++k) if (in_ptr[k][n] > v) { i = k; v = in_ptr[k][n]; }
 			maxi_ptr[n] = i;
 			maxv_ptr[n] = v;
 		}
@@ -171,9 +173,9 @@ void DynamicProgram::distanceTransform1D(const float* src, float* dst, int* ptr,
 	float* z = new float[n+1];
 	int k = 0;
 	v[0] = 0;
-	z[0] = +numeric_limits<float>::infinity();
-	z[1] = -numeric_limits<float>::infinity();
-	for (int q = 1; q < n; ++q) {
+	z[0] = -numeric_limits<float>::infinity();
+	z[1] = +numeric_limits<float>::infinity();
+	for (int q = 1; q <= n-1; ++q) {
 	    float s = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
 	    while (s <= z[k]) {
 			// Update pointer
@@ -187,7 +189,7 @@ void DynamicProgram::distanceTransform1D(const float* src, float* dst, int* ptr,
 	}
 
 	k = 0;
-	for (int q = 0; q < n; ++q) {
+	for (int q = 0; q <= n-1; ++q) {
 		while (z[k+1] < q) k++;
 		dst[q] = a*square(q-v[k]) + b*(q-v[k]) + src[v[k]];
 		ptr[q] = v[k];
@@ -245,7 +247,6 @@ void DynamicProgram::distanceTransform(const Mat& score_in, const vector<float> 
 	// compute the distance transform down the columns
 	for (int n = 0; n < N; ++n) {
 		distanceTransform1D(score_tmp.ptr<float>(n), score_out.ptr<float>(n), Iy.ptr<int>(n), M, -ay, -by);
-
 	}
 
 	// transpose back to the original layout
@@ -253,6 +254,7 @@ void DynamicProgram::distanceTransform(const Mat& score_in, const vector<float> 
 	transpose(Iy, Iy);
 
 	// get argmins
+	// FIXME: this miiiight be wrong! Check this against the original code if there are bugs in the dynamic program
 	float* row_ptr = row.ptr<float>(0);
 	for (int m = 0; m < M; ++m) {
 		int* Iy_ptr = Iy.ptr<int>(m);
@@ -418,20 +420,28 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
 					// calculate a valid region of interest for the scores
 					int X = score_in.cols;
 					int Y = score_in.rows;
-					int xmin = std::max(anchor.x,   0);
-					int ymin = std::max(anchor.y,   0);
-					int xmax = std::min(anchor.x+X, X);
-					int ymax = std::min(anchor.y+Y, X);
-					int xoff = std::max(-anchor.x,  0);
-					int yoff = std::max(-anchor.y,  0);
+					int xmin = std::max(anchor.x,     0);
+					int ymin = std::max(anchor.y,     0);
+					int xmax = std::min(anchor.x+X-1, X);
+					int ymax = std::min(anchor.y+Y-1, Y);
+					int xoff = std::max(-anchor.x,    0);
+					int yoff = std::max(-anchor.y,    0);
 
+					printf("score_dt: %f\n", score_dt.at<float>(ymin, xmin));
 					// shift the score by the Part's offset from its parent
 					Mat score = -numeric_limits<float>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
 					Mat Ixm   = Mat::zeros(Ix_dt.size(), Ix_dt.type());
 					Mat Iym   = Mat::zeros(Iy_dt.size(), Iy_dt.type());
-					score(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = score_dt(Range(xmin, xmax), Range(ymin, ymax));
-					Ixm(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = Ix_dt(Range(xmin, xmax), Range(ymin, ymax));
-					Iym(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = Iy_dt(Range(xmin, xmax), Range(ymin, ymax));
+					Mat score_dt_range 	= score_dt(Range(ymin, ymax),        Range(xmin, xmax));
+					Mat score_range    	= score(Range(yoff, yoff+ymax-ymin), Range(xoff, xoff+xmax-xmin));
+					Mat Ix_dt_range 	= Ix_dt(Range(ymin, ymax),           Range(xmin, xmax));
+					Mat Ixm_range 		= Ixm(Range(yoff, yoff+ymax-ymin),   Range(xoff, xoff+xmax-xmin));
+					Mat Iy_dt_range 	= Iy_dt(Range(ymin, ymax),           Range(xmin, xmax));
+					Mat Iym_range 		= Iym(Range(yoff, yoff+ymax-ymin),   Range(xoff, xoff+xmax-xmin));
+					score_dt_range.copyTo(score_range);
+					Ix_dt_range.copyTo(Ixm_range);
+					Iy_dt_range.copyTo(Iym_range);
+					printf("score   : %f\n", score.at<float>(yoff, xoff));
 
 					// push the scores onto the intermediate vectors
 					scoresp.push_back(score);
@@ -445,7 +455,7 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
 					for (int mm = 0; mm < cpart.nmixtures(); ++mm) {
 						weighted.push_back(scoresp[mm] + cpart.bias(m));
 					}
-
+					printf("score_dt: %f\n", scoresp[0].at<float>(10,10));
 					// compute the max over the mixtures
 					Mat maxv, maxi;
 					reduceMax(weighted, maxv, maxi);

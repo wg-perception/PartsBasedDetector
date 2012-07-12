@@ -64,7 +64,7 @@ void PartsBasedDetector::detect(const Mat& im, vector<Candidate>& candidates) {
 	for (int n = 0; n < pdf.size(); ++n) printf("pdf size: %d, %d\n", pdf[n][0].rows, pdf[n][0].cols);
 	for (int m = 0; m < 10; ++m) {
 		for (int n = 0; n < 10; ++n) {
-			printf("%f ", pdf[0][0].at<float>(m,n*32));
+			printf("%f ", pdf[0][0].at<float>(m,n));
 		}
 		printf("\n");
 	}

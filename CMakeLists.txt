@@ -2,6 +2,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(PartsBasedDetector)
 set(PROJECT_ROOT ${PROJECT_SOURCE_DIR})
+set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type") 
 
 # find the dependencies
 find_package(Boost REQUIRED)

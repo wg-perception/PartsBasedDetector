@@ -66,6 +66,7 @@ private:
 	int interval_;
 
 	// private methods
+	void boundaryOcclusionFeature(cv::Mat& feature, const int flen, const int padsize);
 	template<typename IT> void features(const cv::Mat& im, cv::Mat& feature) const;
 	void convolve(const cv::Mat& feature, const cv::Mat& filter, cv::Mat& pdf, int stride);
 public:

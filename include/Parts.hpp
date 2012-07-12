@@ -106,7 +106,7 @@ public:
 	 * @return the number of mixtures. Note that not all components
 	 * and parts will have the same number of mixtures
 	 */
-	int nmixtures(void) const { return filterid_[self_].size(); }
+	int nmixtures(void) const { return (*filterid_)[self_].size(); }
 	/*! @brief the current flattened tree index
 	 *
 	 * @return the current flattened tree index. self() == 0 is the root part
