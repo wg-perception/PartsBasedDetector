@@ -51,6 +51,7 @@ public:
 	virtual int binsize(void) = 0;
 	virtual int nscales(void) = 0;
 	// public methods
+	virtual vectorf scales(void) const = 0;
 	virtual void pyramid(const cv::Mat& im, std::vector<cv::Mat>& pyrafeatures) = 0;
 	virtual void pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters, vector2DMat& responses) = 0;
 };

@@ -100,18 +100,18 @@ public:
 	 *
 	 * @return the number of parts
 	 */
-	int nparts(void) const { return filterid_->size(); }
+	const int nparts(void) const { return filterid_->size(); }
 	/*! @brief get the number of mixtures for the current part
 	 *
 	 * @return the number of mixtures. Note that not all components
 	 * and parts will have the same number of mixtures
 	 */
-	int nmixtures(void) const { return (*filterid_)[self_].size(); }
+	const int nmixtures(void) const { return (*filterid_)[self_].size(); }
 	/*! @brief the current flattened tree index
 	 *
 	 * @return the current flattened tree index. self() == 0 is the root part
 	 */
-	int self(void) const { return self_; }
+	const int self(void) const { return self_; }
 	// perform translation of indices internally
 	/*! @brief return the filter for a part
 	 *
@@ -165,7 +165,10 @@ public:
 	//! the part's filter index
 	int filteri(int mixture = 0) const { return (*filtersi_)[(*filterid_)[self_][mixture]]; }
 	//! the part's bias
-	float bias(int mixture = 0) const { return (*biasw_)[(*biasid_)[self_][mixture]]; }
+	vectorf bias(int mixture = 0) const {
+		const int offset = (*biasid_)[self_][mixture];
+		return vectorf(&((*biasw_)[offset]), &((*biasw_)[offset+nmixtures()]));
+	}
 	//! the part's bias index
 	int biasi(int mixture = 0) const { return (*biasi_)[(*biasid_)[self_][mixture]]; }
 	//! the part's deformation weights
@@ -175,11 +178,11 @@ public:
 	//! the part's anchor (relative to its parent part)
 	cv::Point anchor(int mixture = 0) const { return (*anchors_)[(*defid_)[self_][mixture]]; }
 	//! the x size (width) of the part
-	int xsize(int mixture = 0) const { return (*filtersw_)[(*filterid_)[self_][mixture]].rows; }
+	const int xsize(int mixture = 0) const { return (*filtersw_)[(*filterid_)[self_][mixture]].rows; }
 	//! the y size (height) of the part
-	int ysize(int mixture = 0) const { return (*filtersw_)[(*filterid_)[self_][mixture]].rows; }
+	const int ysize(int mixture = 0) const { return (*filtersw_)[(*filterid_)[self_][mixture]].rows; }
 	//! is the current part the root
-	bool isRoot(void) const { return self_ == 0; }
+	const bool isRoot(void) const { return self_ == 0; }
 };
 
 /*! @class Parts
@@ -239,13 +242,13 @@ public:
 		return ComponentPart(filtersw_, filtersi_, biasw_, biasi_, anchors_, defw_, defi_, defid_[c], biasid_[c], filterid_[c], parentid_[c], p);
 	}
 	//! the number of components in the model
-	int ncomponents(void) const { return filterid_.size(); }
+	const int ncomponents(void) const { return filterid_.size(); }
 	/*! @brief the number of parts within a component
 	 *
 	 * @param c the component of interest
 	 * @return the number of parts
 	 */
-	int nparts(int c) const {
+	const int nparts(int c) const {
 		assert(c < biasid_.size() && c < filterid_.size() && c < parentid_.size());
 		return filterid_[c].size();
 	}

@@ -41,34 +41,21 @@
 using namespace cv;
 using namespace std;
 
-PartsBasedDetector::PartsBasedDetector() {
-	// TODO Auto-generated constructor stub
 
+void PartsBasedDetector::detect(const cv::Mat& im, std::vector<Candidate>& candidates) {
+	detect(im, Mat(), candidates);
 }
 
-PartsBasedDetector::~PartsBasedDetector() {
-	// TODO Auto-generated destructor stub
-}
-
-void PartsBasedDetector::detect(const Mat& im, vector<Candidate>& candidates) {
+void PartsBasedDetector::detect(const Mat& im, const Mat& depth, vector<Candidate>& candidates) {
 
 	// calculate a feature pyramid for the new image
 	vector<Mat> pyramid;
-	features_.pyramid(im, pyramid);
-	for (int n = 0; n < pyramid.size(); ++n) printf("pyramid size: %d, %d\n", pyramid[n].rows, pyramid[n].cols/32);
+	features_->pyramid(im, pyramid);
 
 	// convolve the feature pyramid with the Part experts
 	// to get probability density for each Part
 	vector2DMat pdf;
-	features_.pdf(pyramid, parts_.filters(), pdf);
-	for (int n = 0; n < pdf.size(); ++n) printf("pdf size: %d, %d\n", pdf[n][0].rows, pdf[n][0].cols);
-	for (int m = 0; m < 10; ++m) {
-		for (int n = 0; n < 10; ++n) {
-			printf("%f ", pdf[0][0].at<float>(m,n));
-		}
-		printf("\n");
-	}
-
+	features_->pdf(pyramid, parts_.filters(), pdf);
 
 	// use dynamic programming to predict the best detection candidates from the part responses
 	vector4DMat Ix, Iy, Ik;
@@ -76,7 +63,7 @@ void PartsBasedDetector::detect(const Mat& im, vector<Candidate>& candidates) {
 	dp_.min(parts_, pdf, Ix, Iy, Ik, rootv, rooti);
 
 	// walk back down the tree to find the part locations
-	dp_.argmin(parts_, rootv, rooti, features_.scales(), Ix, Iy, Ik, candidates);
+	dp_.argmin(parts_, rootv, rooti, features_->scales(), Ix, Iy, Ik, candidates);
 
 }
 
@@ -90,21 +77,12 @@ void PartsBasedDetector::distributeModel(Model& model) {
 	name_ = model.name();
 
 	// initialize the Feature engine
-	features_ = HOGFeatures<float>(model.binsize(), model.nscales(), model.flen(), model.norient());
+	features_.reset(new HOGFeatures<float>(model.binsize(), model.nscales(), model.flen(), model.norient()));
 
 	// make sure the filters are of the correct precision for the Feature engine
 	int nfilters = model.filters().size();
 	for (int n = 0; n < nfilters; ++n) {
 		model.filters()[n].convertTo(model.filters()[n], DataType<float>::type);
-	}
-
-	// print out one of the filters
-	printf("Filter components: \n");
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			printf("%f ", model.filters()[0].at<float>(i,j+4));
-		}
-		printf("\n");
 	}
 
 	// initialize the tree of Parts

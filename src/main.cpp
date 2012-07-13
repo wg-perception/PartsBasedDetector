@@ -50,40 +50,7 @@ using namespace std;
 int main(int argc, char** argv) {
 
 	// check arguments
-	if (argc != 3) printf("Usage: PartsBasedDetector image_filename model_filename\n");
-
-	// load an image from file
-	Mat image = imread(argv[2]);
-
-	/*
-	// create some random filters
-	vector<Mat> filters;
-	for (int n = 0; n < 60; ++n) {
-		Mat filter(Size(5*32, 5), CV_64FC1);
-		randn(filter, 0, 0.1);
-		filters.push_back(filter);
-	}
-
-	// create the HOG features
-	HOGFeatures<double> hog(8, 5, 32, 18);
-
-	// create a pyramid of features
-	double t = (double)getTickCount();
-	int N = 10;
-	for (int n = 0; n < N; ++n) {
-		vector<Mat> pyramid;
-		vector2DMat responses;
-		printf("Image size: %d, %d\n", image.rows, image.cols);
-
-		hog.pyramid(image, pyramid);
-		hog.pdf(pyramid, filters, responses);
-	}
-	printf("Total pyramid time: %f\n", ((double)getTickCount() - t)/getTickFrequency()/N);
-
-
-
-	return 0;
-	*/
+	if (argc != 3) printf("Usage: PartsBasedDetector model_file image_file\n");
 
 	// create the model object and deserialize it
 	MatlabIOModel model;
@@ -97,14 +64,16 @@ int main(int argc, char** argv) {
 	Mat im = imread(argv[2]);
 
 	// detect potential candidates in the image
+	double t = (double)getTickCount();
 	vector<Candidate> candidates;
 	pbd.detect(im, candidates);
+	printf("Detection time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	// display the best candidates
 	Visualize visualize(model.name());
 	if (candidates.size() > 0) {
 		Candidate::sort(candidates);
-		visualize.candidates(im, candidates);
+		visualize.candidates(im, candidates, 5, true);
 		waitKey();
 	}
 

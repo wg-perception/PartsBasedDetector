@@ -41,6 +41,7 @@
 #include <string>
 #include <vector>
 #include <opencv2/core/core.hpp>
+#include <boost/scoped_ptr.hpp>
 #include "Part.hpp"
 #include "Parts.hpp"
 #include "Model.hpp"
@@ -55,16 +56,17 @@ private:
 	//! the name of the Part detector
 	std::string name_;
 	//! produces features, feature pyramids and compares features with Parts
-	HOGFeatures<float> features_;
+	boost::scoped_ptr<IFeatures> features_;
 	//! dynamic program to predict part positions and candidate likelihoods from raw scores
 	DynamicProgram dp_;
 	//! the tree of Parts
 	Parts parts_;
 public:
-	PartsBasedDetector();
-	virtual ~PartsBasedDetector();
+	PartsBasedDetector() {}
+	virtual ~PartsBasedDetector() {}
 	// public methods
 	void detect(const cv::Mat& im, std::vector<Candidate>& candidates);
+	void detect(const cv::Mat& im, const cv::Mat& depth, std::vector<Candidate>& candidates);
 	void distributeModel(Model& model);
 };
 

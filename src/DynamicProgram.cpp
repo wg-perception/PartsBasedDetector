@@ -37,6 +37,7 @@
  */
 
 #include <cstdio>
+#include <iostream>
 #include <limits>
 #include "DynamicProgram.hpp"
 using namespace cv;
@@ -51,12 +52,12 @@ DynamicProgram::~DynamicProgram() {
 	// TODO Auto-generated destructor stub
 }
 
-void find(const Mat& binary, vector<Point> idx) {
+void find(const Mat& binary, vector<Point>& idx) {
 
 	int M = binary.rows;
 	int N = binary.cols;
 	for (int m = 0; m < M; ++m) {
-		const char* bin_ptr = binary.ptr<char>(m);
+		const unsigned char* bin_ptr = binary.ptr<unsigned char>(m);
 		for (int n = 0; n < N; ++n) if (bin_ptr[n] > 0) idx.push_back(Point(n,m));
 	}
 }
@@ -385,22 +386,22 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
 	#pragma omp parallel for
 	#endif
 	for (int n = 0; n < nscales; ++n) {
-		vector3DMat Ixn; Ixn.resize(parts.ncomponents());
-		vector3DMat Iyn; Iyn.resize(parts.ncomponents());
-		vector3DMat Ikn; Ikn.resize(parts.ncomponents());
+		Ix[n].resize(parts.ncomponents());
+		Iy[n].resize(parts.ncomponents());
+		Ik[n].resize(parts.ncomponents());
 
 		for (int c = 0; c < parts.ncomponents(); ++c) {
-			vector2DMat Ixnc; Ixnc.resize(parts.nparts(c));
-			vector2DMat Iync; Iync.resize(parts.nparts(c));
-			vector2DMat Iknc; Iknc.resize(parts.nparts(c));
+			Ix[n][c].resize(parts.nparts(c));
+			Iy[n][c].resize(parts.nparts(c));
+			Ik[n][c].resize(parts.nparts(c));
 
 			for (int p = parts.nparts(c)-1; p > 0; --p) {
 
 				// get the component part (which may have multiple mixtures associated with it)
 				ComponentPart cpart = parts.component(c, p);
-				Ixnc[p].resize(cpart.nmixtures());
-				Iync[p].resize(cpart.nmixtures());
-				Iknc[p].resize(cpart.nmixtures());
+				Ix[n][c][p].resize(cpart.nmixtures());
+				Iy[n][c][p].resize(cpart.nmixtures());
+				Ik[n][c][p].resize(cpart.nmixtures());
 
 				// intermediate results for mixtures of this part
 				vector<Mat> scoresp;
@@ -411,6 +412,7 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
 					// raw score outputs
 					Mat score_dt, Ix_dt, Iy_dt;
 					Mat score_in = cpart.score(scores[n], m);
+
 					// compute the distance transform
 					distanceTransform(score_in, cpart.defw(m), score_dt, Ix_dt, Iy_dt);
 
@@ -420,14 +422,13 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
 					// calculate a valid region of interest for the scores
 					int X = score_in.cols;
 					int Y = score_in.rows;
-					int xmin = std::max(anchor.x,     0);
-					int ymin = std::max(anchor.y,     0);
-					int xmax = std::min(anchor.x+X-1, X);
-					int ymax = std::min(anchor.y+Y-1, Y);
+					int xmin = std::max(std::min(anchor.x, X), 0);
+					int ymin = std::max(std::min(anchor.y, Y), 0);
+					int xmax = std::min(std::max(anchor.x+X, 0), X);
+					int ymax = std::min(std::max(anchor.y+Y, 0), Y);
 					int xoff = std::max(-anchor.x,    0);
 					int yoff = std::max(-anchor.y,    0);
 
-					printf("score_dt: %f\n", score_dt.at<float>(ymin, xmin));
 					// shift the score by the Part's offset from its parent
 					Mat score = -numeric_limits<float>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
 					Mat Ixm   = Mat::zeros(Ix_dt.size(), Ix_dt.type());
@@ -441,7 +442,6 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
 					score_dt_range.copyTo(score_range);
 					Ix_dt_range.copyTo(Ixm_range);
 					Iy_dt_range.copyTo(Iym_range);
-					printf("score   : %f\n", score.at<float>(yoff, xoff));
 
 					// push the scores onto the intermediate vectors
 					scoresp.push_back(score);
@@ -452,38 +452,37 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
 				for (int m = 0; m < cpart.nmixtures(); ++m) {
 					vector<Mat> weighted;
 					// weight each of the child scores
+					// TODO: More elegant way of handling bias
 					for (int mm = 0; mm < cpart.nmixtures(); ++mm) {
-						weighted.push_back(scoresp[mm] + cpart.bias(m));
+						weighted.push_back(scoresp[mm] + cpart.bias(mm)[m]);
 					}
-					printf("score_dt: %f\n", scoresp[0].at<float>(10,10));
 					// compute the max over the mixtures
 					Mat maxv, maxi;
 					reduceMax(weighted, maxv, maxi);
+
 
 					// choose the best indices
 					Mat Ixm, Iym;
 					reducePickIndex(Ixp, maxi, Ixm);
 					reducePickIndex(Iyp, maxi, Iym);
-					Ixnc[p][m] = Ixm;
-					Iync[p][m] = Iym;
-					Iknc[p][m] = maxi;
+					Ix[n][c][p][m] = Ixm;
+					Iy[n][c][p][m] = Iym;
+					Ik[n][c][p][m] = maxi;
 
 					// update the parent's score
-					if (!cpart.isRoot()) cpart.parent().score(scores[n],m) = maxv;
+					cpart.parent().score(scores[n],m) = maxv;
 				}
 			}
 			// add bias to the root score and find the best mixture
 			ComponentPart root = parts.component(c);
-			float bias = root.bias(0);
+			float bias = root.bias(0)[0];
 			vector<Mat> weighted;
 			// weight each of the child scores
 			for (int m = 0; m < root.nmixtures(); ++m) {
 				weighted.push_back(root.score(scores[n],m) + bias);
 			}
 			reduceMax(weighted, rootv[n][c], rooti[n][c]);
-			Ixn[c] = Ixnc; Iyn[c] = Iync; Ikn[c] = Iknc;
 		}
-		Ix[n] = Ixn; Iy[n] = Iyn; Ik[n] = Ikn;
 	}
 }
 
@@ -493,7 +492,7 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
  * Get the minimum argument of a dynamic program by traversing down the tree of
  * a dynamic program, returning the locations of the best nodes
  */
-void DynamicProgram::argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat Ik, vector<Candidate>& candidates) {
+void DynamicProgram::argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, vector<Candidate>& candidates) {
 
 	// for each scale, and each component, traverse back down the tree to retrieve the part positions
 	int nscales = scales.size();
@@ -501,7 +500,7 @@ void DynamicProgram::argmin(Parts& parts, const vector2DMat& rootv, const vector
 	#pragma omp parallel for
 	#endif
 	for (int n = 0; n < nscales; ++n) {
-		float scale = scales[n];
+		float scale = 1.0f/scales[n];
 		for (int c = 0; c < parts.ncomponents(); ++c) {
 
 			// get the scores and indices for this tree of parts
@@ -534,17 +533,19 @@ void DynamicProgram::argmin(Parts& parts, const vector2DMat& rootv, const vector
 						x = xv[idx];
 						y = yv[idx];
 						m = mv[idx];
-						xv[p] = Ixnc[p][m].at<int>(x,y);
-						yv[p] = Iync[p][m].at<int>(x,y);
-						mv[p] = Iknc[p][m].at<int>(x,y);
+						xv[p] = Ixnc[p][m].at<int>(y,x);
+						yv[p] = Iync[p][m].at<int>(y,x);
+						mv[p] = Iknc[p][m].at<int>(y,x);
 					}
 
 					// calculate the bounding rectangle and add it to the Candidate
+					// FIXME: Scaling by 8 is a total hack! Will NOT work for human bodies
 					Point ptwo = Point(2,2);
 					Point pone = Point(1,1);
-					Point xy1 = (Point(x,y)-ptwo)*scale + pone;
-					Point xy2 = xy1 + Point(part.xsize(m), part.ysize(m))*scale - pone;
-					candidate.addPart(Rect(xy1, xy2));
+					Point xy1 = (Point(x,y)-ptwo)*scale*8 + pone;
+					Point xy2 = xy1 + Point(part.xsize(m), part.ysize(m))*scale*8 - pone;
+					if (part.isRoot()) candidate.addPart(Rect(xy1, xy2), rootv[n][c].at<float>(inds[i]));
+					else candidate.addPart(Rect(xy1, xy2), 0.0);
 				}
 				#ifdef _OPENMP
 				#pragma omp critical(addcandidate)

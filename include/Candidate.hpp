@@ -39,30 +39,31 @@
 #ifndef CANDIDATE_HPP_
 #define CANDIDATE_HPP_
 #include <algorithm>
+#include <limits>
 #include <opencv2/core/core.hpp>
+#include "types.hpp"
 /*
  *
  */
 class Candidate {
 private:
 	std::vector<cv::Rect> parts_;
-	double score_;
+	vectorf confidence_;
 public:
 	Candidate() {}
-	Candidate(int nparts, double score) : score_(score) { parts_.resize(nparts); }
 	virtual ~Candidate() {}
-	std::vector<cv::Rect>& parts(void) { return parts_; }
-	void addPart(cv::Rect r) { parts_.push_back(r); }
-	void addPart(cv::Rect r, int idx) { if (parts_.size() < idx) parts_.resize(idx); parts_[idx] = r; }
-	const double score(void) const { return score_; }
-	static bool compare(Candidate c1, Candidate c2) { return c1.score() < c2.score(); }
+	const std::vector<cv::Rect>& parts(void) const { return parts_; }
+	const vectorf& confidence(void) const { return confidence_; }
+	void addPart(cv::Rect r, float confidence) { parts_.push_back(r); confidence_.push_back(confidence); }
+	const float score(void) const { return (confidence_.size() > 0) ? confidence_[0] : -std::numeric_limits<double>::infinity(); }
+	static bool descending(Candidate c1, Candidate c2) { return c1.score() > c2.score(); }
 
 	/*! @brief Sort the candidates from best to worst, in place
 	 *
 	 * @param candidates the vector of candidates to sort
 	 */
 	static void sort(std::vector<Candidate>& candidates) {
-		std::sort(candidates.begin(), candidates.end(), compare);
+		std::sort(candidates.begin(), candidates.end(), descending);
 	}
 };
 

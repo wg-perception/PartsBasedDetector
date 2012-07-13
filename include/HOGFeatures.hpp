@@ -76,7 +76,6 @@ public:
 		// TODO: don't hard code this. Compute more intuitively from scales rather than interval
 		interval_ = nscales_;
 		sfactor_  = pow(2.0f, 1.0f/(float)interval_);
-		printf("HOG scaling: %d, %f\n", interval_, sfactor_);
 		assert(norient_%2 == 0);
 
 	}

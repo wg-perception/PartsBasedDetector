@@ -59,8 +59,9 @@ public:
 	Visualize(std::string name) : name_(name) {}
 	virtual ~Visualize() {}
 	// public methods
-	void candidates(const cv::Mat& im, std::vector<Candidate>);
-	void candidates(const cv::Mat& im, std::vector<Candidate>, int n);
+	void candidates(const cv::Mat& im, const std::vector<Candidate>& candidates, bool display_confidence = false);
+	void candidates(const cv::Mat& im, const std::vector<Candidate>& candidates, int N, bool display_confidence = false);
+	void candidates(const cv::Mat& im, const Candidate& candidate, bool display_confidence = true);
 };
 
 #endif /* VISUALIZE_HPP_ */

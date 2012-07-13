@@ -52,6 +52,9 @@ HOGFeatures<float> hog_float;
 HOGFeatures<double> hog_double;
 
 template<typename T>
+static inline T square(T x) { return x * x; }
+
+template<typename T>
 void HOGFeatures<T>::boundaryOcclusionFeature(Mat& feature, const int flen, const int padsize) {
 
 	const int M = feature.rows;
@@ -85,12 +88,9 @@ void HOGFeatures<T>::boundaryOcclusionFeature(Mat& feature, const int flen, cons
 template<typename T>
 void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
 
-	Mat thisnag;
 	// calculate the scaling factor
 	Size_<float> imsize = im.size();
 	nscales_  = 1 + floor(log(min(imsize.height, imsize.width)/(5.0f*(float)binsize_))/log(sfactor_));
-	printf("nscales: %d\n", nscales_);
-	printf("binsize: %d\n", binsize_);
 
 	vector<Mat> pyraimages;
 	pyraimages.resize(nscales_);
@@ -108,11 +108,13 @@ void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
 		Mat scaled;
 		resize(im, scaled, imsize * (1.0f/pow(sfactor_,i)));
 		pyraimages[i] = scaled;
+		scales_[i] = (1.0f/pow(sfactor_,i));
 		// perform subsequent power of two scaling
 		for (int j = i+interval_; j < nscales_; j+=interval_) {
 			Mat scaled2;
 			pyrDown(scaled, scaled2);
 			pyraimages[j] = scaled2;
+			scales_[j] = 0.5 * scales_[j-interval_];
 			scaled2.copyTo(scaled);
 		}
 	}
@@ -131,17 +133,6 @@ void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
 			case CV_16U: features<uint16_t>(pyraimages[n], feature); break;
 			default: CV_Error(CV_StsUnsupportedFormat, "Unsupported image type"); break;
 		}
-
-		if (n < 2) {
-			printf("Feature components: \n");
-			for (int i = 0; i < 10; ++i) {
-				for (int j = 0; j < 10; ++j) {
-					printf("%f ", feature.at<T>(i,j*32+1));
-				}
-				printf("\n");
-			}
-		}
-		printf("Image size: %d, %d, %d\n", n, pyraimages[n].rows, pyraimages[n].cols);
 		copyMakeBorder(feature, padded, 3, 3, 3*flen_, 3*flen_, BORDER_CONSTANT, 0);
 		boundaryOcclusionFeature(padded, flen_, 3);
 		pyrafeatures[n] = padded;
@@ -191,7 +182,7 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 	const T vv[9] = {0.000, 0.3420, 0.6428, 0.8660, 0.9848,  0.9848,  0.8660,  0.6428,  0.3420};
 
 	// calculate the zero offset
-	const IT* im = imm.ptr<IT>(0);
+	const IT* im  = imm.ptr<IT>(0);
 	T* const hist = histm.ptr<T>(0);
 	T* const norm = normm.ptr<T>(0);
 	T* const feat = featm.ptr<T>(0);
@@ -216,9 +207,9 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 				const IT* s = im + 3 * min(x, imm.cols-2) + min(y, imm.rows-2)*imstride;
 
 				// blue image channel
-				dy = *(s+imstride) - *(s-imstride);
-				dx = *(s+3) - *(s-3);
-				 v = dx*dx + dy*dy;
+				T dyb = *(s+imstride) - *(s-imstride);
+				T dxb = *(s+3) - *(s-3);
+				T  vb = dxb*dxb + dyb*dyb;
 
 				// green image channel
 				s += 1;
@@ -228,13 +219,13 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 
 				// third image channel
 				s += 1;
-				T dyr = *(s+imstride) - *(s-imstride);
-				T dxr = *(s+3) - *(s-3);
-				T  vr = dxr*dxr + dyr*dyr;
+				dy = *(s+imstride) - *(s-imstride);
+				dx = *(s+3) - *(s-3);
+				 v = dx*dx + dy*dy;
 
 				// pick the channel with the strongest gradient
 				if (vg > v) { v = vg; dx = dxg; dy = dyg; }
-				if (vr > v) { v = vr; dx = dxr; dy = dyr; }
+				if (vb > v) { v = vb; dx = dxb; dy = dyb; }
 			}
 
 			// snap to one of 18 orientations
@@ -243,7 +234,7 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 			for (int o = 0; o < norient_/2; ++o) {
 				T dot = uu[o]*dx + vv[o]*dy;
 				if (dot > best_dot) { best_dot = dot; best_o = o; }
-				else if (-dot > best_dot) { best_dot = -dot; best_o = o+9; }
+				else if (-dot > best_dot) { best_dot = -dot; best_o = o+norient_/2; }
 			}
 
 			// add to 4 histograms around pixel using linear interpolation
@@ -270,7 +261,11 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 		T* dst = norm + y*normstride;
 		T const * const dst_end = dst + blocks.width;
 		while (dst < dst_end) {
-			for (int o = 0; o < norient_/2; ++o) { *dst += pow( *src + *(src+norient_/2), 2); src++; }
+			*dst = 0;
+			for (int o = 0; o < norient_/2; ++o) {
+				*dst += square( *src + *(src+norient_/2) );
+				src++;
+			}
 			dst++;
 			src += norient_/2;
 		}

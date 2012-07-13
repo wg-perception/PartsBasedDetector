@@ -36,7 +36,10 @@
  *  Created: Jun 21, 2012
  */
 
+#include <cstdio>
+#include <iostream>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Visualize.hpp"
 using namespace cv;
 using namespace std;
@@ -47,7 +50,7 @@ using namespace std;
  * @param candidates a vector of type Candidate, representing potential
  * part locations
  */
-void Visualize::candidates(const cv::Mat& im, std::vector<Candidate> candidates) {
+void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, int N, bool display_confidence) {
 
 	// create a new canvas that we can modify
 	Mat canvas;
@@ -57,21 +60,40 @@ void Visualize::candidates(const cv::Mat& im, std::vector<Candidate> candidates)
 	int ncolors = candidates[0].parts().size();
 	vector<Scalar> colors;
 	for (int n = 0; n < ncolors; ++n) {
-		Mat_<int> color = 0.5*Mat::ones(Size(1,1), CV_32FC3);
+		Mat color(Size(1,1), CV_32FC3);
 		// Hue is in radians
-		color(0,0,0) = (2 * CV_PI) / ncolors * n;
+		color.at<float>(0) = (360) / ncolors * n;
+		color.at<float>(1) = 1.0;
+		color.at<float>(2) = 0.7;
 		cvtColor(color, color, CV_HSV2BGR);
-		colors.push_back(Scalar(color(0,0,0), color(0,0,1), color(0,0,2)));
+		color = color * 255;
+		colors.push_back(Scalar(color.at<float>(0), color.at<float>(1), color.at<float>(2)));
 	}
 
 	// draw each candidate to the canvas
-	const int LINE_THICKNESS = 5;
-	for (int n = 0; n < candidates.size(); ++n) {
+	const int LINE_THICKNESS = 3;
+	Scalar black(0,0,0);
+	N = (candidates.size() < N) ? candidates.size() : N;
+	for (int n = 0; n < N; ++n) {
 		Candidate candidate = candidates[n];
 		for (int p = 0; p < candidate.parts().size(); ++p) {
-			rectangle(canvas, candidate.parts()[p], colors[p], LINE_THICKNESS);
+			Rect box = candidate.parts()[p];
+			string confidence  = boost::lexical_cast<string>(candidate.confidence()[p]);
+			rectangle(canvas, box, colors[p], LINE_THICKNESS);
+			if (display_confidence) putText(canvas, confidence, Point(box.x, box.y-5), FONT_HERSHEY_SIMPLEX, 0.5f, black, 2);
 		}
 	}
 
 	imshow(name_, canvas);
+}
+
+void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, bool display_confidence) {
+	Visualize::candidates(im, candidates, candidates.size(), display_confidence);
+}
+
+void Visualize::candidates(const Mat& im, const Candidate& candidate, bool display_confidence) {
+
+	vector<Candidate> vec;
+	vec.push_back(candidate);
+	candidates(im, vec, display_confidence);
 }
