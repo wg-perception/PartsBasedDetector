@@ -1,6 +1,24 @@
 # PartsBasedDetector CMakeLists.txt
 cmake_minimum_required(VERSION 2.8)
-project(PartsBasedDetector)
+project(object_recognition_by_parts)
+if (catkin_FOUND)
+    catkin_stack()
+    catkin_project(object_recognition_by_parts
+                   DEPENDS Boost OpenCV
+                   INCLUDE_DIRS include
+    )
+    #install targets for all things python
+    catkin_python_setup()
+    find_package(ecto REQUIRED)
+    find_package(object_recognition_core REQUIRED)
+endif()
+
+
+
+
+
+
+
 set(PROJECT_ROOT ${PROJECT_SOURCE_DIR})
 set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type") 
 
@@ -51,3 +69,9 @@ target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${OpenCV_LIBS} ${ZLIB_L
 # install the targets
 install(FILES ${PROJECT_SOURCE_DIR}/build/${PROJECT_NAME} DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 #install(FILES ${PROJECT_SOURCE_DIR}/doc/latex/refman.pdf DESTINATION ${PROJECT_SOURCE_DIR}/doc/latex/MatlabIO.pdf)
+
+
+if (${ecto_FOUND} AND ${object_recognition_core_FOUND})    
+    add_subdirectory(cells)
+    add_subdirectory(python)
+endif()

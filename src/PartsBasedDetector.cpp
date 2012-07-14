@@ -42,11 +42,13 @@ using namespace cv;
 using namespace std;
 
 
-void PartsBasedDetector::detect(const cv::Mat& im, std::vector<Candidate>& candidates) {
+template<typename T>
+void PartsBasedDetector<T>::detect(const cv::Mat& im, std::vector<Candidate>& candidates) {
 	detect(im, Mat(), candidates);
 }
 
-void PartsBasedDetector::detect(const Mat& im, const Mat& depth, vector<Candidate>& candidates) {
+template<typename T>
+void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vector<Candidate>& candidates) {
 
 	// calculate a feature pyramid for the new image
 	vector<Mat> pyramid;
@@ -71,18 +73,19 @@ void PartsBasedDetector::detect(const Mat& im, const Mat& depth, vector<Candidat
  *
  * @param model the monolithic model containing the deserialization of all model parameters
  */
-void PartsBasedDetector::distributeModel(Model& model) {
+template<typename T>
+void PartsBasedDetector<T>::distributeModel(Model& model) {
 
 	// the name of the Part detector
 	name_ = model.name();
 
 	// initialize the Feature engine
-	features_.reset(new HOGFeatures<float>(model.binsize(), model.nscales(), model.flen(), model.norient()));
+	features_.reset(new HOGFeatures<T>(model.binsize(), model.nscales(), model.flen(), model.norient()));
 
 	// make sure the filters are of the correct precision for the Feature engine
 	int nfilters = model.filters().size();
 	for (int n = 0; n < nfilters; ++n) {
-		model.filters()[n].convertTo(model.filters()[n], DataType<float>::type);
+		model.filters()[n].convertTo(model.filters()[n], DataType<T>::type);
 	}
 
 	// initialize the tree of Parts
@@ -90,6 +93,12 @@ void PartsBasedDetector::distributeModel(Model& model) {
 			model.anchors(), model.biasid(), model.filterid(), model.defid(), model.parentid());
 
 	// initialize the dynamic program
-	dp_ = DynamicProgram(model.thresh());
+	dp_ = DynamicProgram<T>(model.thresh());
 
 }
+
+
+
+// declare all specializations of the template
+template class PartsBasedDetector<float>;
+template class PartsBasedDetector<double>;

@@ -59,17 +59,20 @@
  *  of the Part tree to the root. argmin() traverses back down the tree to
  *  retrieve the actual Part locations
  */
+template<typename T>
 class DynamicProgram {
 private:
 	//! the threshold for a positive detection
 	double thresh_;
+	void reduceMax(const std::vector<cv::Mat>& in, cv::Mat& maxv, cv::Mat& maxi);
+	template<typename IT> void reducePickIndex(const std::vector<cv::Mat>& in, const cv::Mat& idx, cv::Mat& out);
 	void minRecursive(Part& self, Part& parent, std::vector<cv::Mat>& scores, int nparts, int scale);
 	void argminRecursive(const Part& self, const Part& parent, std::vector<cv::Mat>& scores, Candidate& candidate, int nparts, int nscales);
-	void distanceTransform1D(const float* src, float* dst, int* ptr, int n, float a, float b);
+	void distanceTransform1D(const T* src, T* dst, int* ptr, int n, T a, T b);
 public:
-	DynamicProgram();
+	DynamicProgram() {}
 	DynamicProgram(double thresh) : thresh_(thresh) {}
-	virtual ~DynamicProgram();
+	virtual ~DynamicProgram() {}
 	// public methods
 	void min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vector4DMat& Iy, vector4DMat& Ik, vector2DMat& rootv, vector2DMat& rooti);
 	void argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, std::vector<Candidate>& candidates);

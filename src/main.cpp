@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 	model.deserialize(argv[1]);
 
 	// create the PartsBasedDetector and distribute the model parameters
-	PartsBasedDetector pbd;
+	PartsBasedDetector<double> pbd;
 	pbd.distributeModel(model);
 
 	// load the image from file

@@ -81,12 +81,12 @@ public:
 	}
 	virtual ~HOGFeatures() {}
 	// get methods
-	virtual int binsize(void) { return binsize_; }
-	virtual int nscales(void) { return nscales_; }
+	int binsize(void) { return binsize_; }
+	int nscales(void) { return nscales_; }
 	vectorf scales(void) const { return scales_; }
 
-	virtual void pyramid(const cv::Mat& im, std::vector<cv::Mat>& pyrafeatures);
-	virtual void pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters, vector2DMat& responses);
+	void pyramid(const cv::Mat& im, std::vector<cv::Mat>& pyrafeatures);
+	void pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters, vector2DMat& responses);
 };
 
 #endif /* HOGFEATURES_HPP_ */

@@ -48,8 +48,8 @@ using namespace std;
 using namespace cv;
 
 // declare all possible types of specialization (this is kinda sacrilege, but it's all we'll ever need...)
-HOGFeatures<float> hog_float;
-HOGFeatures<double> hog_double;
+template class HOGFeatures<float>;
+template class HOGFeatures<double>;
 
 template<typename T>
 static inline T square(T x) { return x * x; }

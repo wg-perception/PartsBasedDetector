@@ -51,6 +51,7 @@
 /*
  *
  */
+template<typename T>
 class PartsBasedDetector {
 private:
 	//! the name of the Part detector
@@ -58,7 +59,7 @@ private:
 	//! produces features, feature pyramids and compares features with Parts
 	boost::scoped_ptr<IFeatures> features_;
 	//! dynamic program to predict part positions and candidate likelihoods from raw scores
-	DynamicProgram dp_;
+	DynamicProgram<T> dp_;
 	//! the tree of Parts
 	Parts parts_;
 public:

@@ -43,15 +43,6 @@
 using namespace cv;
 using namespace std;
 
-DynamicProgram::DynamicProgram() {
-	// TODO Auto-generated constructor stub
-
-}
-
-DynamicProgram::~DynamicProgram() {
-	// TODO Auto-generated destructor stub
-}
-
 void find(const Mat& binary, vector<Point>& idx) {
 
 	int M = binary.rows;
@@ -75,7 +66,8 @@ void find(const Mat& binary, vector<Point>& idx) {
  * @param idx the index to choose at each element (idx.size() == in[k].size() forall k)
  * @param out the flatten 2D output matrix
  */
-void reducePickIndex(const vector<Mat>& in, const Mat& idx, Mat& out) {
+template<typename T> template<typename IT>
+void DynamicProgram<T>::reducePickIndex(const vector<Mat>& in, const Mat& idx, Mat& out) {
 
 	// error checking
 	int K = in.size();
@@ -90,12 +82,12 @@ void reducePickIndex(const vector<Mat>& in, const Mat& idx, Mat& out) {
 	// perform the indexing
 	int M = in[0].rows;
 	int N = in[0].cols;
-	vector<const float*> in_ptr(K);
+	vector<const IT*> in_ptr(K);
 	if (in[0].isContinuous()) { N = M*N; M = 1; }
 	for (int m = 0; m < M; ++m) {
-		float* out_ptr = out.ptr<float>(m);
+		IT* out_ptr = out.ptr<IT>(m);
 		const int*   idx_ptr = idx.ptr<int>(m);
-		for (int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<float>(m);
+		for (int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<IT>(m);
 		for (int n = 0; n < N; ++n) {
 			out_ptr[n] = in_ptr[idx_ptr[n]][n];
 		}
@@ -113,7 +105,8 @@ void reducePickIndex(const vector<Mat>& in, const Mat& idx, Mat& out) {
  * @param maxv the output 2D matrix, containing the maximal values
  * @param maxi the output 2D matrix, containing the maximal indices
  */
-void reduceMax(const vector<Mat>& in, Mat& maxv, Mat& maxi) {
+template<typename T>
+void DynamicProgram<T>::reduceMax(const vector<Mat>& in, Mat& maxv, Mat& maxi) {
 
 	// TODO: flatten the input into a multi-channel matrix for faster indexing
 	// error checking
@@ -128,14 +121,14 @@ void reduceMax(const vector<Mat>& in, Mat& maxv, Mat& maxi) {
 	int M = in[0].rows;
 	int N = in[0].cols;
 
-	vector<const float*> in_ptr(K);
+	vector<const T*> in_ptr(K);
 	if (in[0].isContinuous()) { N = M*N; M = 1; }
 	for (int m = 0; m < M; ++m) {
-		float* maxv_ptr = maxv.ptr<float>(m);
+		T* maxv_ptr = maxv.ptr<T>(m);
 		int* maxi_ptr = maxi.ptr<int>(m);
-		for (int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<float>(m);
+		for (int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<T>(m);
 		for (int n = 0; n < N; ++n) {
-			float v = -numeric_limits<float>::infinity();
+			T v = -numeric_limits<T>::infinity();
 			int i = 0;
 			for (int k = 0; k < K; ++k) if (in_ptr[k][n] > v) { i = k; v = in_ptr[k][n]; }
 			maxi_ptr[n] = i;
@@ -168,16 +161,17 @@ static inline int square(int x) { return x*x; }
  * @param a the quadratic coefficient
  * @param b the linear coefficient
  */
-void DynamicProgram::distanceTransform1D(const float* src, float* dst, int* ptr, int n, float a, float b) {
+template<typename T>
+void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, int n, T a, T b) {
 
 	int*   v = new int[n];
-	float* z = new float[n+1];
+	T* z = new T[n+1];
 	int k = 0;
 	v[0] = 0;
-	z[0] = -numeric_limits<float>::infinity();
-	z[1] = +numeric_limits<float>::infinity();
+	z[0] = -numeric_limits<T>::infinity();
+	z[1] = +numeric_limits<T>::infinity();
 	for (int q = 1; q <= n-1; ++q) {
-	    float s = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
+	    T s = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
 	    while (s <= z[k]) {
 			// Update pointer
 			k--;
@@ -186,7 +180,7 @@ void DynamicProgram::distanceTransform1D(const float* src, float* dst, int* ptr,
 	    k++;
 	    v[k]   = q;
 	    z[k]   = s;
-	    z[k+1] = +numeric_limits<float>::infinity();
+	    z[k+1] = +numeric_limits<T>::infinity();
 	}
 
 	k = 0;
@@ -217,7 +211,8 @@ void DynamicProgram::distanceTransform1D(const float* src, float* dst, int* ptr,
  * @param Ix the distances in the x direction
  * @param Iy the distances in the y direction
  */
-void DynamicProgram::distanceTransform(const Mat& score_in, const vector<float> w, Mat& score_out, Mat& Ix, Mat& Iy) {
+template<typename T>
+void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vector<float> w, Mat& score_out, Mat& Ix, Mat& Iy) {
 
 	// get the dimensionality of the score
 	int M = score_in.rows;
@@ -230,16 +225,16 @@ void DynamicProgram::distanceTransform(const Mat& score_in, const vector<float> 
 	float by = w[3];
 
 	// allocate the output and working matrices
-	score_out.create(Size(M, N), DataType<float>::type);
+	score_out.create(Size(M, N), DataType<T>::type);
 	Ix.create(Size(N, M), DataType<int>::type);
 	Iy.create(Size(M, N), DataType<int>::type);
 
-	Mat score_tmp(Size(N, M), DataType<float>::type);
-	Mat row(Size(N, 1), DataType<float>::type);
+	Mat score_tmp(Size(N, M), DataType<T>::type);
+	Mat row(Size(N, 1), DataType<int>::type);
 
 	// compute the distance transform across the rows
 	for (int m = 0; m < M; ++m) {
-		distanceTransform1D(score_in.ptr<float>(m), score_tmp.ptr<float>(m), Ix.ptr<int>(m), N, -ax, -bx);
+		distanceTransform1D(score_in.ptr<T>(m), score_tmp.ptr<T>(m), Ix.ptr<int>(m), N, -ax, -bx);
 	}
 
 	// transpose the intermediate matrices
@@ -247,7 +242,7 @@ void DynamicProgram::distanceTransform(const Mat& score_in, const vector<float> 
 
 	// compute the distance transform down the columns
 	for (int n = 0; n < N; ++n) {
-		distanceTransform1D(score_tmp.ptr<float>(n), score_out.ptr<float>(n), Iy.ptr<int>(n), M, -ay, -by);
+		distanceTransform1D(score_tmp.ptr<T>(n), score_out.ptr<T>(n), Iy.ptr<int>(n), M, -ay, -by);
 	}
 
 	// transpose back to the original layout
@@ -256,7 +251,7 @@ void DynamicProgram::distanceTransform(const Mat& score_in, const vector<float> 
 
 	// get argmins
 	// FIXME: this miiiight be wrong! Check this against the original code if there are bugs in the dynamic program
-	float* row_ptr = row.ptr<float>(0);
+	int * const row_ptr = row.ptr<int>(0);
 	for (int m = 0; m < M; ++m) {
 		int* Iy_ptr = Iy.ptr<int>(m);
 		int* Ix_ptr = Ix.ptr<int>(m);
@@ -269,8 +264,8 @@ void DynamicProgram::distanceTransform(const Mat& score_in, const vector<float> 
 	}
 }
 
-
-void DynamicProgram::minRecursive(Part& self, Part& parent, vector<Mat>& scores, int nparts, int scale) {
+template<typename T>
+void DynamicProgram<T>::minRecursive(Part& self, Part& parent, vector<Mat>& scores, int nparts, int scale) {
 
 	// if this is not a leaf node, request the child messages
 	if (!self.isLeaf()) {
@@ -311,7 +306,7 @@ void DynamicProgram::minRecursive(Part& self, Part& parent, vector<Mat>& scores,
 		int yoff = std::max(-anchor.y,  0);
 
 		// shift the score by the Part's offset from its parent
-		Mat score = -numeric_limits<float>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
+		Mat score = -numeric_limits<T>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
 		Mat Ixm   = Mat::zeros(Ix_dt.size(), Ix_dt.type());
 		Mat Iym   = Mat::zeros(Iy_dt.size(), Iy_dt.type());
 		score(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = score_dt(Range(xmin, xmax), Range(ymin, ymax));
@@ -340,8 +335,8 @@ void DynamicProgram::minRecursive(Part& self, Part& parent, vector<Mat>& scores,
 
 		// choose the best indices
 		Mat Ixm, Iym;
-		reducePickIndex(Ixi, maxi, Ixm);
-		reducePickIndex(Iyi, maxi, Iym);
+		reducePickIndex<int>(Ixi, maxi, Ixm);
+		reducePickIndex<int>(Iyi, maxi, Iym);
 		Ix.push_back(Ixm);
 		Iy.push_back(Iym);
 		Ik.push_back(maxi);
@@ -370,7 +365,8 @@ void DynamicProgram::minRecursive(Part& self, Part& parent, vector<Mat>& scores,
  * @param maxv the root score
  * @param maxi the best mixture for each pixel in the root score
  */
-void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vector4DMat& Iy, vector4DMat& Ik, vector2DMat& rootv, vector2DMat& rooti) {
+template<typename T>
+void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vector4DMat& Iy, vector4DMat& Ik, vector2DMat& rootv, vector2DMat& rooti) {
 
 	// initialize the outputs, preallocate vectors to make them thread safe
 	// TODO: better initialisation of Ix, Iy, Ik
@@ -415,7 +411,6 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
 
 					// compute the distance transform
 					distanceTransform(score_in, cpart.defw(m), score_dt, Ix_dt, Iy_dt);
-
 					// get the anchor position
 					Point anchor = cpart.anchor(m);
 
@@ -430,7 +425,7 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
 					int yoff = std::max(-anchor.y,    0);
 
 					// shift the score by the Part's offset from its parent
-					Mat score = -numeric_limits<float>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
+					Mat score = -numeric_limits<T>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
 					Mat Ixm   = Mat::zeros(Ix_dt.size(), Ix_dt.type());
 					Mat Iym   = Mat::zeros(Iy_dt.size(), Iy_dt.type());
 					Mat score_dt_range 	= score_dt(Range(ymin, ymax),        Range(xmin, xmax));
@@ -463,8 +458,8 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
 
 					// choose the best indices
 					Mat Ixm, Iym;
-					reducePickIndex(Ixp, maxi, Ixm);
-					reducePickIndex(Iyp, maxi, Iym);
+					reducePickIndex<int>(Ixp, maxi, Ixm);
+					reducePickIndex<int>(Iyp, maxi, Iym);
 					Ix[n][c][p][m] = Ixm;
 					Iy[n][c][p][m] = Iym;
 					Ik[n][c][p][m] = maxi;
@@ -475,7 +470,7 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
 			}
 			// add bias to the root score and find the best mixture
 			ComponentPart root = parts.component(c);
-			float bias = root.bias(0)[0];
+			T bias = root.bias(0)[0];
 			vector<Mat> weighted;
 			// weight each of the child scores
 			for (int m = 0; m < root.nmixtures(); ++m) {
@@ -492,7 +487,8 @@ void DynamicProgram::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vec
  * Get the minimum argument of a dynamic program by traversing down the tree of
  * a dynamic program, returning the locations of the best nodes
  */
-void DynamicProgram::argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, vector<Candidate>& candidates) {
+template<typename T>
+void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, vector<Candidate>& candidates) {
 
 	// for each scale, and each component, traverse back down the tree to retrieve the part positions
 	int nscales = scales.size();
@@ -500,7 +496,7 @@ void DynamicProgram::argmin(Parts& parts, const vector2DMat& rootv, const vector
 	#pragma omp parallel for
 	#endif
 	for (int n = 0; n < nscales; ++n) {
-		float scale = 1.0f/scales[n];
+		T scale = 1.0f/scales[n];
 		for (int c = 0; c < parts.ncomponents(); ++c) {
 
 			// get the scores and indices for this tree of parts
@@ -544,7 +540,7 @@ void DynamicProgram::argmin(Parts& parts, const vector2DMat& rootv, const vector
 					Point pone = Point(1,1);
 					Point xy1 = (Point(x,y)-ptwo)*scale*8 + pone;
 					Point xy2 = xy1 + Point(part.xsize(m), part.ysize(m))*scale*8 - pone;
-					if (part.isRoot()) candidate.addPart(Rect(xy1, xy2), rootv[n][c].at<float>(inds[i]));
+					if (part.isRoot()) candidate.addPart(Rect(xy1, xy2), rootv[n][c].at<T>(inds[i]));
 					else candidate.addPart(Rect(xy1, xy2), 0.0);
 				}
 				#ifdef _OPENMP
@@ -557,3 +553,8 @@ void DynamicProgram::argmin(Parts& parts, const vector2DMat& rootv, const vector
 		}
 	}
 }
+
+// declare all specializations of the template
+template class DynamicProgram<float>;
+template class DynamicProgram<double>;
+
