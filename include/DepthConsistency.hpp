@@ -41,8 +41,9 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include "StereoCameraModel.hpp"
-/*
- *
+
+/*! @class DepthConsistency
+ *  @brief Search space pruning via depth consistency
  */
 class DepthConsistency {
 public:

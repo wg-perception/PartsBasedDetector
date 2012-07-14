@@ -43,7 +43,8 @@
 #include <opencv2/core/core.hpp>
 #include "types.hpp"
 
-/*! @brief detection candidate
+/*! @class Candidate
+ *  @brief detection candidate
  *
  * Candidate describes a storage class for object detection candidates. A single Candidate
  * represents a detection for a tree of parts. The candidate is parameterized by a cv::Rect

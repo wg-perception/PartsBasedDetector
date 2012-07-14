@@ -45,8 +45,8 @@
 typedef std::vector<std::vector<float> > vector2Df;
 typedef std::vector<std::vector<cv::Mat> > vector2DMat;
 
-/*
- *
+/*! @class Part
+ *  @brief Tree of parts based on ITree interface (deprecated)
  */
 class Part : public ITree<std::vector<cv::Mat> > {
 private:

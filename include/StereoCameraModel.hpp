@@ -39,8 +39,8 @@
 #ifndef STEREOCAMERAMODEL_HPP_
 #define STEREOCAMERAMODEL_HPP_
 
-/*
- *
+/*! @class StereoCameraModel
+ *  @brief Slim implementation of camera model for non-ROS users
  */
 class StereoCameraModel {
 public:

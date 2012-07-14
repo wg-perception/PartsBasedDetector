@@ -41,7 +41,9 @@
 
 #include "Model.hpp"
 
-
+/*! @class FileStorageModel
+ *  @brief Model with cv::FileStorage (de-)serialization
+ */
 class FileStorageModel: public Model {
 public:
 	FileStorageModel() {}

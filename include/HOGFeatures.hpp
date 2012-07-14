@@ -44,8 +44,8 @@
 #include "IFeatures.hpp"
 #include "types.hpp"
 
-/*
- *
+/*! @class HOGFeatures
+ *  @brief Implementation of IFeatures interface using HOG
  */
 template<typename T>
 class HOGFeatures : public IFeatures {

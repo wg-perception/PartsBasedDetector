@@ -42,8 +42,8 @@
 #include "Model.hpp"
 #include "types.hpp"
 
-/*
- *
+/*! @class MatlabIOModel
+ *  @brief Model implementation with Matlab .Mat file deserialization
  */
 class MatlabIOModel: public Model {
 public:

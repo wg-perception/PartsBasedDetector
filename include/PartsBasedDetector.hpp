@@ -138,7 +138,7 @@
  *
  *
  * @class PartsBasedDetector
- *
+ * @brief The main object detection class
  * PartsBasedDetector is the main entry point for detecting objects. It has a single
  * method distributeModel() for setting up the detector parameters from a deserialized
  * model, and a method detect() for running the detection pipeline.

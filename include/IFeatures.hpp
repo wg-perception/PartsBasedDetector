@@ -43,7 +43,7 @@
 #include "types.hpp"
 
 /*! @class Feature interface
- *
+ *  @brief Interface for creating and comparing image features
  * IFeatures provides an interface for creating and comparing image features
  */
 class IFeatures {

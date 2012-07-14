@@ -42,8 +42,9 @@
 #include <string>
 #include <opencv2/core/core.hpp>
 #include "types.hpp"
-/*
- *
+
+/*! @class Model
+ *  @brief Monolithic container class for storing model parameters
  */
 class Model {
 protected:

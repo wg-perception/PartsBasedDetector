@@ -45,6 +45,7 @@
 #include "Candidate.hpp"
 
 /*! @class Visualize
+ *  @brief visualize detection candidates
  *
  * visualize a collection of object detection candidates by rendering the
  * input image to screen, and overlaying the detection bounding boxes of
