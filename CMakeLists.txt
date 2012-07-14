@@ -76,3 +76,8 @@ if(BUILD_DOC)
     configure_file(${PROJECT_SOURCE_DIR}/doc/Doxyfile.in ${PROJECT_SOURCE_DIR}/doc/Doxyfile @ONLY)
     add_custom_target(object_recognition_by_parts_doc ALL ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/doc/Doxyfile)
 endif()
+
+if(BUILD_TEST)
+  enable_testing()
+  add_subdirectory(test)
+endif()
