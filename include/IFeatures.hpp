@@ -41,18 +41,45 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include "types.hpp"
-/*
+
+/*! @class Feature interface
  *
+ * IFeatures provides an interface for creating and comparing image features
  */
 class IFeatures {
 public:
 	virtual ~IFeatures() {}
 	// get and set methods
+	//! retrieve the spatial binning size (1 if not relevant)
 	virtual int binsize(void) = 0;
+	//! retrieve the number of scales the features are calculated over
 	virtual int nscales(void) = 0;
 	// public methods
+	/*! @brief the vector of scales
+	 *
+	 * the vector of scales, 1 indicating the native image resolution,
+	 * values lower than 1 indicating downsampled images, and values greater
+	 * than 1 indicating hallucinated resolutions
+	 */
 	virtual vectorf scales(void) const = 0;
+
+	/*! @brief a pyramid of features
+	 *
+	 * features calculated of a number of scales
+	 * @param im the input image to calculate features for
+	 * @param pyrafeatures an output vector of matrices of features, one matrix for each scale
+	 */
 	virtual void pyramid(const cv::Mat& im, std::vector<cv::Mat>& pyrafeatures) = 0;
+
+	/*! @brief probability density function
+	 *
+	 * A custom convolution-type operation for producing a map of probability density functions
+	 * where each pixel indicates the likelihood of a positive detection
+	 *
+	 * @param features the input pyramid of features
+	 * @param filters the filters (patch experts, usually an SVM) with which to convolve
+	 * @param responses a 2D vector of pdfs, 1st dimension across scale, 2nd dimension across filter
+	 */
 	virtual void pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters, vector2DMat& responses) = 0;
 };
 

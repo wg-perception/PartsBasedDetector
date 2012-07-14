@@ -41,12 +41,28 @@
 using namespace cv;
 using namespace std;
 
-
+/*! @brief search an image for potential candidates
+ *
+ * calls detect(const Mat& im, const Mat&depth=Mat(), vector<Candidate>& candidates);
+ *
+ * @param im the input color or grayscale image
+ * @param candidates the output vector of detection candidates above the threshold
+ */
 template<typename T>
 void PartsBasedDetector<T>::detect(const cv::Mat& im, std::vector<Candidate>& candidates) {
 	detect(im, Mat(), candidates);
 }
 
+/*! @brief search an image for potential object candidates
+ *
+ * This is the main entry point to the detection pipeline. Given an instantiated an populated model,
+ * this method takes an input image, and attempts to find all instances of an object in that image.
+ * The object, number of scales, detection confidence, etc are all defined through the Model.
+ *
+ * @param im the input color or grayscale image
+ * @param depth the image depth image, used for depth consistency and search space pruning
+ * @param candidates the output vector of detection candidates above the threshold
+ */
 template<typename T>
 void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vector<Candidate>& candidates) {
 

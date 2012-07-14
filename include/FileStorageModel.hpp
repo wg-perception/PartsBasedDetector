@@ -31,37 +31,27 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  File:    Visualize.hpp
+ *  File:    FileStorageModel.hpp
  *  Author:  Hilton Bristow
- *  Created: Jun 21, 2012
+ *  Created: Jun 30, 2012
  */
 
-#ifndef VISUALIZE_HPP_
-#define VISUALIZE_HPP_
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <string>
-#include <vector>
-#include "Candidate.hpp"
+#ifndef FILESTORAGEMODEL_HPP_
+#define FILESTORAGEMODEL_HPP_
 
-/*! @class Visualize
- *
- * visualize a collection of object detection candidates by rendering the
- * input image to screen, and overlaying the detection bounding boxes of
- * each of the parts, with optional confidence values
- */
-class Visualize {
-private:
-	//! the name of the OpenCV window
-	std::string name_;
+#include "Model.hpp"
+
+
+class FileStorageModel: public Model {
 public:
-	Visualize() {}
-	Visualize(std::string name) : name_(name) {}
-	virtual ~Visualize() {}
-	// public methods
-	void candidates(const cv::Mat& im, const std::vector<Candidate>& candidates, bool display_confidence = false);
-	void candidates(const cv::Mat& im, const std::vector<Candidate>& candidates, int N, bool display_confidence = false);
-	void candidates(const cv::Mat& im, const Candidate& candidate, bool display_confidence = true);
+	FileStorageModel() {}
+	virtual ~FileStorageModel() {}
+	// persistence methods
+	bool serialize(std::string filename) { /*TODO: implement */ return true; }
+
+	bool deserialize(std::string filename) { /*TODO: implement */ return true;
+
+	}
 };
 
-#endif /* VISUALIZE_HPP_ */
+#endif /* FILESTORAGEMODEL_HPP_ */

@@ -42,20 +42,31 @@
 #include <limits>
 #include <opencv2/core/core.hpp>
 #include "types.hpp"
-/*
+
+/*! @brief detection candidate
  *
+ * Candidate describes a storage class for object detection candidates. A single Candidate
+ * represents a detection for a tree of parts. The candidate is parameterized by a cv::Rect
+ * bounding box and detection confidence for each part
  */
 class Candidate {
 private:
+	//! the bounding boxes of the parts
 	std::vector<cv::Rect> parts_;
+	//! the confidence scores of the parts
 	vectorf confidence_;
 public:
 	Candidate() {}
 	virtual ~Candidate() {}
+	//! return the vector of parts
 	const std::vector<cv::Rect>& parts(void) const { return parts_; }
+	//! return the vector of confidence scores
 	const vectorf& confidence(void) const { return confidence_; }
+	//! add a part score to the candidate, parameterized by a bounding box and confidence value
 	void addPart(cv::Rect r, float confidence) { parts_.push_back(r); confidence_.push_back(confidence); }
+	//! get the root score of the detection. Using for sorting
 	const float score(void) const { return (confidence_.size() > 0) ? confidence_[0] : -std::numeric_limits<double>::infinity(); }
+	//! descending comparison method for ordering objects of type Candidate
 	static bool descending(Candidate c1, Candidate c2) { return c1.score() > c2.score(); }
 
 	/*! @brief Sort the candidates from best to worst, in place

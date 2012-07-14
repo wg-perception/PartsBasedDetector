@@ -44,11 +44,15 @@
 using namespace cv;
 using namespace std;
 
-/*! @brief Visualize the candidate part locations overlaid on an image
+/*! @brief visualize the candidate part locations overlaid on an image
  *
  * @param im the image
  * @param candidates a vector of type Candidate, representing potential
  * part locations
+ * @param N the number of candidates to render. If the candidates have been sorted,
+ * this is equivalent to displaying only the 'N best' candidates
+ * @param display_confidence display the detection confidence above each bounding box
+ * for each part
  */
 void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, int N, bool display_confidence) {
 
@@ -87,10 +91,25 @@ void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, i
 	imshow(name_, canvas);
 }
 
+/*! @brief visualize all of the candidate part locations overlaid on an image
+ *
+ * @param im the image
+ * @param candidates a vector of type Candidate, representing potential
+ * part locations
+ * @param display_confidence display the detection confidence above each bounding box
+ * for each part
+ */
 void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, bool display_confidence) {
 	Visualize::candidates(im, candidates, candidates.size(), display_confidence);
 }
 
+/*! @brief visualize a single candidate overlaid on an image
+ *
+ * @param im the image
+ * @param candidate a single Candidate to superimpose over the image
+ * @param display_confidence display the detection confidence above each bounding box
+ * for each part
+ */
 void Visualize::candidates(const Mat& im, const Candidate& candidate, bool display_confidence) {
 
 	vector<Candidate> vec;

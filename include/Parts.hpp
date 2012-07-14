@@ -42,7 +42,7 @@
 #include "types.hpp"
 
 /*! @class ComponentPart
- *  @brief Part tree for a single component of the model
+ *  @brief Parts tree for a single component of the model
  *
  *  ComponentPart describes a tree of parts for a component of the model.
  *  The parts themselves are held within one monolithic pool, so

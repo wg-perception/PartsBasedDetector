@@ -54,6 +54,12 @@ template class HOGFeatures<double>;
 template<typename T>
 static inline T square(T x) { return x * x; }
 
+/*! @brief add ones to the final padded pixel in each 3D feature map
+ *
+ * @param feature the feature map
+ * @param flen the length of the feature
+ * @param padsize the amount of padding that was applied (equally to all dimensions)
+ */
 template<typename T>
 void HOGFeatures<T>::boundaryOcclusionFeature(Mat& feature, const int flen, const int padsize) {
 
@@ -150,8 +156,8 @@ void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
  *
  * The function supports multithreading via OpenMP
  *
- * @param im the input image (must be color of type CV_8UC3)
- * @param the HOG features as a 2D matrix
+ * @param imm the input image (must be color of type CV_8UC3)
+ * @param featm the HOG features as a 2D matrix
  */
 template<typename T> template<typename IT>
 void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {

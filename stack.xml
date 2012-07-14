@@ -1,0 +1,22 @@
+<stack>
+  <name>object_recognition_by_parts</name>
+  <version>1.0.0</version>
+  <description>A technique to recognize and estimate poses of transparent objects</description>
+  <author email="ilya.lysenkov@itseez.com">Ilya Lysenkov</author>
+  <author email="vrabaud@willowgarage.com">Vincent Rabaud</author>
+  <maintainer email="ilya.lysenkov@itseez.com">Ilya Lysenkov</maintainer>
+  <maintainer email="vrabaud@willowgarage.com">Vincent Rabaud</maintainer>
+  <license>BSD</license>
+  <copyright>Willow Garage</copyright>
+  <url>http://ecto.willowgarage.com</url>
+
+  <build_depends>catkin</build_depends>
+  <build_depends>ecto</build_depends>
+  <build_depends>object_recognition_core</build_depends>
+  <build_depends>openni-dev</build_depends>
+  <build_depends>opencv2</build_depends>
+  <depends>ecto</depends>
+  <depends>opencv2</depends>
+  <depends>object_recognition_core</depends>
+  <depends>openni-dev</depends>
+</stack>

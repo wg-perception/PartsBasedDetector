@@ -1,0 +1,26 @@
+source1:
+  type: ros_kinect
+  rgb_frame_id: '/camera_rgb_optical_frame'
+
+sink1:
+  type: publisher
+
+pipeline1:
+  method: 'by_parts'
+  package: 'object_recognition_by_parts'
+  submethod: 'HOG'
+  sources: [source1]
+  sinks: [sink1]
+  parameters:
+    db:
+      type: 'CouchDB'
+      root: 'http://localhost:5984'
+      collection: 'object_recognition'
+
+    # The list of object_ids to analyze
+    #object_ids: "all"
+    object_ids: ['1acfa3a425f5637f958c0eaff31fe42d']
+    visualize: true
+    parameters:
+        model_file: "/u/hbristow/Downloads/model.mat"
+        use_cuda: false

@@ -31,37 +31,36 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  File:    Visualize.hpp
+ *  File:    types.hpp
  *  Author:  Hilton Bristow
- *  Created: Jun 21, 2012
+ *  Created: Jul 8, 2012
  */
 
-#ifndef VISUALIZE_HPP_
-#define VISUALIZE_HPP_
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <string>
+#ifndef TYPES_HPP_
+#define TYPES_HPP_
 #include <vector>
-#include "Candidate.hpp"
+#include <opencv2/core/core.hpp>
+class MatlabIOContainer;
 
-/*! @class Visualize
- *
- * visualize a collection of object detection candidates by rendering the
- * input image to screen, and overlaying the detection bounding boxes of
- * each of the parts, with optional confidence values
- */
-class Visualize {
-private:
-	//! the name of the OpenCV window
-	std::string name_;
-public:
-	Visualize() {}
-	Visualize(std::string name) : name_(name) {}
-	virtual ~Visualize() {}
-	// public methods
-	void candidates(const cv::Mat& im, const std::vector<Candidate>& candidates, bool display_confidence = false);
-	void candidates(const cv::Mat& im, const std::vector<Candidate>& candidates, int N, bool display_confidence = false);
-	void candidates(const cv::Mat& im, const Candidate& candidate, bool display_confidence = true);
-};
+// common typedefs
+// 1D
+typedef std::vector<int>            vectori;
+typedef std::vector<float>			vectorf;
+typedef std::vector<cv::Mat>        vectorMat;
+typedef std::vector<cv::Point>      vectorPoint;
+typedef std::vector<cv::Point3i>    vectorPoint3;
+typedef std::vector<MatlabIOContainer> vectorMatlabIOContainer;
+// 2D
+typedef std::vector<vectori>     	vector2Di;
+typedef std::vector<vectorf>   		vector2Df;
+typedef std::vector<vectorMat> 		vector2DMat;
+typedef std::vector<vectorMatlabIOContainer> vector2DMatlabIOContainer;
+// 3D
+typedef std::vector<vector2Di>      vector3Di;
+typedef std::vector<vector2DMat>    vector3DMat;
+// 4D
+typedef std::vector<vector3DMat>    vector4DMat;
 
-#endif /* VISUALIZE_HPP_ */
+
+
+#endif /* TYPES_HPP_ */

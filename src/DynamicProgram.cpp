@@ -43,8 +43,18 @@
 using namespace cv;
 using namespace std;
 
+/*! @brief find nonzero elements in a matrix
+ *
+ * Find all nonzero elements in a matrix of type CV_8U, and return
+ * the indieces (x,y) of the nonzero pixels in an array of Point
+ *
+ * @param binary the input image (usually the output of a comparison
+ * operation such as compare(), >, ==, etc)
+ * @param idx the output vector of nonzero indices
+ */
 void find(const Mat& binary, vector<Point>& idx) {
 
+	assert(binary.depth() == CV_8U);
 	int M = binary.rows;
 	int N = binary.cols;
 	for (int m = 0; m < M; ++m) {
@@ -144,6 +154,7 @@ void DynamicProgram<T>::reduceMax(const vector<Mat>& in, Mat& maxv, Mat& maxi) {
  * @return x*x
  */
 static inline int square(int x) { return x*x; }
+
 
 /*! @brief Generalized 1D distance transform
  *
@@ -359,11 +370,14 @@ void DynamicProgram<T>::minRecursive(Part& self, Part& parent, vector<Mat>& scor
  * 		(2) Shift by the anchor position of the part wrt the parent
  * 		(3) Downsample if necessary
  *
- * @param rootpart the parts tree, referenced by the root
+ * @param parts the parts tree, referenced by the root
  * @param scores the probability densities (pdfs) of part locations (fine to coarse)
- * @param nscales the number of spatial scales in the pyramid
- * @param maxv the root score
- * @param maxi the best mixture for each pixel in the root score
+ * @param Ix the detection indices in the x direction
+ * @param Iy the detection indices in the y direction
+ * @param Ik the best mixture at each pixel
+ * @param rootv the root scores, across scale
+ * @param rooti the root indices, across scale
+ *
  */
 template<typename T>
 void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vector4DMat& Iy, vector4DMat& Ik, vector2DMat& rootv, vector2DMat& rooti) {
@@ -482,10 +496,18 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 }
 
 
-/*! @brief Get the argmin of a dynamic program
+/*! @brief get the argmin of a dynamic program
  *
  * Get the minimum argument of a dynamic program by traversing down the tree of
  * a dynamic program, returning the locations of the best nodes
+ * @param parts the tree of parts, referenced by the root
+ * @param rootv the root scores, across scale
+ * @param rooti the root indices, across scale
+ * @param scales the scales (used to calculate bounding box size)
+ * @param Ix the detection indices in the x direction
+ * @param Iy the detection indices in the y direction
+ * @param Ik the best mixture at each pixel
+ * @param candidates
  */
 template<typename T>
 void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, vector<Candidate>& candidates) {
@@ -554,7 +576,7 @@ void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vec
 	}
 }
 
-// declare all specializations of the template
+// declare all specializations of the template (this must be the last declaration in the file)
 template class DynamicProgram<float>;
 template class DynamicProgram<double>;
 
