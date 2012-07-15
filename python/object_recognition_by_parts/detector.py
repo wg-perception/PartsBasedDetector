@@ -23,5 +23,5 @@ class TransparentObjectsDetectionPipeline(DetectionPipeline):
         object_ids = parameters['object_ids']
         object_db = ObjectDb(parameters['db'])
         model_documents = Models(object_db, object_ids, self.type_name(), json_helper.dict_to_cpp_json_str(submethod))
-        model_file = parameters.get('model_file')
+        model_file = parameters['extra'].get('model_file')
         return parts_based_cells.Detector(model_file=model_file, visualize=visualize)

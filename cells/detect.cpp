@@ -11,7 +11,7 @@
 using ecto::tendrils;
 using ecto::spore;
 using object_recognition_core::db::ObjectId;
-//using object_recognition_core::common::PoseResult;
+using object_recognition_core::common::PoseResult;
 using object_recognition_core::db::ObjectDb;
 
 namespace parts_based_detector
@@ -37,7 +37,8 @@ namespace parts_based_detector
     {
       inputs.declare(&PartsBasedDetectorCell::color_, "image", "An rgb full frame image.");
       inputs.declare(&PartsBasedDetectorCell::depth_, "depth", "The 16bit depth image.");
-      //outputs.declare(&PartsBasedDetectorCell::pose_results_, "pose_results", "The results of object recognition");
+
+      outputs.declare(&PartsBasedDetectorCell::pose_results_, "pose_results", "The results of object recognition");
     }
 
     void
@@ -75,7 +76,8 @@ namespace parts_based_detector
         cv::waitKey(30);
       }
 
-      //pose_results_->clear();
+      pose_results_->clear();
+
       return ecto::OK;
     }
 
@@ -86,7 +88,7 @@ namespace parts_based_detector
 
     // I/O
     spore<cv::Mat> color_, depth_;
-    //ecto::spore<std::vector<PoseResult> > pose_results_;
+    ecto::spore<std::vector<PoseResult> > pose_results_;
 
     // the detector classes
     boost::scoped_ptr<Visualize> visualizer_;
@@ -95,5 +97,5 @@ namespace parts_based_detector
   };
 }
 
-ECTO_CELL(parts_based_cells, object_recognition_core::db::bases::ModelReaderBase<parts_based_detector::PartsBasedDetectorCell>, "Detector",
+ECTO_CELL(parts_based_cells, parts_based_detector::PartsBasedDetectorCell, "Detector",
   "Detection of objects by parts");
