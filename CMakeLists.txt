@@ -9,6 +9,7 @@ option(USE_OPENMP       "Build with OpenMP support for multithreading"  ON)
 
 # --------------------
 # CATKIN
+find_package(catkin QUIET)
 if (catkin_FOUND)
     project(object_recognition_by_parts)
     catkin_stack()
@@ -20,13 +21,18 @@ if (catkin_FOUND)
     catkin_python_setup()
     find_package(ecto REQUIRED)
     find_package(object_recognition_core REQUIRED)
+    # Set the install module path
+    set_ecto_install_package_name(${PROJECT_NAME}/ecto_cells)
+    # deal with cvmatio
+    find_package(cvmatio)
+    include_directories(SYSTEM ${cvmatio_INCLUDE_DIRS})
+    set(MatlabIO_LIBRARIES ${cvmatio_LIBRARIES})
 else()
     project(PartsBasedDetector)
     # find cvmatio manually
     include_directories(../cvmatio/include)
     find_library(MatlabIO_LIBRARIES MatlabIO PATHS ../cvmatio/lib)
 endif()
-
 
 # --------------------
 # COMMON
@@ -77,7 +83,14 @@ if(BUILD_DOC)
     add_custom_target(object_recognition_by_parts_doc ALL ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/doc/Doxyfile)
 endif()
 
+# add tests
 if(BUILD_TEST)
   enable_testing()
   add_subdirectory(test)
+endif()
+
+# add ecto cells
+if (${ecto_FOUND} AND ${object_recognition_core_FOUND})    
+    add_subdirectory(cells)
+    add_subdirectory(python)
 endif()
