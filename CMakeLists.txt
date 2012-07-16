@@ -40,13 +40,13 @@ endif()
 # --------------------
 # COMMON
 if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING
+    set(CMAKE_BUILD_TYPE Release CACHE STRING
         "Choose the type of build. Options are: None, Debug, Release, RelWithDebInfo, MinSizeRel"
     FORCE)
 endif()
 
 # find the dependencies
-find_package(Boost REQUIRED)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(OpenCV REQUIRED)
 
 # add OpenMP support

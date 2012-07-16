@@ -175,15 +175,15 @@ static inline int square(int x) { return x*x; }
 template<typename T>
 void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, int n, T a, T b) {
 
-	int*   v = new int[n];
-	T* z = new T[n+1];
+	int * const v = new int[n];
+	T   * const z = new T[n+1];
 	int k = 0;
 	v[0] = 0;
 	z[0] = -numeric_limits<T>::infinity();
 	z[1] = +numeric_limits<T>::infinity();
 	for (int q = 1; q <= n-1; ++q) {
 	    T s = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
-	    while (s <= z[k]) {
+	    while (s <= z[k] && k > 0) {
 			// Update pointer
 			k--;
 			s  = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
@@ -409,16 +409,17 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 
 				// get the component part (which may have multiple mixtures associated with it)
 				ComponentPart cpart = parts.component(c, p);
-				Ix[n][c][p].resize(cpart.nmixtures());
-				Iy[n][c][p].resize(cpart.nmixtures());
-				Ik[n][c][p].resize(cpart.nmixtures());
+				int nmixtures       = cpart.nmixtures();
+				Ix[n][c][p].resize(nmixtures);
+				Iy[n][c][p].resize(nmixtures);
+				Ik[n][c][p].resize(nmixtures);
 
 				// intermediate results for mixtures of this part
 				vector<Mat> scoresp;
 				vector<Mat> Ixp;
 				vector<Mat> Iyp;
 
-				for (int m = 0; m < cpart.nmixtures(); ++m) {
+				for (int m = 0; m < nmixtures; ++m) {
 					// raw score outputs
 					Mat score_dt, Ix_dt, Iy_dt;
 					Mat score_in = cpart.score(scores[n], m);
@@ -459,7 +460,8 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 					Iyp.push_back(Iym);
 				}
 
-				for (int m = 0; m < cpart.nmixtures(); ++m) {
+				nmixtures = cpart.parent().nmixtures();
+				for (int m = 0; m < nmixtures; ++m) {
 					vector<Mat> weighted;
 					// weight each of the child scores
 					// TODO: More elegant way of handling bias

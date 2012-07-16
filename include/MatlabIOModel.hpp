@@ -38,6 +38,8 @@
 
 #ifndef MATLABIOMODEL_HPP_
 #define MATLABIOMODEL_HPP_
+#include <exception>
+#include <boost/filesystem.hpp>
 #include <MatlabIO.hpp>
 #include "Model.hpp"
 #include "types.hpp"
@@ -89,17 +91,23 @@ public:
 		variables = cvmatio.read();
 
 		// populate the model, one variable at a time
-		name_ = cvmatio.find<std::string>(variables, "name");
+		try {
+			name_ = cvmatio.find<std::string>(variables, "name");
+		} catch (...) {
+			name_ = boost::filesystem::path(filename).stem().c_str();
+		}
 
+		/*
 		cv::Mat pa = cvmatio.find<cv::Mat>(variables, "pa");
 		for (int n = 0; n < pa.cols*pa.rows; ++n) conn_.push_back(pa.at<double>(n));
 		zeroIndex(conn_);
+		*/
 
 		//model
 		vectorMatlabIOContainer model = cvmatio.find<vector2DMatlabIOContainer>(variables, "model")[0];
 
 		nscales_ = cvmatio.find<double>(model, "interval");
-		thresh_  = -2.0f;//cvmatio.find<double>(model, "thresh");
+		thresh_  = cvmatio.find<double>(model, "thresh");
 		binsize_ = cvmatio.find<double>(model, "sbin");
 		norient_ = 18;
 
