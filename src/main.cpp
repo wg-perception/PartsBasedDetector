@@ -36,6 +36,7 @@
  *  Created: Jun 27, 2012
  */
 
+#include <iostream>
 #include <cstdio>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -73,7 +74,7 @@ int main(int argc, char** argv) {
 	Visualize visualize(model.name());
 	if (candidates.size() > 0) {
 		Candidate::sort(candidates);
-		visualize.candidates(im, candidates, 5, true);
+		visualize.candidates(im, candidates, 1, true);
 		waitKey();
 	}
 

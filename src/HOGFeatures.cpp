@@ -107,6 +107,7 @@ void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
 	scales_.resize(nscales_);
 
 	// perform the non-power of two scaling
+	// TODO: is this the most intuitive way to represent scaling?
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
@@ -114,13 +115,13 @@ void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
 		Mat scaled;
 		resize(im, scaled, imsize * (1.0f/pow(sfactor_,i)));
 		pyraimages[i] = scaled;
-		scales_[i] = (1.0f/pow(sfactor_,i));
+		scales_[i] = pow(sfactor_,i)*binsize_;
 		// perform subsequent power of two scaling
 		for (int j = i+interval_; j < nscales_; j+=interval_) {
 			Mat scaled2;
 			pyrDown(scaled, scaled2);
 			pyraimages[j] = scaled2;
-			scales_[j] = 0.5 * scales_[j-interval_];
+			scales_[j] = 2 * scales_[j-interval_];
 			scaled2.copyTo(scaled);
 		}
 	}

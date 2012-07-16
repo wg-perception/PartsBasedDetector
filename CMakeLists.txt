@@ -3,13 +3,16 @@ cmake_minimum_required(VERSION 2.8)
 
 # -----------------------------------------------
 # USER-DEFINED VARIABLES
-option(BUILD_EXECUTABLE "Build as executable to test functionality"     OFF)
+option(BUILD_EXECUTABLE "Build as executable to test functionality"     ON)
 option(BUILD_DOC        "Build documentation with Doxygen"              ON)
 option(USE_OPENMP       "Build with OpenMP support for multithreading"  ON)
+option(USE_CATKIN       "Build using Catkin"                            OFF)
 
 # --------------------
 # CATKIN
-find_package(catkin QUIET)
+if (USE_CATKIN)
+    find_package(catkin QUIET)
+endif()
 if (catkin_FOUND)
     project(object_recognition_by_parts)
     catkin_stack()
@@ -31,7 +34,7 @@ else()
     project(PartsBasedDetector)
     # find cvmatio manually
     include_directories(../cvmatio/include)
-    find_library(MatlabIO_LIBRARIES MatlabIO PATHS ../cvmatio/lib)
+    find_library(MatlabIO_LIBRARIES cvmatio PATHS ../cvmatio/lib)
 endif()
 
 # --------------------
@@ -54,33 +57,19 @@ if (USE_OPENMP)
 endif()
 
 # include the dependencies
-include_directories(${OPENCV_INCLUDE_DIRS})
-include_directories(${Boost_INCLUDE_DIRS})
+include_directories(SYSTEM  ${OPENCV_INCLUDE_DIRS}
+                            ${Boost_INCLUDE_DIRS}
+)
 include_directories("include")
 
-# GLOB the source files
-set(SRC_FILES   src/DepthConsistency.cpp src/DynamicProgram.cpp
-                src/HOGFeatures.cpp src/Model.cpp src/Part.cpp
-                src/PartsBasedDetector.cpp src/StereoCameraModel.cpp
-                src/Visualize.cpp
-)
+# add the main executable/library
+add_subdirectory(src)
 
-# build as a standalone executable
-if (BUILD_EXECUTABLE)
-    set(SRC_FILES ${SRC_FILES} src/main.cpp)
-    add_executable(${PROJECT_NAME} ${SRC_FILES})
-else()
-    add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
-endif()
-
-#link
-target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${OpenCV_LIBS} ${ZLIB_LIBRARIES} ${MatlabIO_LIBRARIES})
-
-# build the doxygen pdf
+# add documentation
 if(BUILD_DOC)
     find_package(Doxygen)
     configure_file(${PROJECT_SOURCE_DIR}/doc/Doxyfile.in ${PROJECT_SOURCE_DIR}/doc/Doxyfile @ONLY)
-    add_custom_target(object_recognition_by_parts_doc ALL ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/doc/Doxyfile)
+    add_custom_target(${PROJECT_NAME}_doc ALL ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/doc/Doxyfile)
 endif()
 
 # add tests

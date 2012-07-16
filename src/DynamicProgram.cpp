@@ -425,6 +425,7 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 
 					// compute the distance transform
 					distanceTransform(score_in, cpart.defw(m), score_dt, Ix_dt, Iy_dt);
+
 					// get the anchor position
 					Point anchor = cpart.anchor(m);
 
@@ -439,21 +440,21 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 					int yoff = std::max(-anchor.y,    0);
 
 					// shift the score by the Part's offset from its parent
-					Mat score = -numeric_limits<T>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
-					Mat Ixm   = Mat::zeros(Ix_dt.size(), Ix_dt.type());
-					Mat Iym   = Mat::zeros(Iy_dt.size(), Iy_dt.type());
-					Mat score_dt_range 	= score_dt(Range(ymin, ymax),        Range(xmin, xmax));
-					Mat score_range    	= score(Range(yoff, yoff+ymax-ymin), Range(xoff, xoff+xmax-xmin));
-					Mat Ix_dt_range 	= Ix_dt(Range(ymin, ymax),           Range(xmin, xmax));
-					Mat Ixm_range 		= Ixm(Range(yoff, yoff+ymax-ymin),   Range(xoff, xoff+xmax-xmin));
-					Mat Iy_dt_range 	= Iy_dt(Range(ymin, ymax),           Range(xmin, xmax));
-					Mat Iym_range 		= Iym(Range(yoff, yoff+ymax-ymin),   Range(xoff, xoff+xmax-xmin));
+					Mat scorem = -numeric_limits<T>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
+					Mat Ixm    = Mat::zeros(Ix_dt.size(), Ix_dt.type());
+					Mat Iym    = Mat::zeros(Iy_dt.size(), Iy_dt.type());
+					Mat score_dt_range 	= score_dt(Range(ymin, ymax),         Range(xmin, xmax));
+					Mat score_range    	= scorem(Range(yoff, yoff+ymax-ymin), Range(xoff, xoff+xmax-xmin));
+					Mat Ix_dt_range 	= Ix_dt(Range(ymin, ymax),            Range(xmin, xmax));
+					Mat Ixm_range 		= Ixm(Range(yoff, yoff+ymax-ymin),    Range(xoff, xoff+xmax-xmin));
+					Mat Iy_dt_range 	= Iy_dt(Range(ymin, ymax),            Range(xmin, xmax));
+					Mat Iym_range 		= Iym(Range(yoff, yoff+ymax-ymin),    Range(xoff, xoff+xmax-xmin));
 					score_dt_range.copyTo(score_range);
 					Ix_dt_range.copyTo(Ixm_range);
 					Iy_dt_range.copyTo(Iym_range);
 
 					// push the scores onto the intermediate vectors
-					scoresp.push_back(score);
+					scoresp.push_back(scorem);
 					Ixp.push_back(Ixm);
 					Iyp.push_back(Iym);
 				}
@@ -478,8 +479,10 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 					Iy[n][c][p][m] = Iym;
 					Ik[n][c][p][m] = maxi;
 
+
+
 					// update the parent's score
-					cpart.parent().score(scores[n],m) = maxv;
+					cpart.parent().score(scores[n],m) += maxv;
 				}
 			}
 			// add bias to the root score and find the best mixture
@@ -518,7 +521,7 @@ void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vec
 	#pragma omp parallel for
 	#endif
 	for (int n = 0; n < nscales; ++n) {
-		T scale = 1.0f/scales[n];
+		T scale = scales[n];
 		for (int c = 0; c < parts.ncomponents(); ++c) {
 
 			// get the scores and indices for this tree of parts
@@ -557,11 +560,10 @@ void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vec
 					}
 
 					// calculate the bounding rectangle and add it to the Candidate
-					// FIXME: Scaling by 8 is a total hack! Will NOT work for human bodies
 					Point ptwo = Point(2,2);
 					Point pone = Point(1,1);
-					Point xy1 = (Point(x,y)-ptwo)*scale*8 + pone;
-					Point xy2 = xy1 + Point(part.xsize(m), part.ysize(m))*scale*8 - pone;
+					Point xy1 = (Point(xv[p],yv[p])-ptwo)*scale;
+					Point xy2 = xy1 + Point(part.xsize(m), part.ysize(m))*scale - pone;
 					if (part.isRoot()) candidate.addPart(Rect(xy1, xy2), rootv[n][c].at<T>(inds[i]));
 					else candidate.addPart(Rect(xy1, xy2), 0.0);
 				}
