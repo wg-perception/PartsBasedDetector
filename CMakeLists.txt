@@ -5,14 +5,11 @@ cmake_minimum_required(VERSION 2.8)
 # USER-DEFINED VARIABLES
 option(BUILD_EXECUTABLE "Build as executable to test functionality"     ON)
 option(BUILD_DOC        "Build documentation with Doxygen"              ON)
-option(USE_OPENMP       "Build with OpenMP support for multithreading"  ON)
-option(USE_CATKIN       "Build using Catkin"                            OFF)
+option(USE_OPENMP       "Build with OpenMP support for multithreading"  OFF)
 
 # --------------------
 # CATKIN
-if (USE_CATKIN)
-    find_package(catkin QUIET)
-endif()
+find_package(catkin QUIET)
 if (catkin_FOUND)
     project(object_recognition_by_parts)
     catkin_stack()

@@ -106,8 +106,8 @@ public:
 		//model
 		vectorMatlabIOContainer model = cvmatio.find<vector2DMatlabIOContainer>(variables, "model")[0];
 
-		nscales_ = cvmatio.find<double>(model, "interval");
-		thresh_  = cvmatio.find<double>(model, "thresh");
+		nscales_ = 3;//cvmatio.find<double>(model, "interval");
+		thresh_  = -2.65;//cvmatio.find<double>(model, "thresh");
 		binsize_ = cvmatio.find<double>(model, "sbin");
 		norient_ = 18;
 
@@ -159,15 +159,9 @@ public:
 				int parentid = cvmatio.find<double>(component[p], "parent");
 
 				// the biasid type can change, depending on the number of elements saved
-				MatlabIOContainer biasid = cvmatio.find(component[p], "biasid");
-				if (biasid.typeEquals<double>()) {
-					biasid_[c][p] = std::vector<int>(1, biasid.data<double>());
-					zeroIndex(biasid_[c][p]);
-				} else {
-					cv::Mat biasidmat = biasid.data<cv::Mat>();
-					biasid_[c][p] = std::vector<int>(biasidmat.begin<double>(), biasidmat.end<double>());
-					zeroIndex(biasid_[c][p]);
-				}
+				cv::Mat biasid = cvmatio.find<cv::Mat>(component[p], "biasid");
+				biasid_[c][p] = std::vector<int>(biasid.begin<double>(), biasid.end<double>());
+				zeroIndex(biasid_[c][p]);
 
 				parentid_[c][p] = parentid;
 				filterid_[c][p] = std::vector<int>(filterid.begin<double>(), filterid.end<double>());

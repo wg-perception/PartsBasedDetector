@@ -81,6 +81,7 @@ void DynamicProgram<T>::reducePickIndex(const vector<Mat>& in, const Mat& idx, M
 
 	// error checking
 	int K = in.size();
+	if (K == 1) { in[0].copyTo(out); return; }
 	double minv, maxv;
 	minMaxLoc(idx, &minv, &maxv);
 	assert(minv >= 0 && maxv < K);
@@ -121,7 +122,14 @@ void DynamicProgram<T>::reduceMax(const vector<Mat>& in, Mat& maxv, Mat& maxi) {
 	// TODO: flatten the input into a multi-channel matrix for faster indexing
 	// error checking
 	int K = in.size();
-	assert(K > 1);
+	if (K == 1) {
+		// just return
+		in[0].copyTo(maxv);
+		maxi = Mat::zeros(in[0].size(), DataType<int>::type);
+		return;
+	}
+
+	assert (K > 1);
 	for (int k = 1; k < K; ++k) assert(in[k].size() == in[k-1].size());
 
 	// allocate the output matrices
@@ -384,66 +392,75 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 
 	// initialize the outputs, preallocate vectors to make them thread safe
 	// TODO: better initialisation of Ix, Iy, Ik
-	int nscales = scores.size();
-	Ix.resize(nscales);
-	Iy.resize(nscales);
-	Ik.resize(nscales);
-	rootv.resize(nscales, vectorMat(parts.ncomponents()));
-	rooti.resize(nscales, vectorMat(parts.ncomponents()));
+	const int nscales = scores.size();
+	const int ncomponents = parts.ncomponents();
+	Ix.resize(nscales, vector3DMat(ncomponents));
+	Iy.resize(nscales, vector3DMat(ncomponents));
+	Ik.resize(nscales, vector3DMat(ncomponents));
+	rootv.resize(nscales, vectorMat(ncomponents));
+	rooti.resize(nscales, vectorMat(ncomponents));
 
 	// for each scale, and each component, update the scores through message passing
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for (int n = 0; n < nscales; ++n) {
-		Ix[n].resize(parts.ncomponents());
-		Iy[n].resize(parts.ncomponents());
-		Ik[n].resize(parts.ncomponents());
+	for (int nc = 0; nc < nscales*ncomponents; ++nc) {
 
-		for (int c = 0; c < parts.ncomponents(); ++c) {
-			Ix[n][c].resize(parts.nparts(c));
-			Iy[n][c].resize(parts.nparts(c));
-			Ik[n][c].resize(parts.nparts(c));
+		// calculate the inner loop variables from the dual variables
+		const int n = floor(nc / ncomponents);
+		const int c = nc % ncomponents;
 
-			for (int p = parts.nparts(c)-1; p > 0; --p) {
+		// allocate the inner loop variables
+		Ix[n][c].resize(parts.nparts(c));
+		Iy[n][c].resize(parts.nparts(c));
+		Ik[n][c].resize(parts.nparts(c));
+		vectorMat ncscores(scores[n].size());
 
-				// get the component part (which may have multiple mixtures associated with it)
-				ComponentPart cpart = parts.component(c, p);
-				int nmixtures       = cpart.nmixtures();
-				Ix[n][c][p].resize(nmixtures);
-				Iy[n][c][p].resize(nmixtures);
-				Ik[n][c][p].resize(nmixtures);
+		for (int p = parts.nparts(c)-1; p > 0; --p) {
 
-				// intermediate results for mixtures of this part
-				vector<Mat> scoresp;
-				vector<Mat> Ixp;
-				vector<Mat> Iyp;
+			// get the component part (which may have multiple mixtures associated with it)
+			ComponentPart cpart = parts.component(c, p);
+			int nmixtures       = cpart.nmixtures();
+			Ix[n][c][p].resize(nmixtures);
+			Iy[n][c][p].resize(nmixtures);
+			Ik[n][c][p].resize(nmixtures);
 
-				for (int m = 0; m < nmixtures; ++m) {
-					// raw score outputs
-					Mat score_dt, Ix_dt, Iy_dt;
-					Mat score_in = cpart.score(scores[n], m);
+			// intermediate results for mixtures of this part
+			vector<Mat> scoresp;
+			vector<Mat> Ixp;
+			vector<Mat> Iyp;
 
-					// compute the distance transform
-					distanceTransform(score_in, cpart.defw(m), score_dt, Ix_dt, Iy_dt);
+			for (int m = 0; m < nmixtures; ++m) {
 
-					// get the anchor position
-					Point anchor = cpart.anchor(m);
+				// raw score outputs
+				Mat score_in, score_dt, Ix_dt, Iy_dt;
+				if (cpart.score(ncscores, m).empty()) {
+					score_in = cpart.score(scores[n], m);
+				} else {
+					score_in = cpart.score(ncscores, m);
+				}
 
-					// calculate a valid region of interest for the scores
-					int X = score_in.cols;
-					int Y = score_in.rows;
-					int xmin = std::max(std::min(anchor.x, X), 0);
-					int ymin = std::max(std::min(anchor.y, Y), 0);
-					int xmax = std::min(std::max(anchor.x+X, 0), X);
-					int ymax = std::min(std::max(anchor.y+Y, 0), Y);
-					int xoff = std::max(-anchor.x,    0);
-					int yoff = std::max(-anchor.y,    0);
+				// compute the distance transform
+				distanceTransform(score_in, cpart.defw(m), score_dt, Ix_dt, Iy_dt);
 
-					// shift the score by the Part's offset from its parent
-					Mat scorem = -numeric_limits<T>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
-					Mat Ixm    = Mat::zeros(Ix_dt.size(), Ix_dt.type());
-					Mat Iym    = Mat::zeros(Iy_dt.size(), Iy_dt.type());
+				// get the anchor position
+				Point anchor = cpart.anchor(m);
+
+				// calculate a valid region of interest for the scores
+				int X = score_in.cols;
+				int Y = score_in.rows;
+				int xmin = std::max(std::min(anchor.x, X), 0);
+				int ymin = std::max(std::min(anchor.y, Y), 0);
+				int xmax = std::min(std::max(anchor.x+X, 0), X);
+				int ymax = std::min(std::max(anchor.y+Y, 0), Y);
+				int xoff = std::max(-anchor.x,    0);
+				int yoff = std::max(-anchor.y,    0);
+
+				// shift the score by the Part's offset from its parent
+				Mat scorem = -numeric_limits<T>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
+				Mat Ixm    = Mat::zeros(Ix_dt.size(), Ix_dt.type());
+				Mat Iym    = Mat::zeros(Iy_dt.size(), Iy_dt.type());
+				if (xoff < X && yoff < Y && (ymax - ymin) > 0 && (xmax - xmin) > 0) {
 					Mat score_dt_range 	= score_dt(Range(ymin, ymax),         Range(xmin, xmax));
 					Mat score_range    	= scorem(Range(yoff, yoff+ymax-ymin), Range(xoff, xoff+xmax-xmin));
 					Mat Ix_dt_range 	= Ix_dt(Range(ymin, ymax),            Range(xmin, xmax));
@@ -453,50 +470,47 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 					score_dt_range.copyTo(score_range);
 					Ix_dt_range.copyTo(Ixm_range);
 					Iy_dt_range.copyTo(Iym_range);
-
-					// push the scores onto the intermediate vectors
-					scoresp.push_back(scorem);
-					Ixp.push_back(Ixm);
-					Iyp.push_back(Iym);
 				}
 
-				nmixtures = cpart.parent().nmixtures();
-				for (int m = 0; m < nmixtures; ++m) {
-					vector<Mat> weighted;
-					// weight each of the child scores
-					// TODO: More elegant way of handling bias
-					for (int mm = 0; mm < cpart.nmixtures(); ++mm) {
-						weighted.push_back(scoresp[mm] + cpart.bias(mm)[m]);
-					}
-					// compute the max over the mixtures
-					Mat maxv, maxi;
-					reduceMax(weighted, maxv, maxi);
+				// push the scores onto the intermediate vectors
+				scoresp.push_back(scorem);
+				Ixp.push_back(Ixm);
+				Iyp.push_back(Iym);
+			}
 
-
-					// choose the best indices
-					Mat Ixm, Iym;
-					reducePickIndex<int>(Ixp, maxi, Ixm);
-					reducePickIndex<int>(Iyp, maxi, Iym);
-					Ix[n][c][p][m] = Ixm;
-					Iy[n][c][p][m] = Iym;
-					Ik[n][c][p][m] = maxi;
-
-
-
-					// update the parent's score
-					cpart.parent().score(scores[n],m) += maxv;
+			nmixtures = cpart.parent().nmixtures();
+			for (int m = 0; m < nmixtures; ++m) {
+				vector<Mat> weighted;
+				// weight each of the child scores
+				// TODO: More elegant way of handling bias
+				for (int mm = 0; mm < cpart.nmixtures(); ++mm) {
+					weighted.push_back(scoresp[mm] + cpart.bias(mm)[m]);
 				}
+				// compute the max over the mixtures
+				Mat maxv, maxi;
+				reduceMax(weighted, maxv, maxi);
+
+				// choose the best indices
+				Mat Ixm, Iym;
+				reducePickIndex<int>(Ixp, maxi, Ixm);
+				reducePickIndex<int>(Iyp, maxi, Iym);
+				Ix[n][c][p][m] = Ixm;
+				Iy[n][c][p][m] = Iym;
+				Ik[n][c][p][m] = maxi;
+
+				// update the parent's score
+				cpart.parent().score(ncscores,m) = cpart.parent().score(scores[n],m) + maxv;
 			}
-			// add bias to the root score and find the best mixture
-			ComponentPart root = parts.component(c);
-			T bias = root.bias(0)[0];
-			vector<Mat> weighted;
-			// weight each of the child scores
-			for (int m = 0; m < root.nmixtures(); ++m) {
-				weighted.push_back(root.score(scores[n],m) + bias);
-			}
-			reduceMax(weighted, rootv[n][c], rooti[n][c]);
 		}
+		// add bias to the root score and find the best mixture
+		ComponentPart root = parts.component(c);
+		T bias = root.bias(0)[0];
+		vector<Mat> weighted;
+		// weight each of the child scores
+		for (int m = 0; m < root.nmixtures(); ++m) {
+			weighted.push_back(root.score(scores[n],m) + bias);
+		}
+		reduceMax(weighted, rootv[n][c], rooti[n][c]);
 	}
 }
 

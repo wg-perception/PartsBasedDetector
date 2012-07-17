@@ -72,8 +72,10 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vector<Candi
 
 	// convolve the feature pyramid with the Part experts
 	// to get probability density for each Part
+	double t = (double)getTickCount();
 	vector2DMat pdf;
 	features_->pdf(pyramid, parts_.filters(), pdf);
+	printf("Convolution time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	// use dynamic programming to predict the best detection candidates from the part responses
 	vector4DMat Ix, Iy, Ik;
