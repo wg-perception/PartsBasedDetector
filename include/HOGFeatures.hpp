@@ -41,6 +41,7 @@
 #include <vector>
 #include <cstdio>
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include "IFeatures.hpp"
 #include "types.hpp"
 
@@ -60,6 +61,8 @@ private:
 	int norient_;
 	//! the scales of the features
 	std::vector<float> scales_;
+	//! the internal representation of the filters
+	vector2DFilterEngine filters_;
 	//! the scaling factor between successive levels in the pyramid
 	float sfactor_;
 	//! the interval between half resolution scales
@@ -68,7 +71,7 @@ private:
 	// private methods
 	void boundaryOcclusionFeature(cv::Mat& feature, const int flen, const int padsize);
 	template<typename IT> void features(const cv::Mat& im, cv::Mat& feature) const;
-	void convolve(const cv::Mat& feature, const cv::Mat& filter, cv::Mat& pdf, int stride);
+	void convolve(const cv::Mat& feature, vectorFilterEngine& filter, cv::Mat& pdf, const int stride);
 public:
 	HOGFeatures() {}
 	HOGFeatures(int binsize, int nscales, int flen, int norient) :
@@ -84,9 +87,9 @@ public:
 	int binsize(void) { return binsize_; }
 	int nscales(void) { return nscales_; }
 	vectorf scales(void) const { return scales_; }
-
+	void setFilters(const std::vector<cv::Mat>& filters);
 	void pyramid(const cv::Mat& im, std::vector<cv::Mat>& pyrafeatures);
-	void pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters, vector2DMat& responses);
+	void pdf(const std::vector<cv::Mat>& features, vector2DMat& responses);
 };
 
 #endif /* HOGFEATURES_HPP_ */

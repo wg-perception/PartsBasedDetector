@@ -39,6 +39,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+#include <assert.h>
 #include <math.h>
 #include <cstdio>
 #include <iostream>
@@ -141,9 +142,9 @@ void HOGFeatures<T>::pyramid(const Mat& im, vector<Mat>& pyrafeatures) {
 			case CV_16U: features<uint16_t>(pyraimages[n], feature); break;
 			default: CV_Error(CV_StsUnsupportedFormat, "Unsupported image type"); break;
 		}
-		copyMakeBorder(feature, padded, 3, 3, 3*flen_, 3*flen_, BORDER_CONSTANT, 0);
-		boundaryOcclusionFeature(padded, flen_, 3);
-		pyrafeatures[n] = padded;
+		//copyMakeBorder(feature, padded, 3, 3, 3*flen_, 3*flen_, BORDER_CONSTANT, 0);
+		//boundaryOcclusionFeature(padded, flen_, 3);
+		pyrafeatures[n] = feature;
 	}
 }
 
@@ -372,15 +373,47 @@ double inline sseDotProduct<double>(__m128 a, __m128 b) {
  * @param stride the SVM weight length
  */
 template<typename T>
-void HOGFeatures<T>::convolve(const Mat& feature, const Mat& filter, Mat& pdf, int stride) {
+void HOGFeatures<T>::convolve(const Mat& feature, vectorFilterEngine& filter, Mat& pdf, const int stride) {
 
 	// error checking
-	assert(feature.depth() == filter.depth());
-	assert(feature.cols % stride == 0 && filter.cols % stride == 0);
+	assert(feature.depth() == DataType<T>::type);
 
+	// split the feature into separate channels
+	vectorMat featurev;
+	split(feature.reshape(stride), featurev);
+
+	// calculate the output
+	Rect roi(0,0,-1,-1); // full image
+	Point offset(0,0);
+	Size fsize = featurev[0].size();
+	pdf = Mat::zeros(fsize, DataType<T>::type);
+
+	for (int c = 0; c < stride; ++c) {
+		Mat pdfc(fsize, DataType<T>::type);
+		filter[c]->apply(featurev[c], pdfc, roi, offset, true);
+		pdf += pdfc;
+	}
+
+	/*
+	const int M = feature_nd[0].rows;
+	const int N = feature_nd[0].cols;
+	const int H = filter[0].rows;
+	const int W = filter[0].cols;
+	Mat pdfout = Mat::zeros(feature_nd[0].size(), DataType<T>::type);
+	for (int n = 0; n < stride; ++n) {
+		Mat pdfc;
+		if (n < stride-1)  filter2D(feature_nd[n], pdfc, -1, filter[n]);
+		if (n == stride-1) filter2D(feature_nd[n], pdfc, -1, filter[n], )
+		pdfout += pdfc;
+	}
+	pdf = pdfout(Range(H/2,M-H/2), Range(W/2,N-W/2));
+	return;
+	*/
+
+	/*
 	// really basic convolution algorithm with a stride greater than one
-	const int M = feature.rows - filter.rows + 1;
-	const int N = feature.cols - filter.cols + stride;
+	//const int M = feature.rows - filter.rows + 1;
+	//const int N = feature.cols - filter.cols + stride;
 	const int H = filter.rows;
 	const int W = filter.cols;
 	pdf.create(Size(N/stride, M), feature.type());
@@ -414,6 +447,7 @@ void HOGFeatures<T>::convolve(const Mat& feature, const Mat& filter, Mat& pdf, i
 			}
 		}
 	}
+	*/
 }
 
 
@@ -424,25 +458,61 @@ void HOGFeatures<T>::convolve(const Mat& feature, const Mat& filter, Mat& pdf, i
  * The convolution of a filter with a feature produces a probability density function
  * (pdf) of part location
  * @param features the input features (at different scales, and by extension, size)
- * @param filters the filters representing the parts across mixtures
  * @param responses the vector of responses (pdfs) to return
  */
 template<typename T>
-void HOGFeatures<T>::pdf(const vector<Mat>& features, const vector<Mat>& filters, vector2DMat& responses) {
+void HOGFeatures<T>::pdf(const vector<Mat>& features, vector2DMat& responses) {
 
 	// preallocate the output
 	int M = features.size();
-	int N = filters.size();
+	int N = filters_.size();
 	responses.resize(M, vectorMat(N));
 	// iterate
 #ifdef _OPENMP
 	#pragma omp parallel for
 #endif
-	for (int i = 0; i < M*N; ++i) {
-		int n = i%N;
-		int m = floor(i/N);
-		Mat response;
-		convolve(features[m], filters[n], response, flen_);
-		responses[m][n] = response;
+	for (int n = 0; n < N; ++n) {
+		for (int m = 0; m < M; ++m) {
+			Mat response;
+			convolve(features[m], filters_[n], response, flen_);
+			responses[m][n] = response;
+		}
 	}
 }
+
+/*! @brief set the filters
+ *
+ * given a set of filters, split each filter channel into a plane,
+ * in preparation for convolution
+ *
+ * @param filters the filters
+ */
+template<typename T>
+void HOGFeatures<T>::setFilters(const vectorMat& filters) {
+
+	const int N = filters.size();
+	filters_.clear();
+	filters_.resize(N);
+
+	// split each filter into separate channels, and create a filter engine
+	const int C = filters[0].cols/filters[0].rows;
+	for (int n = 0; n < N; ++n) {
+		vectorMat filtervec;
+		std::vector<Ptr<FilterEngine> > filter_engines(C);
+		split(filters[n].reshape(C), filtervec);
+
+		// the first N-1 filters have zero-padding
+		for (int m = 0; m < C-1; ++m) {
+			Ptr<FilterEngine> fe = createLinearFilter(DataType<T>::type, DataType<T>::type,
+					filtervec[m], Point(-1,-1), 0, BORDER_CONSTANT, -1, Scalar(0,0,0,0));
+			filter_engines[m] = fe;
+		}
+
+		// the last filter has one-padding
+		Ptr<FilterEngine> fe = createLinearFilter(DataType<T>::type, DataType<T>::type,
+				filtervec[C-1], Point(-1,-1), 0, BORDER_CONSTANT, -1, Scalar(1,1,1,1));
+		filter_engines[C-1] = fe;
+		filters_[n] = filter_engines;
+	}
+}
+

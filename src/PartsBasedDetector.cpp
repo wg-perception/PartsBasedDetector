@@ -74,7 +74,7 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vector<Candi
 	// to get probability density for each Part
 	double t = (double)getTickCount();
 	vector2DMat pdf;
-	features_->pdf(pyramid, parts_.filters(), pdf);
+	features_->pdf(pyramid, pdf);
 	printf("Convolution time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	// use dynamic programming to predict the best detection candidates from the part responses
@@ -105,6 +105,7 @@ void PartsBasedDetector<T>::distributeModel(Model& model) {
 	for (int n = 0; n < nfilters; ++n) {
 		model.filters()[n].convertTo(model.filters()[n], DataType<T>::type);
 	}
+	features_->setFilters(model.filters());
 
 	// initialize the tree of Parts
 	parts_ = Parts(model.filters(), model.filtersi(), model.def(), model.defi(), model.bias(), model.biasi(),

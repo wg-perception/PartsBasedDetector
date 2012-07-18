@@ -40,6 +40,7 @@
 #define TYPES_HPP_
 #include <vector>
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 class MatlabIOContainer;
 
 // common typedefs
@@ -50,11 +51,13 @@ typedef std::vector<cv::Mat>        vectorMat;
 typedef std::vector<cv::Point>      vectorPoint;
 typedef std::vector<cv::Point3i>    vectorPoint3;
 typedef std::vector<MatlabIOContainer> vectorMatlabIOContainer;
+typedef std::vector<cv::Ptr<cv::FilterEngine> > vectorFilterEngine;
 // 2D
 typedef std::vector<vectori>     	vector2Di;
 typedef std::vector<vectorf>   		vector2Df;
 typedef std::vector<vectorMat> 		vector2DMat;
 typedef std::vector<vectorMatlabIOContainer> vector2DMatlabIOContainer;
+typedef std::vector<std::vector<cv::Ptr<cv::FilterEngine> > > vector2DFilterEngine;
 // 3D
 typedef std::vector<vector2Di>      vector3Di;
 typedef std::vector<vector2DMat>    vector3DMat;

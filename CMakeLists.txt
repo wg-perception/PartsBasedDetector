@@ -54,8 +54,15 @@ if (USE_OPENMP)
 endif()
 
 # add vectorization support
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1 -O3")
-set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -msse4.1 -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -msse4.1")
+
+# use highest level of optimization in Release mode
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -O3")
+endif ()
+
 
 # include the dependencies
 include_directories(SYSTEM  ${OPENCV_INCLUDE_DIRS}

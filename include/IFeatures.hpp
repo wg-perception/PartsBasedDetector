@@ -77,10 +77,20 @@ public:
 	 * where each pixel indicates the likelihood of a positive detection
 	 *
 	 * @param features the input pyramid of features
-	 * @param filters the filters (patch experts, usually an SVM) with which to convolve
 	 * @param responses a 2D vector of pdfs, 1st dimension across scale, 2nd dimension across filter
 	 */
-	virtual void pdf(const std::vector<cv::Mat>& features, const std::vector<cv::Mat>& filters, vector2DMat& responses) = 0;
+	virtual void pdf(const std::vector<cv::Mat>& features, vector2DMat& responses) = 0;
+
+	/*! @brief set the convolve engine filters
+	 *
+	 * In many situations, the filters are static during operation of the detector
+	 * so we can take advantage of some optimizations such as changing the memory layout
+	 * of the filters, or shifting the filters to the GPU, etc. This function enables
+	 * such a facility, and must necessarily be called before pdf()
+	 *
+	 * @param filters the vector of filters
+	 */
+	virtual void setFilters(const std::vector<cv::Mat>& filters) = 0;
 };
 
 //IFeatures::~IFeatures() {}
