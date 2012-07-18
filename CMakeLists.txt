@@ -1,11 +1,11 @@
 # PartsBasedDetector CMakeLists.txt
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.6)
 
 # -----------------------------------------------
 # USER-DEFINED VARIABLES
 option(BUILD_EXECUTABLE "Build as executable to test functionality"     ON)
 option(BUILD_DOC        "Build documentation with Doxygen"              ON)
-option(USE_OPENMP       "Build with OpenMP support for multithreading"  OFF)
+option(USE_OPENMP       "Build with OpenMP support for multithreading"  ON)
 
 # --------------------
 # CATKIN
@@ -52,6 +52,10 @@ if (USE_OPENMP)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   ${OpenMP_C_FLAGS}")
 endif()
+
+# add vectorization support
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1 -O3")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -msse4.1 -O3")
 
 # include the dependencies
 include_directories(SYSTEM  ${OPENCV_INCLUDE_DIRS}

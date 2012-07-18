@@ -14,7 +14,7 @@ pipeline1:
   parameters:
     db:
       type: 'CouchDB'
-      root: 'http://localhost:5984'
+      root: 'http://bwl:5984'
       collection: 'object_recognition'
 
     # The list of object_ids to analyze

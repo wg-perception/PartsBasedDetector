@@ -42,6 +42,7 @@
 #include <math.h>
 #include <cstdio>
 #include <iostream>
+#include <smmintrin.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "HOGFeatures.hpp"
 using namespace std;
@@ -336,6 +337,24 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 	}
 }
 
+template<typename T>
+T inline sseDotProduct(__m128 a, __m128 b) {
+	return 0;
+}
+
+template<>
+float inline sseDotProduct<float>(__m128 a, __m128 b) {
+	float out;
+	_mm_store_ss(&out, _mm_dp_ps(a, b, 0xff));
+	return out;
+}
+
+template<>
+double inline sseDotProduct<double>(__m128 a, __m128 b) {
+	double out;
+	_mm_store_sd(&out, _mm_dp_pd((__m128d)a, (__m128d)b, 0x31));
+	return out;
+}
 /*! @brief Convolve two matrices, with a stride of greater than one
  *
  * This is a specialized 2D convolution algorithm with a stride of greater
@@ -366,19 +385,33 @@ void HOGFeatures<T>::convolve(const Mat& feature, const Mat& filter, Mat& pdf, i
 	const int W = filter.cols;
 	pdf.create(Size(N/stride, M), feature.type());
 
-	for (int m = 0; m < M; ++m) {
-		T* pdf_ptr = pdf.ptr<T>(m);
-		for (int n = 0; n < N; n+=stride) {
-			T accum = 0;
-			for (int h = 0; h < H; ++h) {
-				const T* filt_ptr = filter.ptr<T>(h);
-				const T* feat_ptr = feature.ptr<T>(m+h) + n;
-				T const * const filt_end = filt_ptr + W;
-				while (filt_ptr < filt_end) {
-					accum += *(filt_ptr++) * *(feat_ptr++);
+
+	try {
+		// attempt to use SSE4 instructions
+		const int sz = 16/sizeof(T);
+		for (int m = 0; m < M; ++m) {
+			T* pdf_ptr = pdf.ptr<T>(m);
+			for (int n = 0; n < N/sz; n+=stride/sz) {
+				T accum = 0;
+				for (int h = 0; h < H; ++h) {
+					const __m128* filt_ptr = filter.ptr<__m128>(h);
+					const __m128* feat_ptr = feature.ptr<__m128>(m+h) + n;
+					__m128 const * const filt_end = filt_ptr + W/sz;
+					while (filt_ptr < filt_end) {
+						accum += sseDotProduct<T>((*filt_ptr++), (*feat_ptr++));
+					}
 				}
+				*(pdf_ptr++) = accum;
 			}
-			*(pdf_ptr++) = accum;
+		}
+	} catch (...) {
+		// vanilla ice cream
+		for (int m = 0; m < M; ++m) {
+			T* pdf_ptr = pdf.ptr<T>(m);
+			for (int n = 0; n < N; n+=stride) {
+				cv::Mat featureroi = feature(Range(m,m+H), Range(n,n+W));
+				*(pdf_ptr++) = filter.dot(featureroi);
+			}
 		}
 	}
 }
@@ -403,7 +436,6 @@ void HOGFeatures<T>::pdf(const vector<Mat>& features, const vector<Mat>& filters
 	responses.resize(M, vectorMat(N));
 	// iterate
 #ifdef _OPENMP
-	omp_set_num_threads(omp_get_num_procs());
 	#pragma omp parallel for
 #endif
 	for (int i = 0; i < M*N; ++i) {
