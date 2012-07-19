@@ -5,12 +5,16 @@ source1:
 sink1:
   type: publisher
 
+sink2:
+  type: publisher
+  package: 'object_recognition_by_parts'
+
 pipeline1:
   method: 'by_parts'
   package: 'object_recognition_by_parts'
   submethod: 'HOG'
   sources: [source1]
-  sinks: [sink1]
+  sinks: [sink1, sink2]
   parameters:
     db:
       type: 'CouchDB'
