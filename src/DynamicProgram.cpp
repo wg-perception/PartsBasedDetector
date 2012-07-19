@@ -181,15 +181,15 @@ static inline int square(int x) { return x*x; }
  * @param b the linear coefficient
  */
 template<typename T>
-void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, int n, T a, T b) {
+void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, int N, T a, T b, int os) {
 
-	int * const v = new int[n];
-	T   * const z = new T[n+1];
+	int * const v = new int[N];
+	T   * const z = new T[N+1];
 	int k = 0;
 	v[0] = 0;
 	z[0] = -numeric_limits<T>::infinity();
 	z[1] = +numeric_limits<T>::infinity();
-	for (int q = 1; q <= n-1; ++q) {
+	for (int q = 1; q <= N-1; ++q) {
 	    T s = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
 	    while (s <= z[k] && k > 0) {
 			// Update pointer
@@ -203,10 +203,11 @@ void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, int 
 	}
 
 	k = 0;
-	for (int q = 0; q <= n-1; ++q) {
-		while (z[k+1] < q) k++;
-		dst[q] = a*square(q-v[k]) + b*(q-v[k]) + src[v[k]];
+	for (int q = 0; q <= N-1; ++q) {
+		while (z[k+1] < os) k++;
+		dst[q] = a*square(os-v[k]) + b*(os-v[k]) + src[v[k]];
 		ptr[q] = v[k];
+		os++;
 	}
 
 	delete [] v;
@@ -231,7 +232,7 @@ void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, int 
  * @param Iy the distances in the y direction
  */
 template<typename T>
-void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, Mat& score_out, Mat& Ix, Mat& Iy) {
+void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, Point os, Mat& score_out, Mat& Ix, Mat& Iy) {
 
 	// get the dimensionality of the score
 	int M = score_in.rows;
@@ -253,7 +254,7 @@ void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, 
 
 	// compute the distance transform across the rows
 	for (int m = 0; m < M; ++m) {
-		distanceTransform1D(score_in.ptr<T>(m), score_tmp.ptr<T>(m), Ix.ptr<int>(m), N, -ax, -bx);
+		distanceTransform1D(score_in.ptr<T>(m), score_tmp.ptr<T>(m), Ix.ptr<int>(m), N, -ax, -bx, os.x);
 	}
 
 	// transpose the intermediate matrices
@@ -261,7 +262,7 @@ void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, 
 
 	// compute the distance transform down the columns
 	for (int n = 0; n < N; ++n) {
-		distanceTransform1D(score_tmp.ptr<T>(n), score_out.ptr<T>(n), Iy.ptr<int>(n), M, -ay, -by);
+		distanceTransform1D(score_tmp.ptr<T>(n), score_out.ptr<T>(n), Iy.ptr<int>(n), M, -ay, -by, os.y);
 	}
 
 	// transpose back to the original layout
@@ -358,13 +359,19 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 					score_in = cpart.score(ncscores, m);
 				}
 
-				// compute the distance transform
-				distanceTransform(score_in, cpart.defw(m), score_dt, Ix_dt, Iy_dt);
-
 				// get the anchor position
 				Point anchor = cpart.anchor(m);
 
+				// compute the distance transform
+				distanceTransform(score_in, cpart.defw(m), anchor, score_dt, Ix_dt, Iy_dt);
+				//cout << score_dt(Range(0,10), Range(0,10)) << endl << endl;
+				scoresp.push_back(score_dt);
+				Ixp.push_back(Ix_dt);
+				Iyp.push_back(Iy_dt);
+				//cout << score_dt(Range(0,10), Range(0,10)) << endl;
+
 				// calculate a valid region of interest for the scores
+				/*
 				int X = score_in.cols;
 				int Y = score_in.rows;
 				int xmin = std::max(std::min(anchor.x, X), 0);
@@ -394,6 +401,7 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 				scoresp.push_back(scorem);
 				Ixp.push_back(Ixm);
 				Iyp.push_back(Iym);
+				*/
 			}
 
 			nmixtures = cpart.parent().nmixtures();
@@ -417,16 +425,27 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 				Ik[n][c][p][m] = maxi;
 
 				// update the parent's score
-				cpart.parent().score(ncscores,m) = cpart.parent().score(scores[n],m) + maxv;
+				ComponentPart parent = cpart.parent();
+				if (parent.score(ncscores,m).empty()) parent.score(scores[n],m).copyTo(parent.score(ncscores,m));
+				parent.score(ncscores,m) += maxv;
+				//cout << parent.score(ncscores,m)(Range(0,10),Range(0,10)) << endl << endl;
+				if (parent.self() == 0) {
+					ComponentPart root = parts.component(c);
+					//cout << root.score(ncscores,m)(Range(0,10),Range(0,10)) << endl << endl;
+				}
+				//cout <<parent.self() << endl;
 			}
 		}
 		// add bias to the root score and find the best mixture
 		ComponentPart root = parts.component(c);
+		//cout << root.self() << endl;
+		Mat rncscore = root.score(ncscores,0);
+		//cout << rncscore(Range(1,10),Range(1,10)) << endl;
 		T bias = root.bias(0)[0];
 		vectorMat weighted;
 		// weight each of the child scores
 		for (int m = 0; m < root.nmixtures(); ++m) {
-			weighted.push_back(root.score(scores[n],m) + bias);
+			weighted.push_back(root.score(ncscores,m) + bias);
 		}
 		reduceMax(weighted, rootv[n][c], rooti[n][c]);
 	}

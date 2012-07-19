@@ -49,7 +49,7 @@ using namespace std;
  * @param candidates the output vector of detection candidates above the threshold
  */
 template<typename T>
-void PartsBasedDetector<T>::detect(const cv::Mat& im, std::vector<Candidate>& candidates) {
+void PartsBasedDetector<T>::detect(const cv::Mat& im, vectorCandidate& candidates) {
 	detect(im, Mat(), candidates);
 }
 
@@ -64,7 +64,7 @@ void PartsBasedDetector<T>::detect(const cv::Mat& im, std::vector<Candidate>& ca
  * @param candidates the output vector of detection candidates above the threshold
  */
 template<typename T>
-void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vector<Candidate>& candidates) {
+void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vectorCandidate& candidates) {
 
 	// calculate a feature pyramid for the new image
 	vectorMat pyramid;
@@ -82,7 +82,7 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vector<Candi
 	vector2DMat rootv, rooti;
 	dp_.min(parts_, pdf, Ix, Iy, Ik, rootv, rooti);
 
-	cout << rootv[0][0](Range(0,10), Range(0,10)) << endl;
+	//cout << rootv[0][0](Range(0,10), Range(0,10)) << endl;
 	// walk back down the tree to find the part locations
 	dp_.argmin(parts_, rootv, rooti, features_->scales(), Ix, Iy, Ik, candidates);
 

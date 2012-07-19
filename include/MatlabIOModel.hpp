@@ -107,7 +107,7 @@ public:
 		vectorMatlabIOContainer model = cvmatio.find<vector2DMatlabIOContainer>(variables, "model")[0];
 
 		nscales_ = cvmatio.find<double>(model, "interval");
-		thresh_  = -2.8;//cvmatio.find<double>(model, "thresh");
+		thresh_  = cvmatio.find<double>(model, "thresh");
 		binsize_ = cvmatio.find<double>(model, "sbin");
 		norient_ = 18;
 
