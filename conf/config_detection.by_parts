@@ -22,5 +22,5 @@ pipeline1:
     object_ids: ['1acfa3a425f5637f958c0eaff31fe42d']
     visualize: true
     extra:
-        model_file: "/u/hbristow/Downloads/model.mat"
+        model_file: "/u/hbristow/Downloads/Person.mat"
         use_cuda: false

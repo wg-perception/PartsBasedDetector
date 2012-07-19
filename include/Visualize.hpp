@@ -43,6 +43,7 @@
 #include <string>
 #include <vector>
 #include "Candidate.hpp"
+#include "types.hpp"
 
 /*! @class Visualize
  *  @brief visualize detection candidates
@@ -56,13 +57,14 @@ private:
 	//! the name of the OpenCV window
 	std::string name_;
 public:
-	Visualize() {}
-	Visualize(std::string name) : name_(name) {}
+	Visualize() : name_("frame") { cv::namedWindow(name_, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED); }
+	Visualize(std::string name) : name_(name) { cv::namedWindow(name_, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED); }
 	virtual ~Visualize() {}
 	// public methods
-	void candidates(const cv::Mat& im, const std::vector<Candidate>& candidates, bool display_confidence = false);
-	void candidates(const cv::Mat& im, const std::vector<Candidate>& candidates, int N, bool display_confidence = false);
+	void candidates(const cv::Mat& im, const vectorCandidate& candidates, bool display_confidence = false);
+	void candidates(const cv::Mat& im, const vectorCandidate& candidates, int N, bool display_confidence = false);
 	void candidates(const cv::Mat& im, const Candidate& candidate, bool display_confidence = true);
+	void image(const cv::Mat& im);
 };
 
 #endif /* VISUALIZE_HPP_ */

@@ -42,9 +42,7 @@
 #include <opencv2/core/core.hpp>
 #include "Candidate.hpp"
 #include "Model.hpp"
-#include "Part.hpp"
 #include "Parts.hpp"
-#include "ITree.hpp"
 #include "types.hpp"
 
 
@@ -64,10 +62,8 @@ class DynamicProgram {
 private:
 	//! the threshold for a positive detection
 	double thresh_;
-	void reduceMax(const std::vector<cv::Mat>& in, cv::Mat& maxv, cv::Mat& maxi);
-	template<typename IT> void reducePickIndex(const std::vector<cv::Mat>& in, const cv::Mat& idx, cv::Mat& out);
-	void minRecursive(Part& self, Part& parent, std::vector<cv::Mat>& scores, int nparts, int scale);
-	void argminRecursive(const Part& self, const Part& parent, std::vector<cv::Mat>& scores, Candidate& candidate, int nparts, int nscales);
+	void reduceMax(const vectorMat& in, cv::Mat& maxv, cv::Mat& maxi);
+	template<typename IT> void reducePickIndex(const vectorMat& in, const cv::Mat& idx, cv::Mat& out);
 	void distanceTransform1D(const T* src, T* dst, int* ptr, int n, T a, T b);
 public:
 	DynamicProgram() {}
@@ -75,8 +71,8 @@ public:
 	virtual ~DynamicProgram() {}
 	// public methods
 	void min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vector4DMat& Iy, vector4DMat& Ik, vector2DMat& rootv, vector2DMat& rooti);
-	void argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, std::vector<Candidate>& candidates);
-	void distanceTransform(const cv::Mat& score_in, const std::vector<float> w, cv::Mat& score_out, cv::Mat& Ix, cv::Mat& Iy);
+	void argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, vectorCandidate& candidates);
+	void distanceTransform(const cv::Mat& score_in, const vectorf w, cv::Mat& score_out, cv::Mat& Ix, cv::Mat& Iy);
 };
 
 #endif /* DYNAMICPROGRAM_HPP_ */

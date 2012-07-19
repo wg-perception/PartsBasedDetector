@@ -16,10 +16,17 @@ else()
 endif()
 
 #link
+#find_library(opencv_imgproc_LIBRARIES NAMES opencv_imgproc PATHS /u/hbristow/dev/lib NO_DEFAULT_PATH)
+#find_library(opencv_core_LIBRARIES NAMES opencv_core PATHS /u/hbristow/dev/lib NO_DEFAULT_PATH)
+#message(info "******************${opencv_imgproc_LIBRARIES} ${opencv_core_LIBRARIES}")
+
+
 target_link_libraries(${PROJECT_NAME}   ${Boost_LIBRARIES} 
                                         ${OpenCV_LIBS} 
                                         ${ZLIB_LIBRARIES} 
                                         ${MatlabIO_LIBRARIES}
+                                        ${opencv_imgproc_LIBRARIES}
+                                        ${opencv_core_LIBRARIES}
 )
 
 #install

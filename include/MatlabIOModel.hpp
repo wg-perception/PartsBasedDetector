@@ -87,7 +87,7 @@ public:
 		if (!ok) return false;
 
 		// read all of the variables from the file
-		std::vector<MatlabIOContainer> variables;
+		vectorMatlabIOContainer variables;
 		variables = cvmatio.read();
 
 		// populate the model, one variable at a time
@@ -106,8 +106,8 @@ public:
 		//model
 		vectorMatlabIOContainer model = cvmatio.find<vector2DMatlabIOContainer>(variables, "model")[0];
 
-		nscales_ = 3;//cvmatio.find<double>(model, "interval");
-		thresh_  = -2.65;//cvmatio.find<double>(model, "thresh");
+		nscales_ = cvmatio.find<double>(model, "interval");
+		thresh_  = -2.8;//cvmatio.find<double>(model, "thresh");
 		binsize_ = cvmatio.find<double>(model, "sbin");
 		norient_ = 18;
 
@@ -132,7 +132,7 @@ public:
 				}
 			}
 			filtersw_.push_back(filter_flat);
-			filtersi_.push_back(cvmatio.find<double>(filters[f], "i"));
+			//filtersi_.push_back(cvmatio.find<double>(filters[f], "i"));
 		}
 
 		// ------------------------------
@@ -160,12 +160,12 @@ public:
 
 				// the biasid type can change, depending on the number of elements saved
 				cv::Mat biasid = cvmatio.find<cv::Mat>(component[p], "biasid");
-				biasid_[c][p] = std::vector<int>(biasid.begin<double>(), biasid.end<double>());
+				biasid_[c][p] = vectori(biasid.begin<double>(), biasid.end<double>());
 				zeroIndex(biasid_[c][p]);
 
 				parentid_[c][p] = parentid;
-				filterid_[c][p] = std::vector<int>(filterid.begin<double>(), filterid.end<double>());
-				defid_[c][p]    = std::vector<int>(defid.begin<double>(),    defid.end<double>());
+				filterid_[c][p] = vectori(filterid.begin<double>(), filterid.end<double>());
+				defid_[c][p]    = vectori(defid.begin<double>(),    defid.end<double>());
 
 				// re-index from zero (Matlab uses 1-based indexing)
 				zeroIndex(parentid_[c][p]);
@@ -180,7 +180,7 @@ public:
 		int ndefs = defs.size();
 		for (int n = 0; n < ndefs; ++n) {
 			defw_.push_back(cvmatio.find<cv::Mat>(defs[n], "w"));
-			defi_.push_back(cvmatio.find<double>(defs[n], "i"));
+			//defi_.push_back(cvmatio.find<double>(defs[n], "i"));
 			cv::Mat anchor = cvmatio.find<cv::Mat>(defs[n], "anchor");
 			anchors_.push_back(cv::Point(anchor.at<double>(0), anchor.at<double>(1)));
 		}
@@ -192,7 +192,7 @@ public:
 		int nbias = bias.size();
 		for (int n = 0; n < nbias; ++n) {
 			biasw_.push_back(cvmatio.find<double>(bias[n], "w"));
-			biasi_.push_back(cvmatio.find<double>(bias[n], "i"));
+			//biasi_.push_back(cvmatio.find<double>(bias[n], "i"));
 		}
 
 		return true;

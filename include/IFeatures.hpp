@@ -69,7 +69,7 @@ public:
 	 * @param im the input image to calculate features for
 	 * @param pyrafeatures an output vector of matrices of features, one matrix for each scale
 	 */
-	virtual void pyramid(const cv::Mat& im, std::vector<cv::Mat>& pyrafeatures) = 0;
+	virtual void pyramid(const cv::Mat& im, vectorMat& pyrafeatures) = 0;
 
 	/*! @brief probability density function
 	 *
@@ -79,7 +79,7 @@ public:
 	 * @param features the input pyramid of features
 	 * @param responses a 2D vector of pdfs, 1st dimension across scale, 2nd dimension across filter
 	 */
-	virtual void pdf(const std::vector<cv::Mat>& features, vector2DMat& responses) = 0;
+	virtual void pdf(const vectorMat& features, vector2DMat& responses) = 0;
 
 	/*! @brief set the convolve engine filters
 	 *
@@ -90,7 +90,7 @@ public:
 	 *
 	 * @param filters the vector of filters
 	 */
-	virtual void setFilters(const std::vector<cv::Mat>& filters) = 0;
+	virtual void setFilters(const vectorMat& filters) = 0;
 };
 
 //IFeatures::~IFeatures() {}

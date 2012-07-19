@@ -76,7 +76,7 @@ protected:
 	//! a unique string identifier for the model
 	std::string name_;
 	//! the connectivity of the parts, where each element is a reference to the part's parent
-	std::vector<int> conn_;
+	vectori conn_;
 	//! the number of parts
 	int nparts_;
 	//! the number of mixtures
@@ -107,7 +107,7 @@ public:
 	vector3Di& defid(void) { return defid_; }
 	vector2Di& parentid(void) { return parentid_; }
 	std::string name(void) { return name_; }
-	std::vector<int>& conn(void) { return conn_; }
+	vectori& conn(void) { return conn_; }
 	int nparts(void) const { return nparts_; }
 	int nmixtures(void) const { return nmixtures_; }
 	float thresh(void) const { return thresh_; }

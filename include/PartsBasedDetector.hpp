@@ -42,7 +42,6 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include <boost/scoped_ptr.hpp>
-#include "Part.hpp"
 #include "Parts.hpp"
 #include "Model.hpp"
 #include "Candidate.hpp"

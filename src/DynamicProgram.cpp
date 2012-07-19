@@ -77,7 +77,7 @@ void find(const Mat& binary, vector<Point>& idx) {
  * @param out the flatten 2D output matrix
  */
 template<typename T> template<typename IT>
-void DynamicProgram<T>::reducePickIndex(const vector<Mat>& in, const Mat& idx, Mat& out) {
+void DynamicProgram<T>::reducePickIndex(const vectorMat& in, const Mat& idx, Mat& out) {
 
 	// error checking
 	int K = in.size();
@@ -117,7 +117,7 @@ void DynamicProgram<T>::reducePickIndex(const vector<Mat>& in, const Mat& idx, M
  * @param maxi the output 2D matrix, containing the maximal indices
  */
 template<typename T>
-void DynamicProgram<T>::reduceMax(const vector<Mat>& in, Mat& maxv, Mat& maxi) {
+void DynamicProgram<T>::reduceMax(const vectorMat& in, Mat& maxv, Mat& maxi) {
 
 	// TODO: flatten the input into a multi-channel matrix for faster indexing
 	// error checking
@@ -231,7 +231,7 @@ void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, int 
  * @param Iy the distances in the y direction
  */
 template<typename T>
-void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vector<float> w, Mat& score_out, Mat& Ix, Mat& Iy) {
+void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, Mat& score_out, Mat& Ix, Mat& Iy) {
 
 	// get the dimensionality of the score
 	int M = score_in.rows;
@@ -282,88 +282,6 @@ void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vector<floa
 		}
 	}
 }
-
-template<typename T>
-void DynamicProgram<T>::minRecursive(Part& self, Part& parent, vector<Mat>& scores, int nparts, int scale) {
-
-	// if this is not a leaf node, request the child messages
-	if (!self.isLeaf()) {
-		for (int c = 0; c < self.children().size(); ++c) minRecursive(self.children()[c], self, scores, nparts, scale);
-	}
-
-	// intermediate results
-	vector<Mat> scoresi;
-	vector<Mat> Ixi;
-	vector<Mat> Iyi;
-	// final results
-	vector<Mat> Ix;
-	vector<Mat> Iy;
-	vector<Mat> Ik;
-
-	// calculate the score of each of the mixtures
-	int nmixtures = self.nmixtures();
-	int Ns = nparts*nmixtures*scale + nmixtures*self.pos();
-	int Np = nparts*nmixtures*scale + nmixtures*parent.pos();
-	for (int m = 0; m < nmixtures; ++m) {
-		// raw score outputs
-		Mat score_dt, Ix_dt, Iy_dt;
-		Mat score_in = scores[Ns+m];
-		// compute the distance transform
-		distanceTransform(score_in, self.w()[m], score_dt, Ix_dt, Iy_dt);
-
-		// get the anchor position
-		Point anchor = self.anchor();
-
-		// calculate a valid region of interest for the scores
-		int X = score_in.cols;
-		int Y = score_in.rows;
-		int xmin = std::max(anchor.x,   0);
-		int ymin = std::max(anchor.y,   0);
-		int xmax = std::min(anchor.x+X, X);
-		int ymax = std::min(anchor.y+Y, X);
-		int xoff = std::max(-anchor.x,  0);
-		int yoff = std::max(-anchor.y,  0);
-
-		// shift the score by the Part's offset from its parent
-		Mat score = -numeric_limits<T>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
-		Mat Ixm   = Mat::zeros(Ix_dt.size(), Ix_dt.type());
-		Mat Iym   = Mat::zeros(Iy_dt.size(), Iy_dt.type());
-		score(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = score_dt(Range(xmin, xmax), Range(ymin, ymax));
-		Ixm(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = Ix_dt(Range(xmin, xmax), Range(ymin, ymax));
-		Iym(Range(xoff, xoff+xmax-xmin), Range(yoff, yoff+ymax-ymin)) = Iy_dt(Range(xmin, xmax), Range(ymin, ymax));
-
-		// push the scores onto the intermediate vectors
-		scoresi.push_back(score);
-		Ixi.push_back(Ixm);
-		Iyi.push_back(Iym);
-	}
-
-	// at each parent location, for each parent mixture, compute the best child mixture
-	for (int m = 0; m < nmixtures; ++m) {
-		vector<float> bias = self.bias()[m];
-		vector<Mat> weighted;
-		Mat I;
-		// weight each of the child scores
-		for (int mm = 0; mm < nmixtures; ++mm) {
-			weighted.push_back(scores[mm] + bias[mm]);
-		}
-
-		// compute the max over the mixtures
-		Mat maxv, maxi;
-		reduceMax(weighted, maxv, maxi);
-
-		// choose the best indices
-		Mat Ixm, Iym;
-		reducePickIndex<int>(Ixi, maxi, Ixm);
-		reducePickIndex<int>(Iyi, maxi, Iym);
-		Ix.push_back(Ixm);
-		Iy.push_back(Iym);
-		Ik.push_back(maxi);
-		scores[Np+m] = maxv;
-	}
-}
-
-
 
 
 /*! @brief Get the min of a dynamic program
@@ -426,9 +344,9 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 			Ik[n][c][p].resize(nmixtures);
 
 			// intermediate results for mixtures of this part
-			vector<Mat> scoresp;
-			vector<Mat> Ixp;
-			vector<Mat> Iyp;
+			vectorMat scoresp;
+			vectorMat Ixp;
+			vectorMat Iyp;
 
 			for (int m = 0; m < nmixtures; ++m) {
 
@@ -480,7 +398,7 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 
 			nmixtures = cpart.parent().nmixtures();
 			for (int m = 0; m < nmixtures; ++m) {
-				vector<Mat> weighted;
+				vectorMat weighted;
 				// weight each of the child scores
 				// TODO: More elegant way of handling bias
 				for (int mm = 0; mm < cpart.nmixtures(); ++mm) {
@@ -505,7 +423,7 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 		// add bias to the root score and find the best mixture
 		ComponentPart root = parts.component(c);
 		T bias = root.bias(0)[0];
-		vector<Mat> weighted;
+		vectorMat weighted;
 		// weight each of the child scores
 		for (int m = 0; m < root.nmixtures(); ++m) {
 			weighted.push_back(root.score(scores[n],m) + bias);
@@ -529,7 +447,7 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
  * @param candidates
  */
 template<typename T>
-void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, vector<Candidate>& candidates) {
+void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, vectorCandidate& candidates) {
 
 	// for each scale, and each component, traverse back down the tree to retrieve the part positions
 	int nscales = scales.size();

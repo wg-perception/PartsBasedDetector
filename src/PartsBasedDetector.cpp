@@ -67,7 +67,7 @@ template<typename T>
 void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vector<Candidate>& candidates) {
 
 	// calculate a feature pyramid for the new image
-	vector<Mat> pyramid;
+	vectorMat pyramid;
 	features_->pyramid(im, pyramid);
 
 	// convolve the feature pyramid with the Part experts
@@ -82,6 +82,7 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vector<Candi
 	vector2DMat rootv, rooti;
 	dp_.min(parts_, pdf, Ix, Iy, Ik, rootv, rooti);
 
+	cout << rootv[0][0](Range(0,10), Range(0,10)) << endl;
 	// walk back down the tree to find the part locations
 	dp_.argmin(parts_, rootv, rooti, features_->scales(), Ix, Iy, Ik, candidates);
 

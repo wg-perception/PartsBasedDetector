@@ -35,7 +35,7 @@ namespace parts_based_detector {
 
         // the detector classes
         boost::scoped_ptr<Visualize> visualizer_;
-        boost::scoped_ptr<PartsBasedDetector<double> > detector_;
+        boost::scoped_ptr<PartsBasedDetector<float> > detector_;
 
         /*! @brief parameter callback
          *
@@ -100,7 +100,7 @@ namespace parts_based_detector {
             visualizer_.reset(new Visualize(model.name()));
 
             // create the PartsBasedDetector and distribute the model parameters
-            detector_.reset(new PartsBasedDetector<double>);
+            detector_.reset(new PartsBasedDetector<float>);
             detector_->distributeModel(model);
         }
 
@@ -124,9 +124,13 @@ namespace parts_based_detector {
                 detector_->detect(*color_, *depth_, candidates);
             } catch(const cv::Exception& e) {}
 
-            if (*visualize_ && candidates.size() > 0) { 
-                Candidate::sort(candidates);
-                visualizer_->candidates(*color_, candidates, 1, true);
+            if (true) {
+            	if (candidates.size() > 0) {
+            		Candidate::sort(candidates);
+            		visualizer_->candidates(*color_, candidates, 1, true);
+            	} else {
+            		visualizer_->image(*color_);
+            	}
                 cv::waitKey(30);
             }
 

@@ -43,7 +43,7 @@ using namespace cv;
 
 
 
-void Part::toVector(vector<Mat>& vec) {
+void Part::toVector(vectorMat& vec) {
 	// if root, allocate space for all of the filters
 	if (isRoot()) vec.resize((ndescendants_+1) * nmixtures_);
 
@@ -54,16 +54,16 @@ void Part::toVector(vector<Mat>& vec) {
 }
 
 
-static std::vector<int> find(std::vector<int> vals, int val) {
-	std::vector<int> idx;
+static vectori find(vectori vals, int val) {
+	vectori idx;
 	for (int n = 0; n < vals.size(); ++n) if(vals[n] == val) idx.push_back(n);
 	return idx;
 }
 
-static Part constructPartHierarchyRecursive(vector2DMat& filters, std::vector<int>& parents, int level, int self) {
+static Part constructPartHierarchyRecursive(vector2DMat& filters, vectori& parents, int level, int self) {
 
 	// find all of the children who have self (current Part) as a parent
-	std::vector<int> cidx = find(parents, self);
+	vectori cidx = find(parents, self);
 	std::vector<Part> children;
 	int ndescendants = 0;
 	vector2Df bias;
@@ -90,7 +90,7 @@ static Part constructPartHierarchyRecursive(vector2DMat& filters, std::vector<in
  * @param parents
  * @return
  */
-Part Part::constructPartHierarchy(vector2DMat& filters, std::vector<int>& parents) {
+Part Part::constructPartHierarchy(vector2DMat& filters, vectori& parents) {
 
 	// error checking
 	assert(filters.size() == parents.size());

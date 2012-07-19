@@ -74,7 +74,7 @@ public:
 	 *
 	 * @param candidates the vector of candidates to sort
 	 */
-	static void sort(std::vector<Candidate>& candidates) {
+	static void sort(vectorCandidate& candidates) {
 		std::sort(candidates.begin(), candidates.end(), descending);
 	}
 };

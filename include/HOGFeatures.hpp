@@ -60,7 +60,7 @@ private:
 	//! the number of orientations to bin
 	int norient_;
 	//! the scales of the features
-	std::vector<float> scales_;
+	vectorf scales_;
 	//! the internal representation of the filters
 	vector2DFilterEngine filters_;
 	//! the scaling factor between successive levels in the pyramid
@@ -87,9 +87,9 @@ public:
 	int binsize(void) { return binsize_; }
 	int nscales(void) { return nscales_; }
 	vectorf scales(void) const { return scales_; }
-	void setFilters(const std::vector<cv::Mat>& filters);
-	void pyramid(const cv::Mat& im, std::vector<cv::Mat>& pyrafeatures);
-	void pdf(const std::vector<cv::Mat>& features, vector2DMat& responses);
+	void setFilters(const vectorMat& filters);
+	void pyramid(const cv::Mat& im, vectorMat& pyrafeatures);
+	void pdf(const vectorMat& features, vector2DMat& responses);
 };
 
 #endif /* HOGFEATURES_HPP_ */

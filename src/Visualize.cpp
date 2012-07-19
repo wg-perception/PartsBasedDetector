@@ -58,7 +58,7 @@ void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, i
 
 	// create a new canvas that we can modify
 	Mat canvas;
-	im.copyTo(canvas);
+    cvtColor(im, canvas, CV_RGB2BGR);
 
 	// generate a set of colors to display. Do this in HSV then convert it
 	int ncolors = candidates[0].parts().size();
@@ -115,4 +115,14 @@ void Visualize::candidates(const Mat& im, const Candidate& candidate, bool displ
 	vector<Candidate> vec;
 	vec.push_back(candidate);
 	candidates(im, vec, display_confidence);
+}
+
+/*! @brief display the raw image with no overlay
+ *
+ * @param im the input image frame
+ */
+void Visualize::image(const Mat& im) {
+    Mat canvas;
+    cvtColor(im, canvas, CV_RGB2BGR);
+	imshow(name_, canvas);
 }

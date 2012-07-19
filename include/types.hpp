@@ -42,6 +42,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 class MatlabIOContainer;
+class Candidate;
 
 // common typedefs
 // 1D
@@ -50,6 +51,7 @@ typedef std::vector<float>			vectorf;
 typedef std::vector<cv::Mat>        vectorMat;
 typedef std::vector<cv::Point>      vectorPoint;
 typedef std::vector<cv::Point3i>    vectorPoint3;
+typedef std::vector<Candidate>      vectorCandidate;
 typedef std::vector<MatlabIOContainer> vectorMatlabIOContainer;
 typedef std::vector<cv::Ptr<cv::FilterEngine> > vectorFilterEngine;
 // 2D

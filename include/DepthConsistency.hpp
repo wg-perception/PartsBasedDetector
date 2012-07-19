@@ -41,6 +41,7 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include "StereoCameraModel.hpp"
+#include "types.hpp"
 
 /*! @class DepthConsistency
  *  @brief Search space pruning via depth consistency
@@ -50,7 +51,7 @@ public:
 	DepthConsistency();
 	virtual ~DepthConsistency();
 	// public methods
-	std::vector<cv::Mat> pruneSearchSpace(const std::vector<cv::Mat>& features, const cv::Mat& depth, const StereoCameraModel& cam);
+	vectorMat pruneSearchSpace(const vectorMat& features, const cv::Mat& depth, const StereoCameraModel& cam);
 };
 
 #endif /* DEPTHCONSISTENCY_HPP_ */

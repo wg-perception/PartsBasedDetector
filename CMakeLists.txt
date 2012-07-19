@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 2.8.6)
 # USER-DEFINED VARIABLES
 option(BUILD_EXECUTABLE "Build as executable to test functionality"     ON)
 option(BUILD_DOC        "Build documentation with Doxygen"              ON)
-option(USE_OPENMP       "Build with OpenMP support for multithreading"  ON)
+option(USE_OPENMP       "Build with OpenMP support for multithreading"  OFF)
 
 # --------------------
 # CATKIN
@@ -37,7 +37,7 @@ endif()
 # --------------------
 # COMMON
 if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING
         "Choose the type of build. Options are: None, Debug, Release, RelWithDebInfo, MinSizeRel"
     FORCE)
 endif()
@@ -54,8 +54,8 @@ if (USE_OPENMP)
 endif()
 
 # add vectorization support
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1")
-set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -msse4.1")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1 -ftree-vectorize")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -msse4.1 -ftree-vectorize")
 
 # use highest level of optimization in Release mode
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
