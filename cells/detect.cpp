@@ -30,7 +30,7 @@ namespace parts_based_detector {
         spore<std::string> model_file_;
 
         // I/O
-        spore<cv::Mat> color_, depth_;
+        spore<cv::Mat> color_, depth_, output_;
         ecto::spore<std::vector<PoseResult> > pose_results_;
 
         // the detector classes
@@ -76,6 +76,7 @@ namespace parts_based_detector {
             inputs.declare(&PartsBasedDetectorCell::depth_, "depth", "The 16bit depth image.");
 
             outputs.declare(&PartsBasedDetectorCell::pose_results_, "pose_results", "The results of object recognition");
+            outputs.declare(&PartsBasedDetectorCell::output_, "image", "The results of object recognition");
         }
 
         /*! @brief configure the detector state
@@ -127,9 +128,9 @@ namespace parts_based_detector {
             if (true) {
             	if (candidates.size() > 0) {
             		Candidate::sort(candidates);
-            		visualizer_->candidates(*color_, candidates, 1, true);
+            		visualizer_->candidates(*color_, candidates, 1, *output_, true);
             	} else {
-            		visualizer_->image(*color_);
+            		visualizer_->image(*color_, *output_);
             	}
                 cv::waitKey(30);
             }

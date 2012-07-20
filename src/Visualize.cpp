@@ -54,10 +54,9 @@ using namespace std;
  * @param display_confidence display the detection confidence above each bounding box
  * for each part
  */
-void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, int N, bool display_confidence) {
+void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, int N, Mat& canvas, bool display_confidence) {
 
 	// create a new canvas that we can modify
-	Mat canvas;
     cvtColor(im, canvas, CV_RGB2BGR);
 
 	// generate a set of colors to display. Do this in HSV then convert it
@@ -99,8 +98,8 @@ void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, i
  * @param display_confidence display the detection confidence above each bounding box
  * for each part
  */
-void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, bool display_confidence) {
-	Visualize::candidates(im, candidates, candidates.size(), display_confidence);
+void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, Mat& canvas, bool display_confidence) {
+	Visualize::candidates(im, candidates, candidates.size(), canvas, display_confidence);
 }
 
 /*! @brief visualize a single candidate overlaid on an image
@@ -110,19 +109,18 @@ void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, b
  * @param display_confidence display the detection confidence above each bounding box
  * for each part
  */
-void Visualize::candidates(const Mat& im, const Candidate& candidate, bool display_confidence) {
+void Visualize::candidates(const Mat& im, const Candidate& candidate, Mat& canvas, bool display_confidence) {
 
 	vector<Candidate> vec;
 	vec.push_back(candidate);
-	candidates(im, vec, display_confidence);
+	candidates(im, vec, canvas, display_confidence);
 }
 
 /*! @brief display the raw image with no overlay
  *
  * @param im the input image frame
  */
-void Visualize::image(const Mat& im) {
-    Mat canvas;
+void Visualize::image(const Mat& im, Mat& canvas) {
     cvtColor(im, canvas, CV_RGB2BGR);
 	imshow(name_, canvas);
 }

@@ -61,10 +61,10 @@ public:
 	Visualize(std::string name) : name_(name) { cv::namedWindow(name_, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED); }
 	virtual ~Visualize() {}
 	// public methods
-	void candidates(const cv::Mat& im, const vectorCandidate& candidates, bool display_confidence = false);
-	void candidates(const cv::Mat& im, const vectorCandidate& candidates, int N, bool display_confidence = false);
-	void candidates(const cv::Mat& im, const Candidate& candidate, bool display_confidence = true);
-	void image(const cv::Mat& im);
+	void candidates(const cv::Mat& im, const vectorCandidate& candidates, cv::Mat& canvas, bool display_confidence = false);
+	void candidates(const cv::Mat& im, const vectorCandidate& candidates, int N, cv::Mat& canvas, bool display_confidence = false);
+	void candidates(const cv::Mat& im, const Candidate& candidate, cv::Mat& canvas, bool display_confidence = true);
+	void image(const cv::Mat& im, cv::Mat& canvas);
 };
 
 #endif /* VISUALIZE_HPP_ */
