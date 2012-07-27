@@ -5,6 +5,7 @@ set(SRC_FILES   DepthConsistency.cpp
                 PartsBasedDetector.cpp 
                 StereoCameraModel.cpp
                 Visualize.cpp
+                nms.cpp
 )
 
 # build as a standalone executable
@@ -25,8 +26,6 @@ target_link_libraries(${PROJECT_NAME}   ${Boost_LIBRARIES}
                                         ${OpenCV_LIBS} 
                                         ${ZLIB_LIBRARIES} 
                                         ${MatlabIO_LIBRARIES}
-                                        ${opencv_imgproc_LIBRARIES}
-                                        ${opencv_core_LIBRARIES}
 )
 
 #install

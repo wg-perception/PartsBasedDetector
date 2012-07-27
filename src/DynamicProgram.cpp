@@ -364,7 +364,6 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 
 				// compute the distance transform
 				distanceTransform(score_in, cpart.defw(m), anchor, score_dt, Ix_dt, Iy_dt);
-				//cout << score_dt(Range(0,10), Range(0,10)) << endl << endl;
 				scoresp.push_back(score_dt);
 				Ixp.push_back(Ix_dt);
 				Iyp.push_back(Iy_dt);

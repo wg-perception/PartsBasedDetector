@@ -37,6 +37,7 @@
  */
 
 #include "PartsBasedDetector.hpp"
+#include "nms.hpp"
 #include <cstdio>
 using namespace cv;
 using namespace std;
@@ -82,7 +83,16 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vectorCandid
 	vector2DMat rootv, rooti;
 	dp_.min(parts_, pdf, Ix, Iy, Ik, rootv, rooti);
 
-	//cout << rootv[0][0](Range(0,10), Range(0,10)) << endl;
+	// suppress non-maximal candidates
+	for (int n = 0; n < rootv.size(); ++n) {
+		for (int c = 0; c < rootv[n].size(); ++c) {
+			Mat maxima;
+			nonMaximaSuppression(rootv[n][c], features_->scales()[n]*3, maxima);
+			rootv[n][c].setTo(-numeric_limits<T>::infinity(), maxima == 0);
+
+		}
+	}
+
 	// walk back down the tree to find the part locations
 	dp_.argmin(parts_, rootv, rooti, features_->scales(), Ix, Iy, Ik, candidates);
 

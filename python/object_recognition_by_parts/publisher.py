@@ -3,13 +3,13 @@ Module defining the Table Publisher
 """
 
 from ecto_ros import Mat2Image
-from ecto_ros.sensor_msgs import Publisher_Image
+from ecto_ros.ecto_sensor_msgs import Publisher_Image
 from object_recognition_core.io.sink import Sink
 import ecto
 
 ########################################################################################################################
 
-class TablePublisher(ecto.BlackBox):
+class Publisher(ecto.BlackBox):
     """
     Class publishing some outputs from the part based detection
     """
@@ -24,7 +24,7 @@ class TablePublisher(ecto.BlackBox):
         i.forward('image', cell_name='_image_converter', cell_key='image')
 
     def configure(self, p, _i, _o):
-        self._image_converter = Mat2Image()
+        self._image_converter = Mat2Image(swap_rgb=True)
         self._image_publisher = Publisher_Image(topic_name = 'by_parts_result')
 
     def connections(self):
@@ -34,12 +34,12 @@ class TablePublisher(ecto.BlackBox):
 
 ########################################################################################################################
 
-class TablePublisherSink(Sink):
+class PublisherSink(Sink):
 
     @classmethod
     def type_name(cls):
-        return 'table_publisher'
+        return 'by_parts_publisher'
 
     @classmethod
     def sink(self, *args, **kwargs):
-        return TablePublisher()
+        return Publisher()

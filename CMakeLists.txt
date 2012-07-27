@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 2.8.6)
 
 # -----------------------------------------------
 # USER-DEFINED VARIABLES
-option(BUILD_EXECUTABLE "Build as executable to test functionality"     OFF)
-option(BUILD_DOC        "Build documentation with Doxygen"              ON)
-option(USE_OPENMP       "Build with OpenMP support for multithreading"  ON)
+option(BUILD_EXECUTABLE "Build as executable to test functionality"     ON)
+option(BUILD_DOC        "Build documentation with Doxygen"              OFF )
+option(USE_OPENMP       "Build with OpenMP support for multithreading"  OFF)
 
 # --------------------
 # CATKIN

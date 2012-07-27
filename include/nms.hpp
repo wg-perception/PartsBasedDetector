@@ -31,40 +31,15 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  File:    Visualize.hpp
+ *  File:    nms.hpp
  *  Author:  Hilton Bristow
- *  Created: Jun 21, 2012
+ *  Created: Jul 25, 2012
  */
 
-#ifndef VISUALIZE_HPP_
-#define VISUALIZE_HPP_
+#ifndef NMS_HPP_
+#define NMS_HPP_
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <string>
-#include <vector>
-#include "Candidate.hpp"
-#include "types.hpp"
+void nonMaximaSuppression(const cv::Mat& src, const int sz, cv::Mat& dst, const cv::Mat mask=cv::Mat());
 
-/*! @class Visualize
- *  @brief visualize detection candidates
- *
- * visualize a collection of object detection candidates by rendering the
- * input image to screen, and overlaying the detection bounding boxes of
- * each of the parts, with optional confidence values
- */
-class Visualize {
-private:
-	//! the name of the OpenCV window
-	std::string name_;
-public:
-	Visualize() : name_("frame") {}
-	Visualize(std::string name) : name_(name) {}
-	virtual ~Visualize() {}
-	// public methods
-	void candidates(const cv::Mat& im, const vectorCandidate& candidates, cv::Mat& canvas, bool display_confidence = false);
-	void candidates(const cv::Mat& im, const vectorCandidate& candidates, int N, cv::Mat& canvas, bool display_confidence = false);
-	void candidates(const cv::Mat& im, const Candidate& candidate, cv::Mat& canvas, bool display_confidence = true);
-	void image(const cv::Mat& im);
-};
 
-#endif /* VISUALIZE_HPP_ */
+#endif /* NMS_HPP_ */

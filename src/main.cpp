@@ -45,10 +45,21 @@
 #include "MatlabIOModel.hpp"
 #include "Visualize.hpp"
 #include "types.hpp"
+#include "nms.hpp"
 using namespace cv;
 using namespace std;
 
 int main(int argc, char** argv) {
+
+	/*
+	Mat_<uint8_t> maxima;
+	Mat_<double> random(Size(10,10));
+	randn(random, 1, 1);
+	nonMaximaSuppression<double>(random, 3, maxima);
+	cout << random << endl;
+	cout << maxima << endl;
+	*/
+
 
 	// check arguments
 	if (argc != 3) printf("Usage: PartsBasedDetector model_file image_file\n");
@@ -74,8 +85,10 @@ int main(int argc, char** argv) {
 	// display the best candidates
 	Visualize visualize(model.name());
 	if (candidates.size() > 0) {
+        Mat canvas;
 		Candidate::sort(candidates);
-		visualize.candidates(im, candidates, 1, true);
+		visualize.candidates(im, candidates, canvas, true);
+        visualize.image(canvas);
 		waitKey();
 	}
 

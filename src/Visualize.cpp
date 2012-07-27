@@ -86,8 +86,6 @@ void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, i
 			if (display_confidence) putText(canvas, confidence, Point(box.x, box.y-5), FONT_HERSHEY_SIMPLEX, 0.5f, black, 2);
 		}
 	}
-
-	imshow(name_, canvas);
 }
 
 /*! @brief visualize all of the candidate part locations overlaid on an image
@@ -120,7 +118,9 @@ void Visualize::candidates(const Mat& im, const Candidate& candidate, Mat& canva
  *
  * @param im the input image frame
  */
-void Visualize::image(const Mat& im, Mat& canvas) {
+void Visualize::image(const Mat& im) {
+    Mat canvas;
     cvtColor(im, canvas, CV_RGB2BGR);
+	cv::namedWindow(name_, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED);
 	imshow(name_, canvas);
 }

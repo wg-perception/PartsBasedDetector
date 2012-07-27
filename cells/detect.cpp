@@ -130,7 +130,7 @@ namespace parts_based_detector {
             		Candidate::sort(candidates);
             		visualizer_->candidates(*color_, candidates, 1, *output_, true);
             	} else {
-            		visualizer_->image(*color_, *output_);
+                    cvtColor(*color_, *output_, CV_RGB2BGR);
             	}
                 cv::waitKey(30);
             }
