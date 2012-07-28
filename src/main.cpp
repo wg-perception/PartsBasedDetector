@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
 	vector<Candidate> candidates;
 	pbd.detect(im, candidates);
 	printf("Detection time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
-	printf("Number of candidates: %d\n", candidates.size());
+	printf("Number of candidates: %ld\n", candidates.size());
 
 	// display the best candidates
 	Visualize visualize(model->name());
