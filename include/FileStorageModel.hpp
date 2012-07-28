@@ -39,6 +39,7 @@
 #ifndef FILESTORAGEMODEL_HPP_
 #define FILESTORAGEMODEL_HPP_
 
+#include <sstream>
 #include "Model.hpp"
 
 /*! @class FileStorageModel
@@ -49,11 +50,8 @@ public:
 	FileStorageModel() {}
 	virtual ~FileStorageModel() {}
 	// persistence methods
-	bool serialize(std::string filename) { /*TODO: implement */ return true; }
-
-	bool deserialize(std::string filename) { /*TODO: implement */ return true;
-
-	}
+	bool deserialize(std::string filename);
+	bool serialize(std::string filename);
 };
 
 #endif /* FILESTORAGEMODEL_HPP_ */

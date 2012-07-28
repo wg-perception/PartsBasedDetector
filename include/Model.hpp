@@ -89,12 +89,12 @@ protected:
 	int binsize_;
 	//! the length of the feature vector in each bin
 	int flen_;
-	//! the number of orientations pin HOG feature bin
+	//! the number of orientations per HOG feature bin
 	int norient_;
 
 public:
-	Model();
-	virtual ~Model();
+	Model() {}
+	virtual ~Model() {}
 	vectorMat& filters(void) { return filtersw_; }
 	vectori& filtersi(void) { return filtersi_; }
 	vector2Df& def(void) { return defw_; }
@@ -108,13 +108,17 @@ public:
 	vector2Di& parentid(void) { return parentid_; }
 	std::string name(void) { return name_; }
 	vectori& conn(void) { return conn_; }
-	int nparts(void) const { return nparts_; }
-	int nmixtures(void) const { return nmixtures_; }
-	float thresh(void) const { return thresh_; }
-	int binsize(void) const { return binsize_; }
-	int nscales(void) const { return nscales_; }
-	int flen(void) const { return flen_; }
-	int norient(void) const { return norient_; }
+	const int nparts(void) const { return nparts_; }
+	const int nmixtures(void) const { return nmixtures_; }
+	const float thresh(void) const { return thresh_; }
+	const int binsize(void) const { return binsize_; }
+	const int nscales(void) const { return nscales_; }
+	const int flen(void) const { return flen_; }
+	const int norient(void) const { return norient_; }
+	const int ncomponents(void) const { return filterid_.size(); }
+
+	virtual bool serialize(std::string filename) = 0;
+	virtual bool deserialize(std::string filename) = 0;
 };
 
 #endif /* MODEL_HPP_ */

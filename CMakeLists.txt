@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 2.8.6)
 # -----------------------------------------------
 # USER-DEFINED VARIABLES
 option(BUILD_EXECUTABLE "Build as executable to test functionality"     ON)
-option(BUILD_DOC        "Build documentation with Doxygen"              OFF )
-option(USE_OPENMP       "Build with OpenMP support for multithreading"  OFF)
+option(BUILD_DOC        "Build documentation with Doxygen"              OFF)
+option(USE_OPENMP       "Build with OpenMP support for multithreading"  ON)
 
 # --------------------
 # CATKIN
@@ -32,6 +32,11 @@ else()
     # find cvmatio manually
     include_directories(../cvmatio/include)
     find_library(MatlabIO_LIBRARIES cvmatio PATHS ../cvmatio/lib)
+    if (MatlabIO_LIBRARIES)
+        set(MatlabIO_FOUND ON)
+    else()
+        set(MatlabIO_FOUND OFF)
+    endif()
 endif()
 
 # --------------------
@@ -91,3 +96,19 @@ if (${ecto_FOUND} AND ${object_recognition_core_FOUND})
     add_subdirectory(cells)
     add_subdirectory(python)
 endif()
+
+
+# --------------------
+# Build summary
+message("")
+message("---------------------------------------------")
+message("PartsBasedDetector Configuration Summary")
+message("")
+message("Build as executable:           ${BUILD_EXECUTABLE}")
+message("Build with documentation:      ${BUILD_DOC}")
+message("Build with threading (OpenMP): ${USE_OPENMP}")
+message("Build with MatlabIO support:   ${MatlabIO_FOUND}")
+message("Build type:                    ${CMAKE_BUILD_TYPE}")
+message("")
+message("---------------------------------------------")
+message("")

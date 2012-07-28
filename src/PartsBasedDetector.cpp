@@ -89,7 +89,6 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vectorCandid
 			Mat maxima;
 			nonMaximaSuppression(rootv[n][c], features_->scales()[n]*3, maxima);
 			rootv[n][c].setTo(-numeric_limits<T>::infinity(), maxima == 0);
-
 		}
 	}
 

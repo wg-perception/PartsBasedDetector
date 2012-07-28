@@ -84,8 +84,8 @@ public:
 	}
 	virtual ~HOGFeatures() {}
 	// get methods
-	int binsize(void) { return binsize_; }
-	int nscales(void) { return nscales_; }
+	int binsize(void) const { return binsize_; }
+	int nscales(void) const { return nscales_; }
 	vectorf scales(void) const { return scales_; }
 	void setFilters(const vectorMat& filters);
 	void pyramid(const cv::Mat& im, vectorMat& pyrafeatures);

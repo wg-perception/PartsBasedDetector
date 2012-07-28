@@ -40,9 +40,14 @@
 #include <cstdio>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/filesystem.hpp>
 #include "PartsBasedDetector.hpp"
 #include "Candidate.hpp"
-#include "MatlabIOModel.hpp"
+#include "FileStorageModel.hpp"
+#ifdef WITH_MATLABIO
+	#include "MatlabIOModel.hpp"
+#endif
 #include "Visualize.hpp"
 #include "types.hpp"
 #include "nms.hpp"
@@ -51,26 +56,33 @@ using namespace std;
 
 int main(int argc, char** argv) {
 
-	/*
-	Mat_<uint8_t> maxima;
-	Mat_<double> random(Size(10,10));
-	randn(random, 1, 1);
-	nonMaximaSuppression<double>(random, 3, maxima);
-	cout << random << endl;
-	cout << maxima << endl;
-	*/
-
-
 	// check arguments
 	if (argc != 3) printf("Usage: PartsBasedDetector model_file image_file\n");
 
-	// create the model object and deserialize it
-	MatlabIOModel model;
-	model.deserialize(argv[1]);
+	// determine the type of model to read
+	boost::scoped_ptr<Model> model;
+	string ext = boost::filesystem::path(argv[1]).extension().c_str();
+	if (ext.compare(".xml") == 0 || ext.compare(".yaml") == 0) {
+		model.reset(new FileStorageModel);
+	}
+#ifdef WITH_MATLABIO
+	else if (ext.compare(".mat") == 0) {
+		model.reset(new MatlabIOModel);
+	}
+#endif
+	else {
+		printf("Unsupported model format: %s\n", ext.c_str());
+		exit(-1);
+	}
+	bool ok = model->deserialize(argv[1]);
+	if (!ok) {
+		printf("Error deserializing file\n");
+		exit(-1);
+	}
 
 	// create the PartsBasedDetector and distribute the model parameters
 	PartsBasedDetector<float> pbd;
-	pbd.distributeModel(model);
+	pbd.distributeModel(*model);
 
 	// load the image from file
 	Mat im = imread(argv[2]);
@@ -83,7 +95,7 @@ int main(int argc, char** argv) {
 	printf("Number of candidates: %d\n", candidates.size());
 
 	// display the best candidates
-	Visualize visualize(model.name());
+	Visualize visualize(model->name());
 	if (candidates.size() > 0) {
         Mat canvas;
 		Candidate::sort(candidates);

@@ -54,7 +54,7 @@ using namespace std;
  * @param display_confidence display the detection confidence above each bounding box
  * for each part
  */
-void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, int N, Mat& canvas, bool display_confidence) {
+void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, int N, Mat& canvas, bool display_confidence) const {
 
 	// create a new canvas that we can modify
     cvtColor(im, canvas, CV_RGB2BGR);
@@ -96,7 +96,7 @@ void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, i
  * @param display_confidence display the detection confidence above each bounding box
  * for each part
  */
-void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, Mat& canvas, bool display_confidence) {
+void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, Mat& canvas, bool display_confidence) const {
 	Visualize::candidates(im, candidates, candidates.size(), canvas, display_confidence);
 }
 
@@ -107,7 +107,7 @@ void Visualize::candidates(const Mat& im, const vector<Candidate>& candidates, M
  * @param display_confidence display the detection confidence above each bounding box
  * for each part
  */
-void Visualize::candidates(const Mat& im, const Candidate& candidate, Mat& canvas, bool display_confidence) {
+void Visualize::candidates(const Mat& im, const Candidate& candidate, Mat& canvas, bool display_confidence) const {
 
 	vector<Candidate> vec;
 	vec.push_back(candidate);
@@ -118,9 +118,9 @@ void Visualize::candidates(const Mat& im, const Candidate& candidate, Mat& canva
  *
  * @param im the input image frame
  */
-void Visualize::image(const Mat& im) {
+void Visualize::image(const Mat& im) const {
     Mat canvas;
     cvtColor(im, canvas, CV_RGB2BGR);
-	cv::namedWindow(name_, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED);
+	namedWindow(name_, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED);
 	imshow(name_, canvas);
 }
