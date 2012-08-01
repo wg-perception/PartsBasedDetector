@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
 	if (candidates.size() > 0) {
         Mat canvas;
 		Candidate::sort(candidates);
-		visualize.candidates(im, candidates, canvas, true);
+		visualize.candidates(im, candidates, 1, canvas, true);
         visualize.image(canvas);
 		waitKey();
 	}

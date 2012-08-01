@@ -423,7 +423,7 @@ void HOGFeatures<T>::setFilters(const vectorMat& filters) {
 	filters_.resize(N);
 
 	// split each filter into separate channels, and create a filter engine
-	const int C = filters[0].cols/filters[0].rows;
+	const int C = flen_;//filters[0].cols/filters[0].rows;
 	for (int n = 0; n < N; ++n) {
 		vectorMat filtervec;
 		std::vector<Ptr<FilterEngine> > filter_engines(C);

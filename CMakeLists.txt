@@ -32,15 +32,19 @@ else()
     # find cvmatio manually
     include_directories(../cvmatio/include)
     find_library(MatlabIO_LIBRARIES cvmatio PATHS ../cvmatio/lib)
-    if (MatlabIO_LIBRARIES)
-        set(MatlabIO_FOUND ON)
-    else()
-        set(MatlabIO_FOUND OFF)
-    endif()
 endif()
+
 
 # --------------------
 # COMMON
+
+# check if the MatlabIO dependency was successfully found
+if (MatlabIO_LIBRARIES)
+    set(MatlabIO_FOUND ON)
+else()
+    set(MatlabIO_FOUND OFF)
+endif()
+
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING
         "Choose the type of build. Options are: None, Debug, Release, RelWithDebInfo, MinSizeRel"

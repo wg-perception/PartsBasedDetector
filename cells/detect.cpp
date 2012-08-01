@@ -5,7 +5,7 @@
 #include <object_recognition_core/common/pose_result.h>
 #include <object_recognition_core/db/ModelReader.h>
 #include "PartsBasedDetector.hpp"
-#include "MatlabIOModel.hpp"
+#include "FileStorageModel.hpp"
 #include "Visualize.hpp"
 
 using ecto::tendrils;
@@ -94,7 +94,7 @@ namespace parts_based_detector {
         configure(const tendrils& params, const tendrils& inputs, const tendrils& outputs) {
 
             // create the model object and deserialize it
-            MatlabIOModel model;
+            FileStorageModel model;
             model.deserialize(*model_file_);
 
             // create the visualizer
@@ -121,9 +121,7 @@ namespace parts_based_detector {
             std::cout << "detector: process" << std::endl;
 
             std::vector<Candidate> candidates;
-            try {
-                detector_->detect(*color_, *depth_, candidates);
-            } catch(const cv::Exception& e) {}
+            detector_->detect(*color_, *depth_, candidates);
 
             if (true) {
             	if (candidates.size() > 0) {
