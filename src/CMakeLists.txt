@@ -8,10 +8,11 @@ if (MatlabIO_FOUND)
                     FileStorageModel.cpp
                     HOGFeatures.cpp 
                     MatlabIOModel.cpp
+                    nms.cpp
                     PartsBasedDetector.cpp 
+                    SearchSpacePruning.cpp
                     StereoCameraModel.cpp
                     Visualize.cpp
-                    nms.cpp
     )
 
     # build as a standalone executable

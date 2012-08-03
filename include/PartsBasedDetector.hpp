@@ -47,6 +47,7 @@
 #include "Candidate.hpp"
 #include "HOGFeatures.hpp"
 #include "DynamicProgram.hpp"
+#include "SearchSpacePruning.hpp"
 
 /*! @mainpage PartsBasedDetector
  *
@@ -156,6 +157,8 @@ private:
 	DynamicProgram<T> dp_;
 	//! the tree of Parts
 	Parts parts_;
+	//! the search space pruner
+	SearchSpacePruning<T> ssp_;
 public:
 	PartsBasedDetector() {}
 	virtual ~PartsBasedDetector() {}
