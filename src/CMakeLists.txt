@@ -7,6 +7,7 @@ if (MatlabIO_FOUND)
                     DynamicProgram.cpp
                     FileStorageModel.cpp
                     HOGFeatures.cpp 
+                    Math.cpp
                     MatlabIOModel.cpp
                     nms.cpp
                     PartsBasedDetector.cpp 
@@ -49,6 +50,7 @@ else()
                     DynamicProgram.cpp
                     FileStorageModel.cpp
                     HOGFeatures.cpp 
+                    Math.cpp
                     PartsBasedDetector.cpp 
                     StereoCameraModel.cpp
                     Visualize.cpp

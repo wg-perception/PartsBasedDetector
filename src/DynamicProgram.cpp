@@ -39,122 +39,10 @@
 #include <cstdio>
 #include <iostream>
 #include <limits>
+#include "Math.hpp"
 #include "DynamicProgram.hpp"
 using namespace cv;
 using namespace std;
-
-/*! @brief find nonzero elements in a matrix
- *
- * Find all nonzero elements in a matrix of type CV_8U, and return
- * the indieces (x,y) of the nonzero pixels in an array of Point
- *
- * @param binary the input image (usually the output of a comparison
- * operation such as compare(), >, ==, etc)
- * @param idx the output vector of nonzero indices
- */
-void find(const Mat& binary, vector<Point>& idx) {
-
-	assert(binary.depth() == CV_8U);
-	int M = binary.rows;
-	int N = binary.cols;
-	for (int m = 0; m < M; ++m) {
-		const unsigned char* bin_ptr = binary.ptr<unsigned char>(m);
-		for (int n = 0; n < N; ++n) if (bin_ptr[n] > 0) idx.push_back(Point(n,m));
-	}
-}
-
-
-/*! @brief Reduce a vector of matrices via indexing
- *
- * Reduce a 3D matrix (represented as a vector of matrices using cv::split() )
- * to a 2D matrix by choosing a single element from each ray cast through the
- * third dimension. This loosely emulates Matlab's matrix indexing functionality
- *
- * out[i][j] == in[i][j][ idx[i][j] ], forall i,j
- *
- * @param in the input 3D matrix
- * @param idx the index to choose at each element (idx.size() == in[k].size() forall k)
- * @param out the flatten 2D output matrix
- */
-template<typename T> template<typename IT>
-void DynamicProgram<T>::reducePickIndex(const vectorMat& in, const Mat& idx, Mat& out) {
-
-	// error checking
-	int K = in.size();
-	if (K == 1) { in[0].copyTo(out); return; }
-	double minv, maxv;
-	minMaxLoc(idx, &minv, &maxv);
-	assert(minv >= 0 && maxv < K);
-	for (int k = 0; k < K; ++k) assert(in[k].size() == idx.size());
-
-	// allocate the output array
-	out.create(in[0].size(), in[0].type());
-
-	// perform the indexing
-	int M = in[0].rows;
-	int N = in[0].cols;
-	vector<const IT*> in_ptr(K);
-	if (in[0].isContinuous()) { N = M*N; M = 1; }
-	for (int m = 0; m < M; ++m) {
-		IT* out_ptr = out.ptr<IT>(m);
-		const int*   idx_ptr = idx.ptr<int>(m);
-		for (int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<IT>(m);
-		for (int n = 0; n < N; ++n) {
-			out_ptr[n] = in_ptr[idx_ptr[n]][n];
-		}
-	}
-}
-
-
-/*! @brief Reduce a vector of matrices via elementwise max
- *
- * Reduce a 3D matrix (represented as a vector of matrices using cv::split() )
- * to a 2D matrix by taking the elementwise maximum across the 3D dimension.
- * Therefore in.size() == out.size() && out.channels() == 1
- *
- * @param in the input 3D matrix
- * @param maxv the output 2D matrix, containing the maximal values
- * @param maxi the output 2D matrix, containing the maximal indices
- */
-template<typename T>
-void DynamicProgram<T>::reduceMax(const vectorMat& in, Mat& maxv, Mat& maxi) {
-
-	// TODO: flatten the input into a multi-channel matrix for faster indexing
-	// error checking
-	int K = in.size();
-	if (K == 1) {
-		// just return
-		in[0].copyTo(maxv);
-		maxi = Mat::zeros(in[0].size(), DataType<int>::type);
-		return;
-	}
-
-	assert (K > 1);
-	for (int k = 1; k < K; ++k) assert(in[k].size() == in[k-1].size());
-
-	// allocate the output matrices
-	maxv.create(in[0].size(), in[0].type());
-	maxi.create(in[0].size(), DataType<int>::type);
-
-	int M = in[0].rows;
-	int N = in[0].cols;
-
-	vector<const T*> in_ptr(K);
-	if (in[0].isContinuous()) { N = M*N; M = 1; }
-	for (int m = 0; m < M; ++m) {
-		T* maxv_ptr = maxv.ptr<T>(m);
-		int* maxi_ptr = maxi.ptr<int>(m);
-		for (int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<T>(m);
-		for (int n = 0; n < N; ++n) {
-			T v = -numeric_limits<T>::infinity();
-			int i = 0;
-			for (int k = 0; k < K; ++k) if (in_ptr[k][n] > v) { i = k; v = in_ptr[k][n]; }
-			maxi_ptr[n] = i;
-			maxv_ptr[n] = v;
-		}
-	}
-}
-
 
 /*! @brief the square of an integer
  *
@@ -363,44 +251,10 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 				Point anchor = cpart.anchor(m);
 
 				// compute the distance transform
-				distanceTransform(score_in, cpart.defw(m), anchor, score_dt, Ix_dt, Iy_dt);
+				//distanceTransform(score_in, cpart.defw(m), anchor, score_dt, Ix_dt, Iy_dt);
 				scoresp.push_back(score_dt);
 				Ixp.push_back(Ix_dt);
 				Iyp.push_back(Iy_dt);
-				//cout << score_dt(Range(0,10), Range(0,10)) << endl;
-
-				// calculate a valid region of interest for the scores
-				/*
-				int X = score_in.cols;
-				int Y = score_in.rows;
-				int xmin = std::max(std::min(anchor.x, X), 0);
-				int ymin = std::max(std::min(anchor.y, Y), 0);
-				int xmax = std::min(std::max(anchor.x+X, 0), X);
-				int ymax = std::min(std::max(anchor.y+Y, 0), Y);
-				int xoff = std::max(-anchor.x,    0);
-				int yoff = std::max(-anchor.y,    0);
-
-				// shift the score by the Part's offset from its parent
-				Mat scorem = -numeric_limits<T>::infinity() * Mat::ones(score_dt.size(), score_dt.type());
-				Mat Ixm    = Mat::zeros(Ix_dt.size(), Ix_dt.type());
-				Mat Iym    = Mat::zeros(Iy_dt.size(), Iy_dt.type());
-				if (xoff < X && yoff < Y && (ymax - ymin) > 0 && (xmax - xmin) > 0) {
-					Mat score_dt_range 	= score_dt(Range(ymin, ymax),         Range(xmin, xmax));
-					Mat score_range    	= scorem(Range(yoff, yoff+ymax-ymin), Range(xoff, xoff+xmax-xmin));
-					Mat Ix_dt_range 	= Ix_dt(Range(ymin, ymax),            Range(xmin, xmax));
-					Mat Ixm_range 		= Ixm(Range(yoff, yoff+ymax-ymin),    Range(xoff, xoff+xmax-xmin));
-					Mat Iy_dt_range 	= Iy_dt(Range(ymin, ymax),            Range(xmin, xmax));
-					Mat Iym_range 		= Iym(Range(yoff, yoff+ymax-ymin),    Range(xoff, xoff+xmax-xmin));
-					score_dt_range.copyTo(score_range);
-					Ix_dt_range.copyTo(Ixm_range);
-					Iy_dt_range.copyTo(Iym_range);
-				}
-
-				// push the scores onto the intermediate vectors
-				scoresp.push_back(scorem);
-				Ixp.push_back(Ixm);
-				Iyp.push_back(Iym);
-				*/
 			}
 
 			nmixtures = cpart.parent().nmixtures();
@@ -413,12 +267,12 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 				}
 				// compute the max over the mixtures
 				Mat maxv, maxi;
-				reduceMax(weighted, maxv, maxi);
+				Math::reduceMax<T>(weighted, maxv, maxi);
 
 				// choose the best indices
 				Mat Ixm, Iym;
-				reducePickIndex<int>(Ixp, maxi, Ixm);
-				reducePickIndex<int>(Iyp, maxi, Iym);
+				Math::reducePickIndex<int>(Ixp, maxi, Ixm);
+				Math::reducePickIndex<int>(Iyp, maxi, Iym);
 				Ix[n][c][p][m] = Ixm;
 				Iy[n][c][p][m] = Iym;
 				Ik[n][c][p][m] = maxi;
@@ -427,26 +281,21 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 				ComponentPart parent = cpart.parent();
 				if (parent.score(ncscores,m).empty()) parent.score(scores[n],m).copyTo(parent.score(ncscores,m));
 				parent.score(ncscores,m) += maxv;
-				//cout << parent.score(ncscores,m)(Range(0,10),Range(0,10)) << endl << endl;
 				if (parent.self() == 0) {
 					ComponentPart root = parts.component(c);
-					//cout << root.score(ncscores,m)(Range(0,10),Range(0,10)) << endl << endl;
 				}
-				//cout <<parent.self() << endl;
 			}
 		}
 		// add bias to the root score and find the best mixture
 		ComponentPart root = parts.component(c);
-		//cout << root.self() << endl;
 		Mat rncscore = root.score(ncscores,0);
-		//cout << rncscore(Range(1,10),Range(1,10)) << endl;
 		T bias = root.bias(0)[0];
 		vectorMat weighted;
 		// weight each of the child scores
 		for (int m = 0; m < root.nmixtures(); ++m) {
 			weighted.push_back(root.score(ncscores,m) + bias);
 		}
-		reduceMax(weighted, rootv[n][c], rooti[n][c]);
+		Math::reduceMax<T>(weighted, rootv[n][c], rooti[n][c]);
 	}
 }
 
@@ -486,7 +335,7 @@ void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vec
 			Mat over_thresh = rootv[n][c] > thresh_;
 			Mat rootmix     = rooti[n][c];
 			vectorPoint inds;
-			find(over_thresh, inds);
+			Math::find(over_thresh, inds);
 
 			for (int i = 0; i < inds.size(); ++i) {
 				Candidate candidate;
