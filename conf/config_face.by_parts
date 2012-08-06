@@ -1,0 +1,30 @@
+source1:
+  type: ros_kinect
+  rgb_frame_id: '/camera_rgb_optical_frame'
+
+sink1:
+  type: 'publisher'
+
+sink2:
+  type: 'by_parts_publisher'
+  package: 'object_recognition_by_parts'
+
+pipeline1:
+  method: 'by_parts'
+  package: 'object_recognition_by_parts'
+  submethod: 'HOG'
+  sources: [source1]
+  sinks: [sink1, sink2]
+  parameters:
+    db:
+      type: 'CouchDB'
+      root: 'http://bwl:5984'
+      collection: 'object_recognition'
+
+    # The list of object_ids to analyze
+    #object_ids: "all"
+    object_ids: ['1acfa3a425f5637f958c0eaff31fe42d']
+    visualize: true
+    extra:
+        model_file: "/u/hbristow/willow/PartsBasedDetector/PartsBasedDetector/models/Face_68parts.xml"
+        use_cuda: false
