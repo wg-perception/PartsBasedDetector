@@ -53,6 +53,7 @@ public:
 	static void find(const cv::Mat& binary, std::vector<cv::Point>& idx);
 	template<typename T> static void reduceMax(const vectorMat& in, cv::Mat& maxv, cv::Mat& maxi);
 	template<typename T> static void reducePickIndex(const vectorMat& in, const cv::Mat& idx, cv::Mat& out);
+	template<typename T> static T median(const cv::Mat& mat);
 };
 
 #endif /* MATH_HPP_ */

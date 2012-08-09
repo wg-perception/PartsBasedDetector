@@ -251,7 +251,10 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 				Point anchor = cpart.anchor(m);
 
 				// compute the distance transform
-				//distanceTransform(score_in, cpart.defw(m), anchor, score_dt, Ix_dt, Iy_dt);
+				distanceTransform(score_in, cpart.defw(m), anchor, score_dt, Ix_dt, Iy_dt);
+				//score_in.copyTo(score_dt);
+				//Ix_dt = Mat::zeros(score_dt.size(), DataType<int>::type);
+				//Iy_dt = Mat::zeros(score_dt.size(), DataType<int>::type);
 				scoresp.push_back(score_dt);
 				Ixp.push_back(Ix_dt);
 				Iyp.push_back(Iy_dt);
@@ -339,6 +342,7 @@ void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vec
 
 			for (int i = 0; i < inds.size(); ++i) {
 				Candidate candidate;
+				candidate.setComponent(c);
 				vectori     xv(nparts);
 				vectori     yv(nparts);
 				vectori     mv(nparts);
@@ -378,6 +382,8 @@ void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vec
 		}
 	}
 }
+
+
 
 // declare all specializations of the template (this must be the last declaration in the file)
 template class DynamicProgram<float>;

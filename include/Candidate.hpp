@@ -56,6 +56,8 @@ private:
 	std::vector<cv::Rect> parts_;
 	//! the confidence scores of the parts
 	vectorf confidence_;
+	//! the model component the candidate belongs to
+	int component_;
 public:
 	Candidate() {}
 	virtual ~Candidate() {}
@@ -67,6 +69,12 @@ public:
 	void addPart(cv::Rect r, float confidence) { parts_.push_back(r); confidence_.push_back(confidence); }
 	//! get the root score of the detection. Using for sorting
 	const float score(void) const { return (confidence_.size() > 0) ? confidence_[0] : -std::numeric_limits<double>::infinity(); }
+	//! set the root score of the detection
+	void setScore(float confidence) { if (confidence_.size() == 0) confidence_.resize(1); confidence_[0] = confidence; }
+	//! set the candidate component
+	void setComponent(int c) { component_ = c; }
+	//! get the candidate component
+	int component(void) { return component_; }
 	//! descending comparison method for ordering objects of type Candidate
 	static bool descending(Candidate c1, Candidate c2) { return c1.score() > c2.score(); }
 

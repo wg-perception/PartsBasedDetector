@@ -37,9 +37,28 @@
  */
 
 #include <assert.h>
+#include <algorithm>
+#include <iostream>
 #include "Math.hpp"
 using namespace std;
 using namespace cv;
+
+/*! @brief return the median value of a matrix
+ *
+ * @param mat the input matrix
+ * @return the median value, of the same precision as the input
+ */
+template<typename T>
+T Math::median(const Mat& mat) {
+	Mat scratch;
+	mat.copyTo(scratch);
+	MatIterator_<T> first = scratch.begin<T>();
+	MatIterator_<T> last  = scratch.end<T>();
+	MatIterator_<T> middle = first + std::distance(first, last)/2;
+	std::nth_element(first, middle, last);
+	return *middle;
+}
+
 
 /*! @brief find nonzero elements in a matrix
  *
@@ -161,3 +180,6 @@ template void Math::reducePickIndex<double>(const vectorMat& in, const Mat& idx,
 template void Math::reduceMax<int>(const vectorMat& in, Mat& maxv, Mat& maxi);
 template void Math::reduceMax<float>(const vectorMat& in, Mat& maxv, Mat& maxi);
 template void Math::reduceMax<double>(const vectorMat& in, Mat& maxv, Mat& maxi);
+template int Math::median<int>(const Mat& mat);
+template float Math::median<float>(const Mat& mat);
+template double Math::median<double>(const Mat& mat);

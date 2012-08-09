@@ -57,7 +57,10 @@ using namespace std;
 int main(int argc, char** argv) {
 
 	// check arguments
-	if (argc != 3) printf("Usage: PartsBasedDetector model_file image_file\n");
+	if (argc != 3 && argc != 4) {
+		printf("Usage: PartsBasedDetector model_file image_file [depth_file]\n");
+		exit(-1);
+	}
 
 	// determine the type of model to read
 	boost::scoped_ptr<Model> model;
@@ -72,12 +75,12 @@ int main(int argc, char** argv) {
 #endif
 	else {
 		printf("Unsupported model format: %s\n", ext.c_str());
-		exit(-1);
+		exit(-2);
 	}
 	bool ok = model->deserialize(argv[1]);
 	if (!ok) {
 		printf("Error deserializing file\n");
-		exit(-1);
+		exit(-3);
 	}
 
 	// create the PartsBasedDetector and distribute the model parameters
@@ -85,12 +88,17 @@ int main(int argc, char** argv) {
 	pbd.distributeModel(*model);
 
 	// load the image from file
+	Mat_<float> depth;
 	Mat im = imread(argv[2]);
+	if (argc == 4) {
+		depth = imread(argv[3], CV_LOAD_IMAGE_ANYDEPTH);
+		depth = depth / 1000.0f;
+	}
 
 	// detect potential candidates in the image
 	double t = (double)getTickCount();
 	vector<Candidate> candidates;
-	pbd.detect(im, candidates);
+	pbd.detect(im, depth, candidates);
 	printf("Detection time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 	printf("Number of candidates: %ld\n", candidates.size());
 
@@ -99,7 +107,7 @@ int main(int argc, char** argv) {
 	if (candidates.size() > 0) {
         Mat canvas;
 		Candidate::sort(candidates);
-		visualize.candidates(im, candidates, 1, canvas, true);
+		visualize.candidates(im, candidates, canvas, true);
         visualize.image(canvas);
 		waitKey();
 	}

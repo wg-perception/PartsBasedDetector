@@ -95,6 +95,10 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vectorCandid
 	dp_.argmin(parts_, rootv, rooti, features_->scales(), Ix, Iy, Ik, candidates);
 	printf("DP argmin time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
+	if (!depth.empty()) {
+		ssp_.filterCandidatesByDepth(parts_, candidates, depth, 0.03);
+	}
+
 }
 
 /*! @brief Distribute the model parameters to the PartsBasedDetector classes

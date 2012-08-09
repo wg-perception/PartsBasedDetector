@@ -39,6 +39,8 @@
 #include "nms.hpp"
 #include "SearchSpacePruning.hpp"
 #include "Math.hpp"
+#include <limits>
+#include <iostream>
 using namespace cv;
 using namespace std;
 
@@ -105,9 +107,32 @@ void SearchSpacePruning<T>::filterResponseByDepth(vector2DMat& pdfs, const vecto
 		// given the 3d width of the part, the focal length of the camera,
 		// and the width of the part in the image
 		float Z = fx*X/scales[n];
-
-
 	}
+}
+
+template<typename T>
+void SearchSpacePruning<T>::filterCandidatesByDepth(Parts& parts, vectorCandidate& candidates, const Mat& depth, const float zfactor) {
+
+	vectorCandidate new_candidates;
+	const int N = candidates.size();
+	for (int n = 0; n < N; ++n) {
+		const int c = candidates[n].component();
+		const int nparts = parts.nparts(c);
+		const vector<Rect>& boxes = candidates[n].parts();
+		for (int p = nparts-1; p >= 1; --p) {
+			ComponentPart part = parts.component(c,p);
+			Point anchor = part.anchor(0);
+			Rect child   = boxes[part.self()];
+			Rect parent  = boxes[part.parent().self()];
+			T cmed_depth = Math::median<T>(depth(child));
+			T pmed_depth = Math::median<T>(depth(parent));
+			if (cmed_depth > 0 && pmed_depth > 0) {
+				if (abs(cmed_depth-pmed_depth) > norm(anchor)*zfactor) break;
+			}
+			if (p == 1) new_candidates.push_back(candidates[n]);
+		}
+	}
+	candidates = new_candidates;
 }
 
 // declare all specializations of the template (this must be the last declaration in the file)

@@ -41,6 +41,8 @@
 
 #include <opencv2/core/core.hpp>
 #include <limits>
+#include "Candidate.hpp"
+#include "Parts.hpp"
 #include "types.hpp"
 
 /*
@@ -53,6 +55,7 @@ public:
 	virtual ~SearchSpacePruning() {}
 	void nonMaxSuppression(vector2DMat& rootv, const vectorf& scales);
 	void filterResponseByDepth(vector2DMat& pdfs, const std::vector<cv::Size>& fsizes, const cv::Mat& depth, const vectorf& scales, const float X, const float fx);
+	void filterCandidatesByDepth(Parts& parts, vectorCandidate& candidates, const cv::Mat& depth, const float zfactor);
 };
 
 #endif /* SEARCHSPACEPRUNING_HPP_ */
