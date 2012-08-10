@@ -1,0 +1,13 @@
+<manifest>
+  <description brief="thing">
+    THING
+  </description>
+  <author>Not me!</author>
+  <license>Driver's</license>
+  <review status="unreviewed" notes="Yeah, right."/>
+
+  <export>
+    <cpp cflags="-I${prefix}/include"
+         lflags="-L${prefix}/lib -lobject_recognition_by_parts"/>
+  </export>
+</manifest>
