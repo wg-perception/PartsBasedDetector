@@ -165,6 +165,7 @@ public:
 	PartsBasedDetector() {}
 	virtual ~PartsBasedDetector() {}
 	// public methods
+	const std::string& name(void) const { return name_; }
 	void detect(const cv::Mat& im, std::vector<Candidate>& candidates);
 	void detect(const cv::Mat& im, const cv::Mat& depth, std::vector<Candidate>& candidates);
 	void distributeModel(Model& model);

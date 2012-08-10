@@ -94,19 +94,11 @@ public:
 	 * @return a single bounding Rect
 	 */
 	cv::Rect boundingBox(void) const {
-		int minx =  std::numeric_limits<int>::max();
-		int miny =  std::numeric_limits<int>::max();
-		int maxx = -std::numeric_limits<int>::max();
-		int maxy = -std::numeric_limits<int>::max();
-		const unsigned int nparts = parts_.size();
-		for (unsigned int n = 0; n < nparts; ++n) {
-			const cv::Rect r = parts_[n];
-			if (r.x < minx) minx = r.x;
-			if (r.y < miny) miny = r.y;
-			if (r.x + r.width > maxx) maxx = r.x + r.width;
-			if (r.y + r.height > maxy) maxy = r.y + r.height;
+		cv::Rect hull = parts_[0];
+		for (unsigned int n = 0; n < parts_.size(); ++n) {
+			hull = hull | parts_[n];
 		}
-		return cv::Rect(minx, miny, maxx-minx, maxy-miny);
+		return hull;
 	}
 
 	/*! @brief create a single bounding box around the detection from mean and standard deviation

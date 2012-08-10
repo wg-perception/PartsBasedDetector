@@ -51,6 +51,7 @@
 #include "Visualize.hpp"
 #include "types.hpp"
 #include "nms.hpp"
+#include "Rect3.hpp"
 using namespace cv;
 using namespace std;
 

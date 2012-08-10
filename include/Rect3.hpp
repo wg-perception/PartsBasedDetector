@@ -77,6 +77,11 @@ public:
 	Rect3_<T>& operator & (const Rect3_<T> r) { return intersection(this, r); }
 	//! convex hull operator
 	Rect3_<T>& operator | (const Rect3_<T> r) { return convexHull(this, r); }
+	//! stream insertion operator
+	friend std::ostream& operator << (std::ostream& stream, const Rect3_<T>& r) {
+		stream << "[" << r.x << ", " << r.y << ", " << r.z << " | " << r.width << ", " << r.height << ", " << r.depth << "]";
+		return stream;
+	}
 
 
 	//! the top left corner in 3-space
