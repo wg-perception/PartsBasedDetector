@@ -69,7 +69,7 @@ static inline int square(int x) { return x*x; }
  * @param b the linear coefficient
  */
 template<typename T>
-void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, int N, T a, T b, int os) {
+inline void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, int N, T a, T b, int os) {
 
 	int * const v = new int[N];
 	T   * const z = new T[N+1];

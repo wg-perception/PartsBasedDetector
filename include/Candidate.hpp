@@ -43,6 +43,8 @@
 #include <limits>
 #include <opencv2/core/core.hpp>
 #include "types.hpp"
+#include "Rect3.hpp"
+#include "Math.hpp"
 
 /*! @class Candidate
  *  @brief detection candidate
@@ -98,18 +100,18 @@ public:
 		int maxy = -std::numeric_limits<int>::max();
 		const int nparts = parts_.size();
 		for (int n = 0; n < nparts; ++n) {
-			const cv::Rect p = parts_[n];
-			if (p.x + p.width/2  < minx) minx = p.x + p.width/2;
-			if (p.x + p.width/2  > maxx) maxx = p.x + p.width/2;
-			if (p.y + p.height/2 < miny) miny = p.y + p.height/2;
-			if (p.y + p.height/2 > maxy) maxy = p.y + p.height/2;
+			const cv::Rect r = parts_[n];
+			if (r.x + r.width/2  < minx) minx = r.x + r.width/2;
+			if (r.x + r.width/2  > maxx) maxx = r.x + r.width/2;
+			if (r.y + r.height/2 < miny) miny = r.y + r.height/2;
+			if (r.y + r.height/2 > maxy) maxy = r.y + r.height/2;
 		}
 		return cv::Rect(minx, miny, maxx-minx, maxy-miny);
 	}
 
 	/*! @brief create a single bounding box around the detection from mean and standard deviation
 	 *
-	 * @return
+	 * @return a bounding box
 	 */
 	cv::Rect boundingBoxNorm(void) const {
 		const int nparts = parts_.size();
@@ -125,6 +127,36 @@ public:
 		cv::meanStdDev(ypts, ymean, ystd);
 		return cv::Rect(xmean(0)-1.5*xstd(0), ymean(0)-1.5*ystd(0), 3*xstd(0), 3*ystd(0));
 	}
+
+	/*! @brief create a single bounding box in 3D
+	 *
+	 * Given a 3D image, return
+	 * @param depth
+	 * @return
+	 */
+	Rect3 boundingBox3D(cv::Mat& depth) const {
+		const int nparts = parts_.size();
+		cv::Point3_<int> minv(1,1,1); minv *=  std::numeric_limits<int>::max();
+		cv::Point3_<int> maxv(1,1,1); maxv *= -std::numeric_limits<int>::min();
+		for (int n = 0; n < nparts; ++n) {
+			int med;
+			switch (depth.depth()) {
+				case CV_16U: med = Math::median<uint16_t>(depth(parts_[n])); break;
+				case CV_32F: med = Math::median<float>(depth(parts_[n]))*1000; break;
+				case CV_64F: med = Math::median<double>(depth(parts_[n]))*1000; break;
+			}
+			const cv::Rect r = parts_[n];
+			if (r.x + r.width/2  < minv.x) minv.x = r.x + r.width/2;
+			if (r.y + r.height/2 < minv.y) minv.y = r.y + r.height/2;
+			if (r.x + r.width/2  > maxv.x) maxv.x = r.x + r.width/2;
+			if (r.y + r.height/2 < maxv.y) maxv.y = r.y + r.height/2;
+
+			if (med < minv.z) minv.z = med;
+			if (med > maxv.z) maxv.z = med;
+		}
+		return Rect3(minv, maxv);
+	}
+
 };
 
 #endif /* CANDIDATE_HPP_ */
