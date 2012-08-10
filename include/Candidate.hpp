@@ -39,6 +39,7 @@
 #ifndef CANDIDATE_HPP_
 #define CANDIDATE_HPP_
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <opencv2/core/core.hpp>
 #include "types.hpp"
@@ -84,6 +85,45 @@ public:
 	 */
 	static void sort(vectorCandidate& candidates) {
 		std::sort(candidates.begin(), candidates.end(), descending);
+	}
+
+	/*! @brief create a single bounding box around the detection taken from the part limit
+	 *
+	 * @return a single bounding Rect
+	 */
+	cv::Rect boundingBox(void) const {
+		int minx =  std::numeric_limits<int>::max();
+		int miny =  std::numeric_limits<int>::max();
+		int maxx = -std::numeric_limits<int>::max();
+		int maxy = -std::numeric_limits<int>::max();
+		const int nparts = parts_.size();
+		for (int n = 0; n < nparts; ++n) {
+			const cv::Rect p = parts_[n];
+			if (p.x + p.width/2  < minx) minx = p.x + p.width/2;
+			if (p.x + p.width/2  > maxx) maxx = p.x + p.width/2;
+			if (p.y + p.height/2 < miny) miny = p.y + p.height/2;
+			if (p.y + p.height/2 > maxy) maxy = p.y + p.height/2;
+		}
+		return cv::Rect(minx, miny, maxx-minx, maxy-miny);
+	}
+
+	/*! @brief create a single bounding box around the detection from mean and standard deviation
+	 *
+	 * @return
+	 */
+	cv::Rect boundingBoxNorm(void) const {
+		const int nparts = parts_.size();
+		cv::Mat_<int> xpts(cv::Size(1,nparts));
+		cv::Mat_<int> ypts(cv::Size(1,nparts));
+		for (int n = 0; n < nparts; ++n) {
+			const cv::Point centroid = (parts_[n].tl() + parts_[n].br())*0.5;
+			xpts(n) = centroid.x;
+			ypts(n) = centroid.y;
+		}
+		cv::Scalar xmean, ymean, xstd, ystd;
+		cv::meanStdDev(xpts, xmean, xstd);
+		cv::meanStdDev(ypts, ymean, ystd);
+		return cv::Rect(xmean(0)-1.5*xstd(0), ymean(0)-1.5*ystd(0), 3*xstd(0), 3*ystd(0));
 	}
 };
 

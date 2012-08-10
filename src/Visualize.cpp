@@ -85,6 +85,7 @@ void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, int
 			rectangle(canvas, box, colors[p], LINE_THICKNESS);
 			if (display_confidence) putText(canvas, confidence, Point(box.x, box.y-5), FONT_HERSHEY_SIMPLEX, 0.5f, black, 2);
 		}
+		rectangle(canvas, candidate.boundingBoxNorm(), Scalar(255, 0, 0), LINE_THICKNESS);
 	}
 }
 

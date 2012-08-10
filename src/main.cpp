@@ -92,6 +92,7 @@ int main(int argc, char** argv) {
 	Mat im = imread(argv[2]);
 	if (argc == 4) {
 		depth = imread(argv[3], CV_LOAD_IMAGE_ANYDEPTH);
+		// convert the depth image from mm to m
 		depth = depth / 1000.0f;
 	}
 
@@ -107,7 +108,7 @@ int main(int argc, char** argv) {
 	if (candidates.size() > 0) {
         Mat canvas;
 		Candidate::sort(candidates);
-		visualize.candidates(im, candidates, canvas, true);
+		visualize.candidates(im, candidates, 1, canvas, true);
         visualize.image(canvas);
 		waitKey();
 	}
