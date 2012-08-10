@@ -64,9 +64,10 @@ static inline int square(int x) { return x*x; }
  * @param src pointer to the start of the source data
  * @param dst pointer to the start of the destination data
  * @param ptr pointer to indices
- * @param n the total number of rows
+ * @param N the total number of rows
  * @param a the quadratic coefficient
  * @param b the linear coefficient
+ * @param os the anchor offset
  */
 template<typename T>
 inline void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, unsigned int N, T a, T b, int os) {
@@ -115,6 +116,7 @@ inline void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* pt
  *
  * @param score_in the input score
  * @param w the quadratic weights
+ * @param os the anchor offset of the child from the parent
  * @param score_out the distance transformed score
  * @param Ix the distances in the x direction
  * @param Iy the distances in the y direction

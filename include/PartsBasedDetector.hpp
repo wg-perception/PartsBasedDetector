@@ -112,8 +112,10 @@
  * // visualize the best 5 detection candidates
  * Visualize visualize(model.name());
  * if (candidates.size() > 0) {
+ *  Mat canvas;
  * 	Candidate::sort(candidates);
- * 	visualize.candidates(im, candidates, 5, true);
+ * 	visualize.candidates(im, candidates, 5, canvas, true);
+ * 	visualize.image(canvas);
  * 	waitKey();
  * }
  * \endcode

@@ -128,7 +128,7 @@ public:
 
 	/*! @brief return the filters for all mixtures of a part
 	 *
-	 * @out the filters to return
+	 * @param out the filters to return
 	 */
 	void filters(vectorMat& out) const {
 		out.clear();

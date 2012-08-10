@@ -64,7 +64,7 @@ void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, uns
 	vector<Scalar> colors;
 	for (unsigned int n = 0; n < ncolors; ++n) {
 		Mat color(Size(1,1), CV_32FC3);
-		// Hue is in radians
+		// Hue is in degrees, not radians (because consistency is over-rated)
 		color.at<float>(0) = (360) / ncolors * n;
 		color.at<float>(1) = 1.0;
 		color.at<float>(2) = 0.7;
