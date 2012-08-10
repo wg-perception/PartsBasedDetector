@@ -54,15 +54,15 @@ using namespace std;
  * @param display_confidence display the detection confidence above each bounding box
  * for each part
  */
-void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, int N, Mat& canvas, bool display_confidence) const {
+void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, unsigned int N, Mat& canvas, bool display_confidence) const {
 
 	// create a new canvas that we can modify
     cvtColor(im, canvas, CV_RGB2BGR);
 
 	// generate a set of colors to display. Do this in HSV then convert it
-	int ncolors = candidates[0].parts().size();
+	const unsigned int ncolors = candidates[0].parts().size();
 	vector<Scalar> colors;
-	for (int n = 0; n < ncolors; ++n) {
+	for (unsigned int n = 0; n < ncolors; ++n) {
 		Mat color(Size(1,1), CV_32FC3);
 		// Hue is in radians
 		color.at<float>(0) = (360) / ncolors * n;
@@ -77,15 +77,15 @@ void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, int
 	const int LINE_THICKNESS = 3;
 	Scalar black(0,0,0);
 	N = (candidates.size() < N) ? candidates.size() : N;
-	for (int n = 0; n < N; ++n) {
+	for (unsigned int n = 0; n < N; ++n) {
 		Candidate candidate = candidates[n];
-		for (int p = 0; p < candidate.parts().size(); ++p) {
+		for (unsigned int p = 0; p < candidate.parts().size(); ++p) {
 			Rect box = candidate.parts()[p];
 			string confidence  = boost::lexical_cast<string>(candidate.confidence()[p]);
 			rectangle(canvas, box, colors[p], LINE_THICKNESS);
-			if (display_confidence) putText(canvas, confidence, Point(box.x, box.y-5), FONT_HERSHEY_SIMPLEX, 0.5f, black, 2);
+			if (display_confidence && p == 0) putText(canvas, confidence, Point(box.x, box.y-5), FONT_HERSHEY_SIMPLEX, 0.5f, black, 2);
 		}
-		rectangle(canvas, candidate.boundingBoxNorm(), Scalar(255, 0, 0), LINE_THICKNESS);
+		rectangle(canvas, candidate.boundingBox(), Scalar(255, 0, 0), LINE_THICKNESS);
 	}
 }
 

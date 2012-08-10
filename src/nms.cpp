@@ -90,15 +90,15 @@ using namespace cv;
 void nonMaximaSuppression(const Mat& src, const int sz, Mat& dst, const Mat mask) {
 
 	// initialise the block mask and destination
-	const int M = src.rows;
-	const int N = src.cols;
+	const unsigned int M = src.rows;
+	const unsigned int N = src.cols;
 	const bool masked = !mask.empty();
 	Mat block = 255*Mat_<uint8_t>::ones(Size(2*sz+1,2*sz+1));
 	dst = Mat_<uint8_t>::zeros(src.size());
 
 	// iterate over image blocks
-	for (int m = 0; m < M; m+=sz+1) {
-		for (int n = 0; n < N; n+=sz+1) {
+	for (unsigned int m = 0; m < M; m+=sz+1) {
+		for (unsigned int n = 0; n < N; n+=sz+1) {
 			Point  ijmax;
 			double vcmax, vnmax;
 
@@ -109,8 +109,8 @@ void nonMaximaSuppression(const Mat& src, const int sz, Mat& dst, const Mat mask
 			Point cc = ijmax + Point(jc.start,ic.start);
 
 			// search the neighbours centered around the candidate for the true maxima
-			Range in(max(cc.y-sz,0), min(cc.y+sz+1,M));
-			Range jn(max(cc.x-sz,0), min(cc.x+sz+1,N));
+			Range in(max(cc.y-sz,0), min((unsigned int)cc.y+sz+1,M));
+			Range jn(max(cc.x-sz,0), min((unsigned int)cc.x+sz+1,N));
 
 			// mask out the block whose maxima we already know
 			Mat_<uint8_t> blockmask;
@@ -120,7 +120,7 @@ void nonMaximaSuppression(const Mat& src, const int sz, Mat& dst, const Mat mask
 			blockmask(iis, jis) = Mat_<uint8_t>::zeros(Size(jis.size(),iis.size()));
 
 			minMaxLoc(src(in,jn), NULL, &vnmax, NULL, &ijmax, masked ? mask(in,jn).mul(blockmask) : blockmask);
-			Point cn = ijmax + Point(jn.start, in.start);
+			//Point cn = ijmax + Point(jn.start, in.start);
 
 			// if the block centre is also the neighbour centre, then it's a local maxima
 			if (vcmax > vnmax) {

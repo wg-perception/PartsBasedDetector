@@ -72,11 +72,11 @@ T Math::median(const Mat& mat) {
 void Math::find(const Mat& binary, vector<Point>& idx) {
 
 	assert(binary.depth() == CV_8U);
-	int M = binary.rows;
-	int N = binary.cols;
-	for (int m = 0; m < M; ++m) {
+	const unsigned int M = binary.rows;
+	const unsigned int N = binary.cols;
+	for (unsigned int m = 0; m < M; ++m) {
 		const unsigned char* bin_ptr = binary.ptr<unsigned char>(m);
-		for (int n = 0; n < N; ++n) if (bin_ptr[n] > 0) idx.push_back(Point(n,m));
+		for (unsigned int n = 0; n < N; ++n) if (bin_ptr[n] > 0) idx.push_back(Point(n,m));
 	}
 }
 
@@ -97,26 +97,26 @@ template<typename T>
 void Math::reducePickIndex(const vectorMat& in, const Mat& idx, Mat& out) {
 
 	// error checking
-	int K = in.size();
+	const unsigned int K = in.size();
 	if (K == 1) { in[0].copyTo(out); return; }
 	double minv, maxv;
 	minMaxLoc(idx, &minv, &maxv);
 	assert(minv >= 0 && maxv < K);
-	for (int k = 0; k < K; ++k) assert(in[k].size() == idx.size());
+	for (unsigned int k = 0; k < K; ++k) assert(in[k].size() == idx.size());
 
 	// allocate the output array
 	out.create(in[0].size(), in[0].type());
 
 	// perform the indexing
-	int M = in[0].rows;
-	int N = in[0].cols;
+	unsigned int M = in[0].rows;
+	unsigned int N = in[0].cols;
 	vector<const T*> in_ptr(K);
 	if (in[0].isContinuous()) { N = M*N; M = 1; }
-	for (int m = 0; m < M; ++m) {
+	for (unsigned int m = 0; m < M; ++m) {
 		T* out_ptr = out.ptr<T>(m);
 		const int*   idx_ptr = idx.ptr<int>(m);
-		for (int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<T>(m);
-		for (int n = 0; n < N; ++n) {
+		for (unsigned int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<T>(m);
+		for (unsigned int n = 0; n < N; ++n) {
 			out_ptr[n] = in_ptr[idx_ptr[n]][n];
 		}
 	}
@@ -138,7 +138,7 @@ void Math::reduceMax(const vectorMat& in, Mat& maxv, Mat& maxi) {
 
 	// TODO: flatten the input into a multi-channel matrix for faster indexing
 	// error checking
-	int K = in.size();
+	const unsigned int K = in.size();
 	if (K == 1) {
 		// just return
 		in[0].copyTo(maxv);
@@ -147,25 +147,25 @@ void Math::reduceMax(const vectorMat& in, Mat& maxv, Mat& maxi) {
 	}
 
 	assert (K > 1);
-	for (int k = 1; k < K; ++k) assert(in[k].size() == in[k-1].size());
+	for (unsigned int k = 1; k < K; ++k) assert(in[k].size() == in[k-1].size());
 
 	// allocate the output matrices
 	maxv.create(in[0].size(), in[0].type());
 	maxi.create(in[0].size(), DataType<int>::type);
 
-	int M = in[0].rows;
-	int N = in[0].cols;
+	unsigned int M = in[0].rows;
+	unsigned int N = in[0].cols;
 
 	vector<const T*> in_ptr(K);
 	if (in[0].isContinuous()) { N = M*N; M = 1; }
-	for (int m = 0; m < M; ++m) {
+	for (unsigned int m = 0; m < M; ++m) {
 		T* maxv_ptr = maxv.ptr<T>(m);
 		int* maxi_ptr = maxi.ptr<int>(m);
-		for (int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<T>(m);
-		for (int n = 0; n < N; ++n) {
+		for (unsigned int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<T>(m);
+		for (unsigned int n = 0; n < N; ++n) {
 			T v = -numeric_limits<T>::infinity();
 			int i = 0;
-			for (int k = 0; k < K; ++k) if (in_ptr[k][n] > v) { i = k; v = in_ptr[k][n]; }
+			for (unsigned int k = 0; k < K; ++k) if (in_ptr[k][n] > v) { i = k; v = in_ptr[k][n]; }
 			maxi_ptr[n] = i;
 			maxv_ptr[n] = v;
 		}

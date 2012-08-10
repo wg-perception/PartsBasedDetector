@@ -58,20 +58,20 @@ private:
 	vectorf   	const * biasw_;
 	//! the bias indices
 	vectori   	const * biasi_;
+	//! the anchors (part position relative to parent)
+	vectorPoint	const * anchors_;
 	//! the deformation weights
 	vector2Df 	const * defw_;
 	//! the deformation indices
 	vectori   	const * defi_;
-	//! the anchors (part position relative to parent)
-	vectorPoint	const * anchors_;
+	//! indexing schema for deformation (weights, indices and anchors)
+	vector2Di 	const * defid_;
 	//! indexing schema for the bias (weights and indices)
 	vector2Di 	const * biasid_;
 	//! indexing schema for the filters (weights and indices)
 	vector2Di 	const * filterid_;
 	//! indexing schema for the parent (for biasid_ and filterid_)
 	vectori   	const * parentid_;
-	//! indexing schema for deformation (weights, indices and anchors)
-	vector2Di 	const * defid_;
 	//! the current part index
 	int         	    self_;
 public:
@@ -82,16 +82,16 @@ public:
 			       const vectorf& biasw, const vectori& biasi, const vectorPoint& anchors,
 			       const vector2Df& defw, const vectori& defi, const vector2Di& defid,
 				   const vector2Di& biasid, const vector2Di& filterid, const vectori& parentid, int self) :
-	   filtersw_(&filtersw), filtersi_(&filtersi), filterid_(&filterid),
+	   filtersw_(&filtersw), filtersi_(&filtersi),
 	    biasw_(&biasw), biasi_(&biasi), anchors_(&anchors),
 		defw_(&defw), defi_(&defi), defid_(&defid), biasid_(&biasid),
-		parentid_(&parentid), self_(self) {}
+		filterid_(&filterid), parentid_(&parentid), self_(self) {}
 	//! internal copy constructor, used to traverse to new nodes in the tree (parent, children or random access)
 	ComponentPart(const ComponentPart& other, int self) :
-		filtersw_(other.filtersw_), filtersi_(other.filtersi_), filterid_(other.filterid_),
+		filtersw_(other.filtersw_), filtersi_(other.filtersi_),
 		biasw_(other.biasw_), biasi_(other.biasi_), anchors_(other.anchors_),
 		defw_(other.defw_), defi_(other.defi_), defid_(other.defid_), biasid_(other.biasid_),
-		parentid_(other.parentid_), self_(self) {}
+		filterid_(other.filterid_), parentid_(other.parentid_), self_(self) {}
 	//! destructor
 	virtual ~ComponentPart() {}
 	// get methods
@@ -100,37 +100,41 @@ public:
 	 *
 	 * @return the number of parts
 	 */
-	const int nparts(void) const { return filterid_->size(); }
+	unsigned int nparts(void) const { return filterid_->size(); }
+
 	/*! @brief get the number of mixtures for the current part
 	 *
 	 * @return the number of mixtures. Note that not all components
 	 * and parts will have the same number of mixtures
 	 */
-	const int nmixtures(void) const { return (*filterid_)[self_].size(); }
+	unsigned int nmixtures(void) const { return (*filterid_)[self_].size(); }
+
 	/*! @brief the current flattened tree index
 	 *
 	 * @return the current flattened tree index. self() == 0 is the root part
 	 */
-	const int self(void) const { return self_; }
+	int self(void) const { return self_; }
+
 	// perform translation of indices internally
 	/*! @brief return the filter for a part
 	 *
 	 * @param mixture the part mixture of interest
 	 * @return the associated filter
 	 */
-	const cv::Mat& filter(int mixture = 0) const {
+	const cv::Mat& filter(unsigned int mixture = 0) const {
 		assert((*filterid_)[self_].size() > mixture);
-		return (*filtersw_)[(*filterid_)[self_][mixture]]; }
+		return (*filtersw_)[(*filterid_)[self_][mixture]];
+	}
+
 	/*! @brief return the filters for all mixtures of a part
 	 *
-	 * @return the filters
+	 * @out the filters to return
 	 */
-	const vectorMat filters(void) const {
-		vectorMat out;
-		for (int m = 0; m < filterid_[self_].size(); ++m) {
+	void filters(vectorMat& out) const {
+		out.clear();
+		for (unsigned int m = 0; m < filterid_[self_].size(); ++m) {
 			out.push_back((*filtersw_)[(*filterid_)[self_][m]]);
 		}
-		return out;
 	}
 	/*! @brief the current part's parent
 	 *
@@ -143,7 +147,7 @@ public:
 	 */
 	std::vector<ComponentPart> children(void) const {
 		std::vector<ComponentPart> c;
-		for (int n = self_; (*parentid_)[n] <= self_; ++n) {
+		for (unsigned int n = self_; (*parentid_)[n] <= self_; ++n) {
 			ComponentPart cp(*this, n);
 			if ((*parentid_)[n] == self_) c.push_back(cp);
 		}
@@ -158,31 +162,31 @@ public:
 	 * @param mixture the part mixture to retrieve
 	 * @return the associated score for this part's mixture
 	 */
-	cv::Mat& score(vectorMat& scores, int mixture = 0) const {
+	cv::Mat& score(vectorMat& scores, unsigned int mixture = 0) const {
 		assert((*filterid_)[self_].size() > mixture);
 		return scores[(*filterid_)[self_][mixture]];
 	}
 	//! the part's filter index
-	int filteri(int mixture = 0) const { return (*filtersi_)[(*filterid_)[self_][mixture]]; }
+	int filteri(unsigned int mixture = 0) const { return (*filtersi_)[(*filterid_)[self_][mixture]]; }
 	//! the part's bias
-	vectorf bias(int mixture = 0) const {
+	vectorf bias(unsigned int mixture = 0) const {
 		const int offset = (*biasid_)[self_][mixture];
 		return vectorf(&((*biasw_)[offset]), &((*biasw_)[offset+nmixtures()]));
 	}
 	//! the part's bias index
-	int biasi(int mixture = 0) const { return (*biasi_)[(*biasid_)[self_][mixture]]; }
+	int biasi(unsigned int mixture = 0) const { return (*biasi_)[(*biasid_)[self_][mixture]]; }
 	//! the part's deformation weights
-	vectorf defw(int mixture = 0) const { return (*defw_)[(*defid_)[self_][mixture]]; }
+	vectorf defw(unsigned int mixture = 0) const { return (*defw_)[(*defid_)[self_][mixture]]; }
 	//! the part's deformation indices
-	int defi(int mixture = 0) const { return (*defi_)[(*defid_)[self_][mixture]]; }
+	int defi(unsigned int mixture = 0) const { return (*defi_)[(*defid_)[self_][mixture]]; }
 	//! the part's anchor (relative to its parent part)
-	cv::Point anchor(int mixture = 0) const { return (*anchors_)[(*defid_)[self_][mixture]]; }
+	cv::Point anchor(unsigned int mixture = 0) const { return (*anchors_)[(*defid_)[self_][mixture]]; }
 	//! the x size (width) of the part
-	const int xsize(int mixture = 0) const { return (*filtersw_)[(*filterid_)[self_][mixture]].rows; }
+	unsigned int xsize(unsigned int mixture = 0) const { return (*filtersw_)[(*filterid_)[self_][mixture]].rows; }
 	//! the y size (height) of the part
-	const int ysize(int mixture = 0) const { return (*filtersw_)[(*filterid_)[self_][mixture]].rows; }
+	unsigned int ysize(unsigned int mixture = 0) const { return (*filtersw_)[(*filterid_)[self_][mixture]].rows; }
 	//! is the current part the root
-	const bool isRoot(void) const { return self_ == 0; }
+	bool isRoot(void) const { return self_ == 0; }
 };
 
 /*! @class Parts
@@ -237,18 +241,18 @@ public:
 	 * @param p the part to reference within that component (defaults to the root)
 	 * @return the ComponentPart for component c at node p
 	 */
-	ComponentPart component(int c, int p = 0) {
+	ComponentPart component(unsigned int c, unsigned int p = 0) {
 		assert(c < biasid_.size() && c < filterid_.size() && c < parentid_.size());
 		return ComponentPart(filtersw_, filtersi_, biasw_, biasi_, anchors_, defw_, defi_, defid_[c], biasid_[c], filterid_[c], parentid_[c], p);
 	}
 	//! the number of components in the model
-	const int ncomponents(void) const { return filterid_.size(); }
+	unsigned int ncomponents(void) const { return filterid_.size(); }
 	/*! @brief the number of parts within a component
 	 *
 	 * @param c the component of interest
 	 * @return the number of parts
 	 */
-	const int nparts(int c) const {
+	unsigned int nparts(unsigned int c) const {
 		assert(c < biasid_.size() && c < filterid_.size() && c < parentid_.size());
 		return filterid_[c].size();
 	}

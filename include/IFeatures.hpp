@@ -51,9 +51,9 @@ public:
 	virtual ~IFeatures() {}
 	// get and set methods
 	//! retrieve the spatial binning size (1 if not relevant)
-	virtual int binsize(void) const = 0;
+	virtual unsigned int binsize(void) const = 0;
 	//! retrieve the number of scales the features are calculated over
-	virtual int nscales(void) const = 0;
+	virtual unsigned int nscales(void) const = 0;
 	// public methods
 	/*! @brief the vector of scales
 	 *

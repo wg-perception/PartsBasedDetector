@@ -64,15 +64,15 @@ static inline T square(T x) { return x * x; }
 template<typename T>
 void HOGFeatures<T>::boundaryOcclusionFeature(Mat& feature, const int flen, const int padsize) {
 
-	const int M = feature.rows;
-	const int N = feature.cols;
-	const int fmstart = padsize-1;
-	const int fnstart = padsize*flen-1;
-	const int fmstop  = M - padsize;
-	const int fnstop  = N - (padsize)*flen;
+	const unsigned int M = feature.rows;
+	const unsigned int N = feature.cols;
+	const unsigned int fmstart = padsize-1;
+	const unsigned int fnstart = padsize*flen-1;
+	const unsigned int fmstop  = M - padsize;
+	const unsigned int fnstop  = N - (padsize)*flen;
 
-	for (int m = 0; m < M; ++m) {
-		for (int n = 0; n < N; n+=flen) {
+	for (unsigned int m = 0; m < M; ++m) {
+		for (unsigned int n = 0; n < N; n+=flen) {
 			if (m > fmstart && m < fmstop && n > fnstart && n < fnstop) continue;
 			feature.at<T>(m,n+flen-1) = 1;
 		}
@@ -112,13 +112,13 @@ void HOGFeatures<T>::pyramid(const Mat& im, vectorMat& pyrafeatures) {
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for (int i = 0; i < interval_; ++i) {
+	for (unsigned int i = 0; i < interval_; ++i) {
 		Mat scaled;
-		resize(im, scaled, imsize * (1.0f/pow(sfactor_,i)));
+		resize(im, scaled, imsize * (1.0f/pow(sfactor_,(int)i)));
 		pyraimages[i] = scaled;
-		scales_[i] = pow(sfactor_,i)*binsize_;
+		scales_[i] = pow(sfactor_,(int)i)*binsize_;
 		// perform subsequent power of two scaling
-		for (int j = i+interval_; j < nscales_; j+=interval_) {
+		for (unsigned int j = i+interval_; j < nscales_; j+=interval_) {
 			Mat scaled2;
 			pyrDown(scaled, scaled2);
 			pyraimages[j] = scaled2;
@@ -131,7 +131,7 @@ void HOGFeatures<T>::pyramid(const Mat& im, vectorMat& pyrafeatures) {
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for (int n = 0; n < nscales_; ++n) {
+	for (unsigned int n = 0; n < nscales_; ++n) {
 		Mat feature;
 		Mat padded;
 		switch (im.depth()) {
@@ -170,17 +170,17 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 	const Size imsize = imm.size();
 	const Size blocks = Size(round((float)imsize.width / (float)binsize_), round((float)imsize.height / (float)binsize_));
 	const Size outsize = Size(max(blocks.width-2, 0), max(blocks.height-2, 0));
-	const Size visible = blocks*binsize_;
+	const Size visible = blocks*(int)binsize_;
 
 	Mat histm = Mat::zeros(Size(blocks.width*norient_, blocks.height),  DataType<T>::type);
 	Mat normm = Mat::zeros(Size(blocks.width,          blocks.height),  DataType<T>::type);
 	featm     = Mat::zeros(Size(outsize.width*flen_,   outsize.height), DataType<T>::type);
 
 	// get the stride of each of the matrices
-	const int imstride   = imm.step1();
-	const int histstride = histm.step1();
-	const int normstride = normm.step1();
-	const int featstride = featm.step1();
+	const unsigned int imstride   = imm.step1();
+	const unsigned int histstride = histm.step1();
+	const unsigned int normstride = normm.step1();
+	const unsigned int featstride = featm.step1();
 
 	// epsilon to avoid division by zero
 	const double eps = 0.0001;
@@ -196,13 +196,13 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 	T* const feat = featm.ptr<T>(0);
 
 	// TODO: source image may not be continuous!
-	for (int y = 1; y < visible.height-1; ++y) {
-		for (int x = 1; x < visible.width-1; ++x) {
+	for (unsigned int y = 1; y < (unsigned int)visible.height-1; ++y) {
+		for (unsigned int x = 1; x < (unsigned int)visible.width-1; ++x) {
 			T dx, dy, v;
 
 			// grayscale image
 			if (!color) {
-				const IT* s = im + min(x, imm.cols-2) + min(y, imm.rows-2)*imstride;
+				const IT* s = im + min(x, (unsigned int)imm.cols-2) + min(y, (unsigned int)imm.rows-2)*imstride;
 				dy = *(s+imstride) - *(s-imstride);
 				dx = *(s+1) - *(s-1);
 				 v = dx*dx + dy*dy;
@@ -212,7 +212,7 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 			// OpenCV uses an interleaved format: BGR-BGR-BGR
 			// Matlab uses a planar format:       RRR-GGG-BBB
 			if (color) {
-				const IT* s = im + 3 * min(x, imm.cols-2) + min(y, imm.rows-2)*imstride;
+				const IT* s = im + 3 * min(x, (unsigned int)imm.cols-2) + min(y, (unsigned int)imm.rows-2)*imstride;
 
 				// blue image channel
 				T dyb = *(s+imstride) - *(s-imstride);
@@ -238,8 +238,8 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 
 			// snap to one of 18 orientations
 			T best_dot = 0;
-			int best_o = 0;
-			for (int o = 0; o < norient_/2; ++o) {
+			unsigned int best_o = 0;
+			for (unsigned int o = 0; o < norient_/2; ++o) {
 				T dot = uu[o]*dx + vv[o]*dy;
 				if (dot > best_dot) { best_dot = dot; best_o = o; }
 				else if (-dot > best_dot) { best_dot = -dot; best_o = o+norient_/2; }
@@ -264,13 +264,13 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 	}
 
 	// compute the energy in each block by summing over orientations
-	for (int y = 0; y < blocks.height; ++y) {
+	for (unsigned int y = 0; y < (unsigned int)blocks.height; ++y) {
 		const T* src = hist + y*histstride;
 		T* dst = norm + y*normstride;
 		T const * const dst_end = dst + blocks.width;
 		while (dst < dst_end) {
 			*dst = 0;
-			for (int o = 0; o < norient_/2; ++o) {
+			for (unsigned int o = 0; o < norient_/2; ++o) {
 				*dst += square( *src + *(src+norient_/2) );
 				src++;
 			}
@@ -280,8 +280,8 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 	}
 
 	// compute the features
-	for (int y = 0; y < outsize.height; ++y) {
-		for (int x = 0; x < outsize.width; ++x) {
+	for (unsigned int y = 0; y < (unsigned int)outsize.height; ++y) {
+		for (unsigned int x = 0; x < (unsigned int)outsize.width; ++x) {
 			T* dst = feat + y*featstride + x*flen_;
 			T* p, n1, n2, n3, n4;
 			const T* src;
@@ -299,7 +299,7 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 
 			// contrast-sensitive features
 			src = hist + (y+1)*histstride + (x+1)*norient_;
-			for (int o = 0; o < norient_; ++o) {
+			for (unsigned int o = 0; o < norient_; ++o) {
 				T val = *src;
 				T h1 = min(val * n1, (T)0.2);
 				T h2 = min(val * n2, (T)0.2);
@@ -315,7 +315,7 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 
 			// contrast-insensitive features
 			src = hist + (y+1)*histstride + (x+1)*norient_;
-			for (int o = 0; o < norient_/2; ++o) {
+			for (unsigned int o = 0; o < norient_/2; ++o) {
 				T sum = *src + *(src+norient_/2);
 				T h1 = min(sum * n1, (T)0.2);
 				T h2 = min(sum * n2, (T)0.2);
@@ -354,7 +354,7 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
  * @param stride the SVM weight length
  */
 template<typename T>
-void HOGFeatures<T>::convolve(const Mat& feature, vectorFilterEngine& filter, Mat& pdf, const int stride) {
+void HOGFeatures<T>::convolve(const Mat& feature, vectorFilterEngine& filter, Mat& pdf, const unsigned int stride) {
 
 	// error checking
 	assert(feature.depth() == DataType<T>::type);
@@ -369,7 +369,7 @@ void HOGFeatures<T>::convolve(const Mat& feature, vectorFilterEngine& filter, Ma
 	Size fsize = featurev[0].size();
 	pdf = Mat::zeros(fsize, DataType<T>::type);
 
-	for (int c = 0; c < stride; ++c) {
+	for (unsigned int c = 0; c < stride; ++c) {
 		Mat pdfc(fsize, DataType<T>::type);
 		filter[c]->apply(featurev[c], pdfc, roi, offset, true);
 		pdf += pdfc;
@@ -391,16 +391,16 @@ template<typename T>
 void HOGFeatures<T>::pdf(const vectorMat& features, vector2DMat& responses) {
 
 	// preallocate the output
-	int M = features.size();
-	int N = filters_.size();
+	const unsigned int M = features.size();
+	const unsigned int N = filters_.size();
 	responses.resize(M, vectorMat(N));
 	// iterate
 #ifdef _OPENMP
 	omp_set_num_threads(8);
 	#pragma omp parallel for
 #endif
-	for (int n = 0; n < N; ++n) {
-		for (int m = 0; m < M; ++m) {
+	for (unsigned int n = 0; n < N; ++n) {
+		for (unsigned int m = 0; m < M; ++m) {
 			Mat response;
 			convolve(features[m], filters_[n], response, flen_);
 			responses[m][n] = response;
@@ -418,19 +418,19 @@ void HOGFeatures<T>::pdf(const vectorMat& features, vector2DMat& responses) {
 template<typename T>
 void HOGFeatures<T>::setFilters(const vectorMat& filters) {
 
-	const int N = filters.size();
+	const unsigned int N = filters.size();
 	filters_.clear();
 	filters_.resize(N);
 
 	// split each filter into separate channels, and create a filter engine
-	const int C = flen_;//filters[0].cols/filters[0].rows;
-	for (int n = 0; n < N; ++n) {
+	const unsigned int C = flen_;
+	for (unsigned int n = 0; n < N; ++n) {
 		vectorMat filtervec;
 		std::vector<Ptr<FilterEngine> > filter_engines(C);
 		split(filters[n].reshape(C), filtervec);
 
 		// the first N-1 filters have zero-padding
-		for (int m = 0; m < C-1; ++m) {
+		for (unsigned int m = 0; m < C-1; ++m) {
 			Ptr<FilterEngine> fe = createLinearFilter(DataType<T>::type, DataType<T>::type,
 					filtervec[m], Point(-1,-1), 0, BORDER_CONSTANT, -1, Scalar(0,0,0,0));
 			filter_engines[m] = fe;

@@ -62,7 +62,7 @@ public:
 	virtual ~Visualize() {}
 	// public methods
 	void candidates(const cv::Mat& im, const vectorCandidate& candidates, cv::Mat& canvas, bool display_confidence = false) const;
-	void candidates(const cv::Mat& im, const vectorCandidate& candidates, int N, cv::Mat& canvas, bool display_confidence = false) const;
+	void candidates(const cv::Mat& im, const vectorCandidate& candidates, unsigned int N, cv::Mat& canvas, bool display_confidence = false) const;
 	void candidates(const cv::Mat& im, const Candidate& candidate, cv::Mat& canvas, bool display_confidence = true) const;
 	void image(const cv::Mat& im) const;
 };

@@ -47,15 +47,15 @@ using namespace std;
 template<typename T>
 void SearchSpacePruning<T>::nonMaxSuppression(vector2DMat& rootv, const vectorf& scales) {
 
-	const int N = rootv.size();
-	const int C = rootv[0].size();
+	const unsigned int N = rootv.size();
+	const unsigned int C = rootv[0].size();
 	/*
 	// TODO: non-maxima suppression across all scales simultaneously,
 	// so good detections at different scales cannot be overlaid
 	const Size maxsize = rootv[0][0].size();
 	vectorMat scaled(N*C);
-	for (int n = 0; n < N; ++n) {
-		for (int c = 0; c < C; ++c) {
+	for (unsigned int n = 0; n < N; ++n) {
+		for (unsigned int c = 0; c < C; ++c) {
 			Mat resized;
 			resize(rootv[n][c], resized, maxsize);
 			scaled[n*C+c] = resized;
@@ -76,9 +76,9 @@ void SearchSpacePruning<T>::nonMaxSuppression(vector2DMat& rootv, const vectorf&
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-	for (int nc = 0; nc < N * C; ++nc) {
-		const int n = nc / C;
-		const int c = nc % C;
+	for (unsigned int nc = 0; nc < N * C; ++nc) {
+		const unsigned int n = nc / C;
+		const unsigned int c = nc % C;
 		Mat maxima;
 		nonMaximaSuppression(rootv[n][c], scales[n] * 5, maxima);
 		rootv[n][c].setTo(smallest, maxima == 0);
@@ -88,15 +88,15 @@ void SearchSpacePruning<T>::nonMaxSuppression(vector2DMat& rootv, const vectorf&
 template<typename T>
 void SearchSpacePruning<T>::filterResponseByDepth(vector2DMat& pdfs, const vector<Size>& fsizes, const Mat& depth, const vectorf& scales, const float X, const float fx) {
 
-	const int N  = pdfs.size();
-	const int F  = pdfs[0].size();
+	const unsigned int N  = pdfs.size();
+	const unsigned int F  = pdfs[0].size();
 
 #ifdef _OPENMP
 	#pragma omp parallel for
 #endif
-	for (int nf = 0; nf < N*F; ++nf) {
-		const int n = nf / F;
-		const int f = nf % F;
+	for (unsigned int nf = 0; nf < N*F; ++nf) {
+		const unsigned int n = nf / F;
+		const unsigned int f = nf % F;
 
 		// create a mask of plausible depths given the object size
 		// and the scale of the image
@@ -107,6 +107,7 @@ void SearchSpacePruning<T>::filterResponseByDepth(vector2DMat& pdfs, const vecto
 		// given the 3d width of the part, the focal length of the camera,
 		// and the width of the part in the image
 		float Z = fx*X/scales[n];
+		Z += fsizes[0].height;
 	}
 }
 
@@ -114,12 +115,12 @@ template<typename T>
 void SearchSpacePruning<T>::filterCandidatesByDepth(Parts& parts, vectorCandidate& candidates, const Mat& depth, const float zfactor) {
 
 	vectorCandidate new_candidates;
-	const int N = candidates.size();
-	for (int n = 0; n < N; ++n) {
-		const int c = candidates[n].component();
-		const int nparts = parts.nparts(c);
+	const unsigned int N = candidates.size();
+	for (unsigned int n = 0; n < N; ++n) {
+		const unsigned int c = candidates[n].component();
+		const unsigned int nparts = parts.nparts(c);
 		const vector<Rect>& boxes = candidates[n].parts();
-		for (int p = nparts-1; p >= 1; --p) {
+		for (unsigned int p = nparts-1; p >= 1; --p) {
 			ComponentPart part = parts.component(c,p);
 			Point anchor = part.anchor(0);
 			Rect child   = boxes[part.self()];

@@ -43,7 +43,7 @@
 
 //! convert a vector of integers from Matlab 1-based indexing to C++ 0-based indexing
 static inline void zeroIndex(vectori& idx) {
-	for (int n = 0; n < idx.size(); ++n) idx[n] -= 1;
+	for (unsigned int n = 0; n < idx.size(); ++n) idx[n] -= 1;
 }
 
 //! convert an integer from Matlab 1-based indexing to C++ 0-based indexing
@@ -54,7 +54,7 @@ static inline void zeroIndex(int& idx) {
 //! convert a vector of Point from Matlab 1-based indexing to C++ 0-based indexing
 static inline void zeroIndex(vectorPoint& pt) {
 	cv::Point one(1,1);
-	for (int n = 0; n < pt.size(); ++n) pt[n] = pt[n] - one;
+	for (unsigned int n = 0; n < pt.size(); ++n) pt[n] = pt[n] - one;
 }
 
 /*! @brief deserialize a Matlab .Mat file into memory
@@ -88,7 +88,7 @@ bool MatlabIOModel::deserialize(std::string filename) {
 
 	/*
 	cv::Mat pa = cvmatio.find<cv::Mat>(variables, "pa");
-	for (int n = 0; n < pa.cols*pa.rows; ++n) conn_.push_back(pa.at<double>(n));
+	for (unsigned int n = 0; n < pa.cols*pa.rows; ++n) conn_.push_back(pa.at<double>(n));
 	zeroIndex(conn_);
 	*/
 
@@ -103,19 +103,19 @@ bool MatlabIOModel::deserialize(std::string filename) {
 	// ------------------------------
 	// get the filters
 	vector2DMatlabIOContainer filters = cvmatio.find<vector2DMatlabIOContainer>(model, "filters");
-	for (int f = 0; f < filters.size(); ++f) {
+	for (unsigned int f = 0; f < filters.size(); ++f) {
 		// flatten the filters to 2D
 		cv::Mat filter = cvmatio.find<cv::Mat>(filters[f], "w");
-		const int M = filter.rows;
-		const int N = filter.cols;
+		const unsigned int M = filter.rows;
+		const unsigned int N = filter.cols;
 		vectorMat filter_vec;
 		cv::split(filter, filter_vec);
-		const int C = filter_vec.size();
+		const unsigned int C = filter_vec.size();
 		flen_ = C;
 		cv::Mat filter_flat(cv::Size(N * C, M), cv::DataType<double>::type);
-		for (int m = 0; m < M; ++m) {
-			for (int c = 0; c < C; ++c) {
-				for (int n = 0; n < N; ++n) {
+		for (unsigned int m = 0; m < M; ++m) {
+			for (unsigned int c = 0; c < C; ++c) {
+				for (unsigned int n = 0; n < N; ++n) {
 					filter_flat.at<double>(m,n*C+c) = filter_vec[c].at<double>(m,n);
 				}
 			}
@@ -127,22 +127,22 @@ bool MatlabIOModel::deserialize(std::string filename) {
 	// ------------------------------
 	// get the components
 	vectorMatlabIOContainer components = cvmatio.find<vectorMatlabIOContainer>(model, "components");
-	const int ncomponents = components.size();
+	const unsigned int ncomponents = components.size();
 	biasid_.resize(ncomponents);
 	filterid_.resize(ncomponents);
 	defid_.resize(ncomponents);
 	parentid_.resize(ncomponents);
-	for (int c = 0; c < ncomponents; ++c) {
+	for (unsigned int c = 0; c < ncomponents; ++c) {
 		// a single component is a struct array
 		vector2DMatlabIOContainer component = components[c].data<vector2DMatlabIOContainer>();
-		int nparts = component.size();
+		const unsigned int nparts = component.size();
 		biasid_[c].resize(nparts);
 		filterid_[c].resize(nparts);
 		defid_[c].resize(nparts);
 		parentid_[c].resize(nparts);
 
 		// for each element, add to the component indices
-		for (int p = 0; p < nparts; ++p) {
+		for (unsigned int p = 0; p < nparts; ++p) {
 			cv::Mat defid = cvmatio.find<cv::Mat>(component[p], "defid");
 			cv::Mat filterid = cvmatio.find<cv::Mat>(component[p], "filterid");
 			int parentid = cvmatio.find<double>(component[p], "parent");
@@ -166,8 +166,8 @@ bool MatlabIOModel::deserialize(std::string filename) {
 	// ------------------------------
 	// get the defs
 	vector2DMatlabIOContainer defs = cvmatio.find<vector2DMatlabIOContainer>(model, "defs");
-	int ndefs = defs.size();
-	for (int n = 0; n < ndefs; ++n) {
+	const unsigned int ndefs = defs.size();
+	for (unsigned int n = 0; n < ndefs; ++n) {
 		defw_.push_back(cvmatio.find<cv::Mat>(defs[n], "w"));
 		//defi_.push_back(cvmatio.find<double>(defs[n], "i"));
 		cv::Mat anchor = cvmatio.find<cv::Mat>(defs[n], "anchor");
@@ -178,8 +178,8 @@ bool MatlabIOModel::deserialize(std::string filename) {
 	// ------------------------------
 	// get the bias
 	vector2DMatlabIOContainer bias = cvmatio.find<vector2DMatlabIOContainer>(model, "bias");
-	int nbias = bias.size();
-	for (int n = 0; n < nbias; ++n) {
+	const unsigned int nbias = bias.size();
+	for (unsigned int n = 0; n < nbias; ++n) {
 		biasw_.push_back(cvmatio.find<double>(bias[n], "w"));
 		//biasi_.push_back(cvmatio.find<double>(bias[n], "i"));
 	}
@@ -190,5 +190,6 @@ bool MatlabIOModel::deserialize(std::string filename) {
 
 bool MatlabIOModel::serialize(std::string filename) {
 	/* TODO: implement */
+	filename[0];
 	return false;
 }

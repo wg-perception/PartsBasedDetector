@@ -115,8 +115,8 @@ void PartsBasedDetector<T>::distributeModel(Model& model) {
 	features_.reset(new HOGFeatures<T>(model.binsize(), model.nscales(), model.flen(), model.norient()));
 
 	// make sure the filters are of the correct precision for the Feature engine
-	int nfilters = model.filters().size();
-	for (int n = 0; n < nfilters; ++n) {
+	const unsigned int nfilters = model.filters().size();
+	for (unsigned int n = 0; n < nfilters; ++n) {
 		model.filters()[n].convertTo(model.filters()[n], DataType<T>::type);
 	}
 	features_->setFilters(model.filters());

@@ -43,6 +43,11 @@ using namespace std;
 
 int main(int argc, char** argv) {
 
+	// check for usage
+	if (argc != 3) {
+		cerr << "Usage: ModelTransfer /path/to/mat/file /path/to/xml/file" << endl;
+		exit(-1);
+	}
 	// allocate two models
 	Model* matlab = new MatlabIOModel;
 	Model* cv     = new FileStorageModel;

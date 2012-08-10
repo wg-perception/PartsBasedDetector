@@ -50,7 +50,7 @@ template<typename T>
 class Rect3_ {
 public:
 	// members
-	T x, y, z, width, height, depth;
+	T x, y, z, height, width, depth;
 	//! default constructor
 	Rect3_() : x(0), y(0), z(0), height(0), width(0), depth(0) {}
 	//! constructor with primitive arguments
@@ -124,7 +124,7 @@ public:
 	static Rect3_<T> convexHull(const std::vector<Rect3_<T> >& r) {
 		Rect3_<T> hull = r[0];
 		const int N = r.size();
-		for (int n = 1; n < N; ++n) {
+		for (unsigned int n = 1; n < N; ++n) {
 			hull = convexHull(hull, r[n]);
 		}
 		return hull;

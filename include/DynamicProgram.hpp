@@ -62,7 +62,7 @@ class DynamicProgram {
 private:
 	//! the threshold for a positive detection
 	double thresh_;
-	void distanceTransform1D(const T* src, T* dst, int* ptr, int n, T a, T b, int os);
+	void distanceTransform1D(const T* src, T* dst, int* ptr, unsigned int n, T a, T b, int os);
 public:
 	DynamicProgram() {}
 	DynamicProgram(double thresh) : thresh_(thresh) {}

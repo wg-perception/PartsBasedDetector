@@ -108,14 +108,14 @@ public:
 	vector2Di& parentid(void) { return parentid_; }
 	std::string name(void) { return name_; }
 	vectori& conn(void) { return conn_; }
-	const int nparts(void) const { return nparts_; }
-	const int nmixtures(void) const { return nmixtures_; }
-	const float thresh(void) const { return thresh_; }
-	const int binsize(void) const { return binsize_; }
-	const int nscales(void) const { return nscales_; }
-	const int flen(void) const { return flen_; }
-	const int norient(void) const { return norient_; }
-	const int ncomponents(void) const { return filterid_.size(); }
+	int nparts(void) const { return nparts_; }
+	int nmixtures(void) const { return nmixtures_; }
+	float thresh(void) const { return thresh_; }
+	int binsize(void) const { return binsize_; }
+	int nscales(void) const { return nscales_; }
+	int flen(void) const { return flen_; }
+	int norient(void) const { return norient_; }
+	int ncomponents(void) const { return filterid_.size(); }
 
 	virtual bool serialize(std::string filename) = 0;
 	virtual bool deserialize(std::string filename) = 0;

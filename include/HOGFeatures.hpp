@@ -52,13 +52,13 @@ template<typename T>
 class HOGFeatures : public IFeatures {
 private:
 	//! the spatial binning size
-	int binsize_;
+	unsigned int binsize_;
 	//! the number of scales to compute features at
-	int nscales_;
+	unsigned int nscales_;
 	//! the length of the feature at each bin (histogram size)
-	int flen_;
+	unsigned int flen_;
 	//! the number of orientations to bin
-	int norient_;
+	unsigned int norient_;
 	//! the scales of the features
 	vectorf scales_;
 	//! the internal representation of the filters
@@ -66,15 +66,15 @@ private:
 	//! the scaling factor between successive levels in the pyramid
 	float sfactor_;
 	//! the interval between half resolution scales
-	int interval_;
+	unsigned int interval_;
 
 	// private methods
 	void boundaryOcclusionFeature(cv::Mat& feature, const int flen, const int padsize);
 	template<typename IT> void features(const cv::Mat& im, cv::Mat& feature) const;
-	void convolve(const cv::Mat& feature, vectorFilterEngine& filter, cv::Mat& pdf, const int stride);
+	void convolve(const cv::Mat& feature, vectorFilterEngine& filter, cv::Mat& pdf, const unsigned int stride);
 public:
 	HOGFeatures() {}
-	HOGFeatures(int binsize, int nscales, int flen, int norient) :
+	HOGFeatures(unsigned int binsize, unsigned int nscales, unsigned int flen, unsigned int norient) :
 		binsize_(binsize), nscales_(nscales), flen_(flen), norient_(norient) {
 		// TODO: don't hard code this. Compute more intuitively from scales rather than interval
 		interval_ = nscales_;
@@ -84,8 +84,8 @@ public:
 	}
 	virtual ~HOGFeatures() {}
 	// get methods
-	int binsize(void) const { return binsize_; }
-	int nscales(void) const { return nscales_; }
+	unsigned int binsize(void) const { return binsize_; }
+	unsigned int nscales(void) const { return nscales_; }
 	vectorf scales(void) const { return scales_; }
 	void setFilters(const vectorMat& filters);
 	void pyramid(const cv::Mat& im, vectorMat& pyrafeatures);

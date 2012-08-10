@@ -69,7 +69,7 @@ static inline int square(int x) { return x*x; }
  * @param b the linear coefficient
  */
 template<typename T>
-inline void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, int N, T a, T b, int os) {
+inline void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, unsigned int N, T a, T b, int os) {
 
 	int * const v = new int[N];
 	T   * const z = new T[N+1];
@@ -77,7 +77,7 @@ inline void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* pt
 	v[0] = 0;
 	z[0] = -numeric_limits<T>::infinity();
 	z[1] = +numeric_limits<T>::infinity();
-	for (int q = 1; q <= N-1; ++q) {
+	for (unsigned int q = 1; q <= N-1; ++q) {
 	    T s = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
 	    while (s <= z[k] && k > 0) {
 			// Update pointer
@@ -91,7 +91,7 @@ inline void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* pt
 	}
 
 	k = 0;
-	for (int q = 0; q <= N-1; ++q) {
+	for (unsigned int q = 0; q <= N-1; ++q) {
 		while (z[k+1] < os) k++;
 		dst[q] = a*square(os-v[k]) + b*(os-v[k]) + src[v[k]];
 		ptr[q] = v[k];
@@ -123,8 +123,8 @@ template<typename T>
 void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, Point os, Mat& score_out, Mat& Ix, Mat& Iy) {
 
 	// get the dimensionality of the score
-	int M = score_in.rows;
-	int N = score_in.cols;
+	const unsigned int M = score_in.rows;
+	const unsigned int N = score_in.cols;
 
 	// get the learned quadratic coefficients
 	float ax = w[0];
@@ -141,7 +141,7 @@ void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, 
 	Mat row(Size(N, 1), DataType<int>::type);
 
 	// compute the distance transform across the rows
-	for (int m = 0; m < M; ++m) {
+	for (unsigned int m = 0; m < M; ++m) {
 		distanceTransform1D(score_in.ptr<T>(m), score_tmp.ptr<T>(m), Ix.ptr<int>(m), N, -ax, -bx, os.x);
 	}
 
@@ -149,7 +149,7 @@ void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, 
 	transpose(score_tmp, score_tmp);
 
 	// compute the distance transform down the columns
-	for (int n = 0; n < N; ++n) {
+	for (unsigned int n = 0; n < N; ++n) {
 		distanceTransform1D(score_tmp.ptr<T>(n), score_out.ptr<T>(n), Iy.ptr<int>(n), M, -ay, -by, os.y);
 	}
 
@@ -160,13 +160,13 @@ void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, 
 	// get argmins
 	// FIXME: this miiiight be wrong! Check this against the original code if there are bugs in the dynamic program
 	int * const row_ptr = row.ptr<int>(0);
-	for (int m = 0; m < M; ++m) {
+	for (unsigned int m = 0; m < M; ++m) {
 		int* Iy_ptr = Iy.ptr<int>(m);
 		int* Ix_ptr = Ix.ptr<int>(m);
-		for (int n = 0; n < N; ++n) {
+		for (unsigned int n = 0; n < N; ++n) {
 			row_ptr[n] = Iy_ptr[Ix_ptr[n]];
 		}
-		for (int n = 0; n < N; ++n) {
+		for (unsigned int n = 0; n < N; ++n) {
 			Iy_ptr[n] = row_ptr[n];
 		}
 	}
@@ -199,8 +199,8 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 
 	// initialize the outputs, preallocate vectors to make them thread safe
 	// TODO: better initialisation of Ix, Iy, Ik
-	const int nscales = scores.size();
-	const int ncomponents = parts.ncomponents();
+	const unsigned int nscales = scores.size();
+	const unsigned int ncomponents = parts.ncomponents();
 	Ix.resize(nscales, vector3DMat(ncomponents));
 	Iy.resize(nscales, vector3DMat(ncomponents));
 	Ik.resize(nscales, vector3DMat(ncomponents));
@@ -211,11 +211,11 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for (int nc = 0; nc < nscales*ncomponents; ++nc) {
+	for (unsigned int nc = 0; nc < nscales*ncomponents; ++nc) {
 
 		// calculate the inner loop variables from the dual variables
-		const int n = floor(nc / ncomponents);
-		const int c = nc % ncomponents;
+		const unsigned int n = floor(nc / ncomponents);
+		const unsigned int c = nc % ncomponents;
 
 		// allocate the inner loop variables
 		Ix[n][c].resize(parts.nparts(c));
@@ -227,7 +227,7 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 
 			// get the component part (which may have multiple mixtures associated with it)
 			ComponentPart cpart = parts.component(c, p);
-			int nmixtures       = cpart.nmixtures();
+			unsigned int nmixtures       = cpart.nmixtures();
 			Ix[n][c][p].resize(nmixtures);
 			Iy[n][c][p].resize(nmixtures);
 			Ik[n][c][p].resize(nmixtures);
@@ -237,7 +237,7 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 			vectorMat Ixp;
 			vectorMat Iyp;
 
-			for (int m = 0; m < nmixtures; ++m) {
+			for (unsigned int m = 0; m < nmixtures; ++m) {
 
 				// raw score outputs
 				Mat score_in, score_dt, Ix_dt, Iy_dt;
@@ -261,11 +261,11 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 			}
 
 			nmixtures = cpart.parent().nmixtures();
-			for (int m = 0; m < nmixtures; ++m) {
+			for (unsigned int m = 0; m < nmixtures; ++m) {
 				vectorMat weighted;
 				// weight each of the child scores
 				// TODO: More elegant way of handling bias
-				for (int mm = 0; mm < cpart.nmixtures(); ++mm) {
+				for (unsigned int mm = 0; mm < cpart.nmixtures(); ++mm) {
 					weighted.push_back(scoresp[mm] + cpart.bias(mm)[m]);
 				}
 				// compute the max over the mixtures
@@ -295,7 +295,7 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 		T bias = root.bias(0)[0];
 		vectorMat weighted;
 		// weight each of the child scores
-		for (int m = 0; m < root.nmixtures(); ++m) {
+		for (unsigned int m = 0; m < root.nmixtures(); ++m) {
 			weighted.push_back(root.score(ncscores,m) + bias);
 		}
 		Math::reduceMax<T>(weighted, rootv[n][c], rooti[n][c]);
@@ -320,19 +320,19 @@ template<typename T>
 void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, vectorCandidate& candidates) {
 
 	// for each scale, and each component, traverse back down the tree to retrieve the part positions
-	int nscales = scales.size();
+	const unsigned int nscales = scales.size();
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for (int n = 0; n < nscales; ++n) {
+	for (unsigned int n = 0; n < nscales; ++n) {
 		T scale = scales[n];
-		for (int c = 0; c < parts.ncomponents(); ++c) {
+		for (unsigned int c = 0; c < parts.ncomponents(); ++c) {
 
 			// get the scores and indices for this tree of parts
 			const vector2DMat& Iknc = Ik[n][c];
 			const vector2DMat& Ixnc = Ix[n][c];
 			const vector2DMat& Iync = Iy[n][c];
-			int nparts = parts.nparts(c);
+			const unsigned int nparts = parts.nparts(c);
 
 			// threshold the root score
 			Mat over_thresh = rootv[n][c] > thresh_;
@@ -340,16 +340,16 @@ void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vec
 			vectorPoint inds;
 			Math::find(over_thresh, inds);
 
-			for (int i = 0; i < inds.size(); ++i) {
+			for (unsigned int i = 0; i < inds.size(); ++i) {
 				Candidate candidate;
 				candidate.setComponent(c);
 				vectori     xv(nparts);
 				vectori     yv(nparts);
 				vectori     mv(nparts);
-				for (int p = 0; p < nparts; ++p) {
+				for (unsigned int p = 0; p < nparts; ++p) {
 					ComponentPart part = parts.component(c, p);
 					// calculate the child's points from the parent's points
-					int x, y, m;
+					unsigned int x, y, m;
 					if (part.isRoot()) {
 						x = xv[0] = inds[i].x;
 						y = yv[0] = inds[i].y;

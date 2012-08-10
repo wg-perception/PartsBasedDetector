@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8.6)
 # -----------------------------------------------
 # USER-DEFINED VARIABLES
 option(BUILD_EXECUTABLE "Build as executable to test functionality"     ON)
-option(BUILD_DOC        "Build documentation with Doxygen"              ON)
+option(BUILD_DOC        "Build documentation with Doxygen"              OFF)
 option(USE_OPENMP       "Build with OpenMP support for multithreading"  ON)
 
 # --------------------
@@ -37,6 +37,9 @@ endif()
 
 # --------------------
 # COMMON
+
+# include all warning types
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -pedantic")
 
 # check if the MatlabIO dependency was successfully found
 if (MatlabIO_LIBRARIES)
