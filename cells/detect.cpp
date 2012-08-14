@@ -31,7 +31,7 @@ namespace parts_based_detector {
 
         // I/O
         spore<cv::Mat> color_, depth_, output_;
-        ecto::spore<std::vector<PoseResult> > pose_results_;
+        spore<std::vector<PoseResult> > pose_results_;
 
         // the detector classes
         boost::scoped_ptr<Visualize> visualizer_;

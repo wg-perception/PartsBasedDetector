@@ -146,7 +146,7 @@
  * model, and a method detect() for running the detection pipeline.
  *
  * @tparam T the detector precision. Should be one of float or double. On modern 64-bit
- * machines, the latter will be just as fast.
+ * machines, the latter will likely be just as fast.
  */
 template<typename T>
 class PartsBasedDetector {

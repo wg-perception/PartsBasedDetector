@@ -54,11 +54,18 @@ int main(int argc, char** argv) {
 
 	// deserialize the Matlab model, cast sideways and serialize
 	// an OpenCV FileStorage model
-	cout << "Converting Matlab (.mat) model to OpenCV (.xml) model..." << endl;
+	cout << "-------------------------------" << endl;
+	cout << "        Model Transfer         " << endl;
+	cout << "-------------------------------" << endl;
+	cout << "" << endl;
+	cout << "deserializing Matlab (.mat) model..." << endl;
 	matlab->deserialize(argv[1]);
+	cout << "converting..." << endl;
 	(*cv) = (*matlab);
+	cout << "serializing to OpenCV (.xml) model..." << endl;
 	cv->serialize(argv[2]);
 	cout << "Conversion complete" << endl;
+	cout << "-------------------------------" << endl;
 
 	// cleanup
 	delete matlab;

@@ -78,7 +78,7 @@ inline void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* pt
 	v[0] = 0;
 	z[0] = -numeric_limits<T>::infinity();
 	z[1] = +numeric_limits<T>::infinity();
-	for (unsigned int q = 1; q <= N-1; ++q) {
+	for (unsigned int q = 1; q < N; ++q) {
 	    T s = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
 	    while (s <= z[k] && k > 0) {
 			// Update pointer
@@ -92,7 +92,14 @@ inline void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* pt
 	}
 
 	k = 0;
-	for (unsigned int q = 0; q <= N-1; ++q) {
+	for (unsigned int q = 0; q < N; ++q) {
+		while(z[k+1] < q) k++;
+		dst[q] = a*square(q-v[k]) + b*(q-v[k]) + src[v[k]];
+		ptr[q] = v[k];
+	}
+
+	k = 0;
+	for (unsigned int q = 0; q < N; ++q) {
 		while (z[k+1] < os) k++;
 		dst[q] = a*square(os-v[k]) + b*(os-v[k]) + src[v[k]];
 		ptr[q] = v[k];
@@ -160,7 +167,6 @@ void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, 
 	transpose(Iy, Iy);
 
 	// get argmins
-	// FIXME: this miiiight be wrong! Check this against the original code if there are bugs in the dynamic program
 	int * const row_ptr = row.ptr<int>(0);
 	for (unsigned int m = 0; m < M; ++m) {
 		int* Iy_ptr = Iy.ptr<int>(m);

@@ -87,7 +87,7 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vectorCandid
 
 	// suppress non-maximal candidates
 	t = (double)getTickCount();
-	ssp_.nonMaxSuppression(rootv, features_->scales());
+	//ssp_.nonMaxSuppression(rootv, features_->scales());
 	printf("non-maxima suppression time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	// walk back down the tree to find the part locations
