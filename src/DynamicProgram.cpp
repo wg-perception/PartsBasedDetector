@@ -93,16 +93,43 @@ inline void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* pt
 
 	k = 0;
 	for (unsigned int q = 0; q < N; ++q) {
-		while(z[k+1] < q) k++;
-		dst[q] = a*square(q-v[k]) + b*(q-v[k]) + src[v[k]];
+		while (z[k+1] < os) k++;
+		dst[q] = a*square(os-v[k]) + b*(os-v[k]) + src[v[k]];
 		ptr[q] = v[k];
+		os++;
+	}
+
+	delete [] v;
+	delete [] z;
+}
+
+template<typename T>
+inline void DynamicProgram<T>::distanceTransform1DMat(const Mat_<T>& src, Mat_<T>& dst, Mat_<int>& ptr, unsigned int N, T a, T b, int os) {
+
+	int * const v = new int[N];
+	T   * const z = new T[N+1];
+	int k = 0;
+	v[0] = 0;
+	z[0] = -numeric_limits<T>::infinity();
+	z[1] = +numeric_limits<T>::infinity();
+	for (unsigned int q = 1; q < N; ++q) {
+	    T s = ((src(q) - src(v[k])) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
+	    while (s <= z[k] && k > 0) {
+			// Update pointer
+			k--;
+			s  = ((src(q) - src(v[k])) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
+	    }
+	    k++;
+	    v[k]   = q;
+	    z[k]   = s;
+	    z[k+1] = +numeric_limits<T>::infinity();
 	}
 
 	k = 0;
 	for (unsigned int q = 0; q < N; ++q) {
 		while (z[k+1] < os) k++;
-		dst[q] = a*square(os-v[k]) + b*(os-v[k]) + src[v[k]];
-		ptr[q] = v[k];
+		dst(q) = a*square(os-v[k]) + b*(os-v[k]) + src(v[k]);
+		ptr(q) = v[k];
 		os++;
 	}
 
@@ -141,13 +168,39 @@ void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, 
 	float ay = w[2];
 	float by = w[3];
 
+	/* --------------------------------------------
+	// new approach
+	// allocate the output
+	Mat score_tmp(Size(N, M), DataType<T>::type);
+	score_out.create(Size(N, M), DataType<T>::type);
+	Ix.create(Size(N, M), DataType<int>::type);
+	Iy.create(Size(N, M), DataType<int>::type);
+	assert(Size(N, M) == score_in.size());
+
+	// compute the distance transform across the rows
+	for (unsigned int m = 0; m < M; ++m) {
+		Mat_<T> src   = score_in.row(m);
+		Mat_<T> dst   = score_tmp.row(m);
+		Mat_<int> idx = Ix.row(m);
+		distanceTransform1DMat(src, dst, idx, N, -ax, -bx, os.x);
+	}
+	//cout << "We get here!" << endl;
+	//cout << score_tmp(Range(0,10), Range(0,10)) << endl;
+
+	// compute the distance transform down the columns
+	for (unsigned int n = 0; n < N; ++n) {
+		Mat_<T> src   = score_tmp.col(n);
+		Mat_<T> dst   = score_out.col(n);
+		Mat_<int> idx = Iy.col(n);
+		distanceTransform1DMat(src, dst, idx, M, -ay, -by, os.y);
+	}
+	// --------------------------------------------*/
+
 	// allocate the output and working matrices
 	score_out.create(Size(M, N), DataType<T>::type);
 	Ix.create(Size(N, M), DataType<int>::type);
 	Iy.create(Size(M, N), DataType<int>::type);
-
 	Mat score_tmp(Size(N, M), DataType<T>::type);
-	Mat row(Size(N, 1), DataType<int>::type);
 
 	// compute the distance transform across the rows
 	for (unsigned int m = 0; m < M; ++m) {
@@ -167,6 +220,7 @@ void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, 
 	transpose(Iy, Iy);
 
 	// get argmins
+	Mat row(Size(N, 1), DataType<int>::type);
 	int * const row_ptr = row.ptr<int>(0);
 	for (unsigned int m = 0; m < M; ++m) {
 		int* Iy_ptr = Iy.ptr<int>(m);
@@ -373,9 +427,8 @@ void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vec
 					}
 
 					// calculate the bounding rectangle and add it to the Candidate
-					Point ptwo = Point(2,2);
 					Point pone = Point(1,1);
-					Point xy1 = (Point(xv[p],yv[p])-ptwo)*scale;
+					Point xy1 = (Point(xv[p],yv[p])-pone)*scale;
 					Point xy2 = xy1 + Point(part.xsize(m), part.ysize(m))*scale - pone;
 					if (part.isRoot()) candidate.addPart(Rect(xy1, xy2), rootv[n][c].at<T>(inds[i]));
 					else candidate.addPart(Rect(xy1, xy2), 0.0);

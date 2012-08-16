@@ -344,7 +344,7 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
  * each pixel an SVM must be evaluated (leading to a stride of SVM weight length).
  * The convolution can be thought of as flattened a 2.5D convolution where the
  * (i,j) dimension is the spatial plane and the (k) dimension is the SVM weights
- * of the pixels. As one would expect, this method is slow
+ * of the pixels.
  *
  * The function supports multithreading via OpenMP
  *
@@ -374,7 +374,12 @@ void HOGFeatures<T>::convolve(const Mat& feature, vectorFilterEngine& filter, Ma
 		filter[c]->apply(featurev[c], pdfc, roi, offset, true);
 		pdf += pdfc;
 	}
-
+	/*
+	cout << "[" << featurev[0].cols << ", " << featurev[0].rows << "]" << endl;
+	cout << "[" << pdf.cols << ", " << pdf.rows << "]" << endl;
+	cout << pdf << endl;
+	exit(0);
+	*/
 }
 
 
