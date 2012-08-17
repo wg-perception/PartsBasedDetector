@@ -289,10 +289,11 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 
 			// get the component part (which may have multiple mixtures associated with it)
 			ComponentPart cpart = parts.component(c, p);
-			unsigned int nmixtures       = cpart.nmixtures();
-			Ix[n][c][p].resize(nmixtures);
-			Iy[n][c][p].resize(nmixtures);
-			Ik[n][c][p].resize(nmixtures);
+			const unsigned int nmixtures  = cpart.nmixtures();
+			const unsigned int pnmixtures = cpart.parent().nmixtures();
+			Ix[n][c][p].resize(pnmixtures);
+			Iy[n][c][p].resize(pnmixtures);
+			Ik[n][c][p].resize(pnmixtures);
 
 			// intermediate results for mixtures of this part
 			vectorMat scoresp;
@@ -322,12 +323,11 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 				Iyp.push_back(Iy_dt);
 			}
 
-			nmixtures = cpart.parent().nmixtures();
-			for (unsigned int m = 0; m < nmixtures; ++m) {
+			for (unsigned int m = 0; m < pnmixtures; ++m) {
 				vectorMat weighted;
 				// weight each of the child scores
 				// TODO: More elegant way of handling bias
-				for (unsigned int mm = 0; mm < cpart.nmixtures(); ++mm) {
+				for (unsigned int mm = 0; mm < nmixtures; ++mm) {
 					weighted.push_back(scoresp[mm] + cpart.bias(mm)[m]);
 				}
 				// compute the max over the mixtures
