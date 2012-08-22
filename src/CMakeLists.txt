@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------
 # With MatlabIO support
 # ----------------------------------------------------------------------------
-if (MatlabIO_FOUND)
+if (cvmatio_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_MATLABIO")
     set(SRC_FILES   DepthConsistency.cpp 
                     DynamicProgram.cpp
@@ -28,13 +28,13 @@ if (MatlabIO_FOUND)
     target_link_libraries(ModelTransfer ${Boost_LIBRARIES}
                                         ${OpenCV_LIBS} 
                                         ${ZLIB_LIBRARIES} 
-                                        ${MatlabIO_LIBRARIES}
+                                        ${cvmatio_LIBRARIES}
     )
 
     target_link_libraries(${PROJECT_NAME}   ${Boost_LIBRARIES} 
                                             ${OpenCV_LIBS} 
                                             ${ZLIB_LIBRARIES} 
-                                            ${MatlabIO_LIBRARIES}
+                                            ${cvmatio_LIBRARIES}
     )
 
     #install
@@ -52,6 +52,7 @@ else()
                     HOGFeatures.cpp 
                     Math.cpp
                     PartsBasedDetector.cpp 
+                    SearchSpacePruning.cpp
                     StereoCameraModel.cpp
                     Visualize.cpp
                     nms.cpp

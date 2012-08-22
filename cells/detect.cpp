@@ -42,7 +42,7 @@ namespace parts_based_detector {
          * @param db_documents the recognition database documents
          */
         void
-        ParameterCallback(const object_recognition_core::db::Documents& db_documents) {}
+        ParameterCallback(const object_recognition_core::db::Documents&) {}
 
         /*! @brief declare parameters used by the detector
          *
@@ -71,7 +71,7 @@ namespace parts_based_detector {
          * @param outputs a hook to the outputs
          */
         static void
-        declare_io(const tendrils& params, tendrils& inputs, tendrils& outputs) {
+        declare_io(const tendrils&, tendrils& inputs, tendrils& outputs) {
             inputs.declare(&PartsBasedDetectorCell::color_, "image", "An rgb full frame image.");
             inputs.declare(&PartsBasedDetectorCell::depth_, "depth", "The 16bit depth image.");
 
@@ -91,7 +91,7 @@ namespace parts_based_detector {
          * @param outputs for initializing outputs, if necessary
          */
         void
-        configure(const tendrils& params, const tendrils& inputs, const tendrils& outputs) {
+        configure(const tendrils&, const tendrils&, const tendrils&) {
 
             // create the model object and deserialize it
             FileStorageModel model;
@@ -117,7 +117,7 @@ namespace parts_based_detector {
          * @return
          */
         int
-        process(const tendrils& inputs, const tendrils& outputs) {
+        process(const tendrils&, const tendrils&) {
             std::cout << "detector: process" << std::endl;
 
             std::vector<Candidate> candidates;
@@ -141,4 +141,4 @@ namespace parts_based_detector {
 
 // register the ECTO cell
 ECTO_CELL(object_recognition_by_parts_cells, parts_based_detector::PartsBasedDetectorCell, "Detector",
-"Detection of objects by parts");
+"Detection of objects by parts")

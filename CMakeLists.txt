@@ -5,12 +5,14 @@ cmake_minimum_required(VERSION 2.8.6)
 # USER-DEFINED VARIABLES
 option(BUILD_EXECUTABLE "Build as executable to test functionality"     ON)
 option(BUILD_DOC        "Build documentation with Doxygen"              OFF)
-option(USE_OPENMP       "Build with OpenMP support for multithreading"  OFF)
+option(USE_OPENMP       "Build with OpenMP support for multithreading"  ON)
 
 # --------------------
 # CATKIN
-#find_package(catkin QUIET)
+set(BUILD_CATKIN OFF)
 if (catkin_FOUND)
+    set(BUILD_CATKIN ON)
+    set(BUILD_EXECUTABLE OFF)
     project(object_recognition_by_parts)
     catkin_stack()
     catkin_project(object_recognition_by_parts
@@ -24,14 +26,13 @@ if (catkin_FOUND)
     # Set the install module path
     set_ecto_install_package_name(${PROJECT_NAME}/ecto_cells)
     # deal with cvmatio
-    find_package(cvmatio)
+    find_package(cvmatio QUIET) 
     include_directories(SYSTEM ${cvmatio_INCLUDE_DIRS})
-    set(MatlabIO_LIBRARIES ${cvmatio_LIBRARIES})
 else()
     project(PartsBasedDetector)
     # find cvmatio manually
     include_directories(../cvmatio/include)
-    find_library(MatlabIO_LIBRARIES cvmatio PATHS ../cvmatio/lib)
+    find_library(cvmatio_LIBRARIES cvmatio PATHS ../cvmatio/lib)
 endif()
 
 
@@ -42,10 +43,10 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -pedantic")
 
 # check if the MatlabIO dependency was successfully found
-if (MatlabIO_LIBRARIES)
-    set(MatlabIO_FOUND ON)
+if (cvmatio_LIBRARIES)
+    set(cvmatio_FOUND ON)
 else()
-    set(MatlabIO_FOUND OFF)
+    set(cvmatio_FOUND OFF)
 endif()
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -109,12 +110,13 @@ endif()
 # Build summary
 message("")
 message("---------------------------------------------")
-message("PartsBasedDetector Configuration Summary")
+message(${PROJECT} " Configuration Summary")
 message("")
+message("Building with ECTO/Catkin:     ${BUILD_CATKIN}")
 message("Build as executable:           ${BUILD_EXECUTABLE}")
 message("Build with documentation:      ${BUILD_DOC}")
 message("Build with threading (OpenMP): ${USE_OPENMP}")
-message("Build with MatlabIO support:   ${MatlabIO_FOUND}")
+message("Build with MatlabIO support:   ${cvmatio_FOUND}")
 message("Build type:                    ${CMAKE_BUILD_TYPE}")
 message("")
 message("---------------------------------------------")
