@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8.6)
 # -----------------------------------------------
 # USER-DEFINED VARIABLES
 option(BUILD_EXECUTABLE "Build as executable to test functionality"     ON)
-option(BUILD_DOC        "Build documentation with Doxygen"              OFF)
+option(BUILD_DOC        "Build documentation with Doxygen"              ON)
 option(USE_OPENMP       "Build with OpenMP support for multithreading"  ON)
 
 # --------------------
@@ -40,7 +40,7 @@ endif()
 # COMMON
 
 # include all warning types
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter -pedantic")
 
 # check if the MatlabIO dependency was successfully found
 if (cvmatio_LIBRARIES)
@@ -67,8 +67,8 @@ if (USE_OPENMP)
 endif()
 
 # add vectorization support
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1 -ftree-vectorize")
-set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -msse4.1 -ftree-vectorize")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -msse4.1")
 
 # use highest level of optimization in Release mode
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")

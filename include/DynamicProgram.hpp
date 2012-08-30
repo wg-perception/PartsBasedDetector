@@ -41,6 +41,7 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include "Candidate.hpp"
+#include "DistanceTransform.hpp"
 #include "Model.hpp"
 #include "Parts.hpp"
 #include "types.hpp"
@@ -62,6 +63,7 @@ class DynamicProgram {
 private:
 	//! the threshold for a positive detection
 	double thresh_;
+	DistanceTransform<T> dt_;
 	void distanceTransform1D(const T* src, T* dst, int* ptr, unsigned int n, T a, T b, int os);
 	void distanceTransform1DMat(const cv::Mat_<T>& src, cv::Mat_<T>& dst, cv::Mat_<int>& ptr, unsigned int N, T a, T b, int os);
 public:

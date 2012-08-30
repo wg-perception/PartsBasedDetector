@@ -44,196 +44,6 @@
 using namespace cv;
 using namespace std;
 
-/*! @brief the square of an integer
- *
- * @param x the input
- * @return x*x
- */
-static inline int square(int x) { return x*x; }
-
-
-/*! @brief Generalized 1D distance transform
- *
- * This method performs the 1D distance transform across the rows of a matrix.
- * It is called twice internally by distanceTransform(), once across the rows
- * and once down the columns (transposed to rows)
- *
- * Only quadratic distance functions are handled
- * y = a.x^2 + b.x
- *
- * @param src pointer to the start of the source data
- * @param dst pointer to the start of the destination data
- * @param ptr pointer to indices
- * @param N the total number of rows
- * @param a the quadratic coefficient
- * @param b the linear coefficient
- * @param os the anchor offset
- */
-template<typename T>
-inline void DynamicProgram<T>::distanceTransform1D(const T* src, T* dst, int* ptr, unsigned int N, T a, T b, int os) {
-
-	int * const v = new int[N];
-	T   * const z = new T[N+1];
-	int k = 0;
-	v[0] = 0;
-	z[0] = -numeric_limits<T>::infinity();
-	z[1] = +numeric_limits<T>::infinity();
-	for (unsigned int q = 1; q < N; ++q) {
-	    T s = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
-	    while (s <= z[k] && k > 0) {
-			// Update pointer
-			k--;
-			s  = ((src[q] - src[v[k]]) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
-	    }
-	    k++;
-	    v[k]   = q;
-	    z[k]   = s;
-	    z[k+1] = +numeric_limits<T>::infinity();
-	}
-
-	k = 0;
-	for (unsigned int q = 0; q < N; ++q) {
-		while (z[k+1] < os) k++;
-		dst[q] = a*square(os-v[k]) + b*(os-v[k]) + src[v[k]];
-		ptr[q] = v[k];
-		os++;
-	}
-
-	delete [] v;
-	delete [] z;
-}
-
-template<typename T>
-inline void DynamicProgram<T>::distanceTransform1DMat(const Mat_<T>& src, Mat_<T>& dst, Mat_<int>& ptr, unsigned int N, T a, T b, int os) {
-
-	int * const v = new int[N];
-	T   * const z = new T[N+1];
-	int k = 0;
-	v[0] = 0;
-	z[0] = -numeric_limits<T>::infinity();
-	z[1] = +numeric_limits<T>::infinity();
-	for (unsigned int q = 1; q < N; ++q) {
-	    T s = ((src(q) - src(v[k])) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
-	    while (s <= z[k] && k > 0) {
-			// Update pointer
-			k--;
-			s  = ((src(q) - src(v[k])) - b*(q - v[k]) + a*(square(q) - square(v[k]))) / (2*a*(q-v[k]));
-	    }
-	    k++;
-	    v[k]   = q;
-	    z[k]   = s;
-	    z[k+1] = +numeric_limits<T>::infinity();
-	}
-
-	k = 0;
-	for (unsigned int q = 0; q < N; ++q) {
-		while (z[k+1] < os) k++;
-		dst(q) = a*square(os-v[k]) + b*(os-v[k]) + src(v[k]);
-		ptr(q) = v[k];
-		os++;
-	}
-
-	delete [] v;
-	delete [] z;
-}
-
-
-/*! @brief Generalized distance transform
- *
- * 1-Dimensional generalized distance transform based on the paper:
- * P. Felzenszwalb and D. Huttenlocher, "Distance Transforms of Sampled Functions,"
- * Cornell Technical Report, 2004
- *
- * This is used to reduce the complexity of the dynamic program, namely when all
- * of the cost functions are quadratic. The 2D distance transform is broken down
- * into two 1D transforms since the operation is separable
- *
- * @param score_in the input score
- * @param w the quadratic weights
- * @param os the anchor offset of the child from the parent
- * @param score_out the distance transformed score
- * @param Ix the distances in the x direction
- * @param Iy the distances in the y direction
- */
-template<typename T>
-void DynamicProgram<T>::distanceTransform(const Mat& score_in, const vectorf w, Point os, Mat& score_out, Mat& Ix, Mat& Iy) {
-
-	// get the dimensionality of the score
-	const unsigned int M = score_in.rows;
-	const unsigned int N = score_in.cols;
-
-	// get the learned quadratic coefficients
-	float ax = w[0];
-	float bx = w[1];
-	float ay = w[2];
-	float by = w[3];
-
-	/* --------------------------------------------
-	// new approach
-	// allocate the output
-	Mat score_tmp(Size(N, M), DataType<T>::type);
-	score_out.create(Size(N, M), DataType<T>::type);
-	Ix.create(Size(N, M), DataType<int>::type);
-	Iy.create(Size(N, M), DataType<int>::type);
-	assert(Size(N, M) == score_in.size());
-
-	// compute the distance transform across the rows
-	for (unsigned int m = 0; m < M; ++m) {
-		Mat_<T> src   = score_in.row(m);
-		Mat_<T> dst   = score_tmp.row(m);
-		Mat_<int> idx = Ix.row(m);
-		distanceTransform1DMat(src, dst, idx, N, -ax, -bx, os.x);
-	}
-	//cout << "We get here!" << endl;
-	//cout << score_tmp(Range(0,10), Range(0,10)) << endl;
-
-	// compute the distance transform down the columns
-	for (unsigned int n = 0; n < N; ++n) {
-		Mat_<T> src   = score_tmp.col(n);
-		Mat_<T> dst   = score_out.col(n);
-		Mat_<int> idx = Iy.col(n);
-		distanceTransform1DMat(src, dst, idx, M, -ay, -by, os.y);
-	}
-	// --------------------------------------------*/
-
-	// allocate the output and working matrices
-	score_out.create(Size(M, N), DataType<T>::type);
-	Ix.create(Size(N, M), DataType<int>::type);
-	Iy.create(Size(M, N), DataType<int>::type);
-	Mat score_tmp(Size(N, M), DataType<T>::type);
-
-	// compute the distance transform across the rows
-	for (unsigned int m = 0; m < M; ++m) {
-		distanceTransform1D(score_in.ptr<T>(m), score_tmp.ptr<T>(m), Ix.ptr<int>(m), N, -ax, -bx, os.x);
-	}
-
-	// transpose the intermediate matrices
-	transpose(score_tmp, score_tmp);
-
-	// compute the distance transform down the columns
-	for (unsigned int n = 0; n < N; ++n) {
-		distanceTransform1D(score_tmp.ptr<T>(n), score_out.ptr<T>(n), Iy.ptr<int>(n), M, -ay, -by, os.y);
-	}
-
-	// transpose back to the original layout
-	transpose(score_out, score_out);
-	transpose(Iy, Iy);
-
-	// get argmins
-	Mat row(Size(N, 1), DataType<int>::type);
-	int * const row_ptr = row.ptr<int>(0);
-	for (unsigned int m = 0; m < M; ++m) {
-		int* Iy_ptr = Iy.ptr<int>(m);
-		int* Ix_ptr = Ix.ptr<int>(m);
-		for (unsigned int n = 0; n < N; ++n) {
-			row_ptr[n] = Iy_ptr[Ix_ptr[n]];
-		}
-		for (unsigned int n = 0; n < N; ++n) {
-			Iy_ptr[n] = row_ptr[n];
-		}
-	}
-}
-
 
 /*! @brief Get the min of a dynamic program
  *
@@ -303,7 +113,8 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 			for (unsigned int m = 0; m < nmixtures; ++m) {
 
 				// raw score outputs
-				Mat score_in, score_dt, Ix_dt, Iy_dt;
+				Mat_<T> score_in, score_dt;
+				Mat_<int> Ix_dt, Iy_dt;
 				if (cpart.score(ncscores, m).empty()) {
 					score_in = cpart.score(scores[n], m);
 				} else {
@@ -314,10 +125,10 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 				Point anchor = cpart.anchor(m);
 
 				// compute the distance transform
-				distanceTransform(score_in, cpart.defw(m), anchor, score_dt, Ix_dt, Iy_dt);
-				//score_in.copyTo(score_dt);
-				//Ix_dt = Mat::zeros(score_dt.size(), DataType<int>::type);
-				//Iy_dt = Mat::zeros(score_dt.size(), DataType<int>::type);
+				vectorf w = cpart.defw(m);
+				Quadratic fx(-w[0], -w[1]);
+				Quadratic fy(-w[2], -w[3]);
+				dt_.compute(score_in, fx, fy, anchor, score_dt, Ix_dt, Iy_dt);
 				scoresp.push_back(score_dt);
 				Ixp.push_back(Ix_dt);
 				Iyp.push_back(Iy_dt);
