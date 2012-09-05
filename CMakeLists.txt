@@ -23,8 +23,6 @@ if (catkin_FOUND)
     catkin_python_setup()
     find_package(ecto REQUIRED)
     find_package(object_recognition_core REQUIRED)
-    # Set the install module path
-    set_ecto_install_package_name(${PROJECT_NAME}/ecto_cells)
     # deal with cvmatio
     find_package(cvmatio QUIET) 
     include_directories(SYSTEM ${cvmatio_INCLUDE_DIRS})

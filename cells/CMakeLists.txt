@@ -1,7 +1,7 @@
-set_ecto_install_package_name(${PROJECT_NAME})
-
-ectomodule(object_recognition_by_parts_cells    module.cpp
-                                                detect.cpp
+ectomodule(object_recognition_by_parts_cells DESTINATION ${PROJECT_NAME}
+                                             INSTALL
+                                             module.cpp
+                                             detect.cpp
 )
 
 find_package(object_recognition_core REQUIRED)
@@ -16,5 +16,3 @@ link_ecto(object_recognition_by_parts_cells     ${OpenCV_LIBRARIES}
                                                 ${MatlabIO_LIBRARIES}
                                                 object_recognition_by_parts
 )
-
-install_ecto_module(object_recognition_by_parts_cells)
