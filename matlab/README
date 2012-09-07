@@ -1,0 +1,20 @@
+-------------------------------------------------
+MATLAB/OCTAVE TRAINING CODE
+-------------------------------------------------
+
+The Matlab and Octave code in this directory can be used to train models
+for the PartsBasedDetector. The code is a mirror of Yi Yang's code 
+available at (with some modifications to support Octave):
+
+    http://www.ics.uci.edu/~yyang8/research/pose/
+
+Procedure to train a model:
+
+    1) Start Octave or Matlab and cd to this matlab directory
+    2) Run compile.m to compile the required mex files
+    3) Annotate your training data. A simple utility called
+       annotateParts() is provided for your clicking 
+       convenience
+    4) Create a training script. A sample training script
+       training_demo.m is provided to outline the steps involved
+    5) Run your script to train your model
