@@ -1,0 +1,46 @@
+-------------------------------------------------
+INSTALLATION GUIDELINES
+-------------------------------------------------
+
+The PartsBasedDetector can be configured to support a number
+of external libraries. In particular, interfaces to ROS and
+ECTO can be built, which requires a different build process.
+The different options are detailed below:
+
+
+STANDALONE
+This is regular cmake. Open the root CMakeLists.txt and 
+change the options and flags to meet your needs. Then:
+    mkdir build
+    cd build
+    cmake ..
+    make -j8
+
+
+ECTO OR ROS
+With the release of ROS Groovy, the build system has transitioned
+to Catkin. The PartsBasedDetector ECTO cell and ROS node are built
+using catkin. This repository must therefore be inserted into the
+build tree as per the catkin way. Schematically, this appears as
+such:
+
+-- workspace
+   |
+   |-- CMakeLists.txt (top-level)
+   |
+   |-- PartsBasedDetector
+   |
+   |-- cvmatio (if you have/need it)
+   |
+   |-- build
+
+Building the PartsBasedDetector is then a matter of invoking the
+top-level CMakeLists.txt from within build/ in the root of the
+workspace (not in PartsBasedDetector!).
+Catkin will  automatically traverse the stacks in the workspace 
+and build PartsBasedDetector (and ECTO cell and/or ROS node 
+if you have selected those options)
+
+RUNNING THE DETECTOR/TRAINING
+To train a new model or run the detector using an existing model,
+please consult the README in matlab/ or the root respectively
