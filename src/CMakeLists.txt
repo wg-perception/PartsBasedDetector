@@ -39,7 +39,7 @@ install(TARGETS ${PROJECT_NAME}_lib
 
 # as an executable
 if (BUILD_EXECUTABLE)
-    set(SRC_FILES main.cpp)
+    set(SRC_FILES demo.cpp)
     add_executable(${PROJECT_NAME}_bin ${SRC_FILES})
     target_link_libraries(${PROJECT_NAME}_bin ${LIBS} ${PROJECT_NAME}_lib)
     set_target_properties(${PROJECT_NAME}_bin PROPERTIES OUTPUT_NAME ${PROJECT_NAME})

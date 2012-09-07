@@ -78,6 +78,15 @@ public:
 	void setComponent(int c) { component_ = c; }
 	//! get the candidate component
 	int component(void) { return component_; }
+	//! rescale the parts
+	void resize(const float factor) {
+		for (unsigned int n = 0; n < parts_.size(); ++n) {
+			parts_[n].height *= factor;
+			parts_[n].width  *= factor;
+			parts_[n].y      *= factor;
+			parts_[n].x      *= factor;
+		}
+	}
 	//! descending comparison method for ordering objects of type Candidate
 	static bool descending(Candidate c1, Candidate c2) { return c1.score() > c2.score(); }
 

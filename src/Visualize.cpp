@@ -74,7 +74,7 @@ void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, uns
 	}
 
 	// draw each candidate to the canvas
-	const int LINE_THICKNESS = 3;
+	const int LINE_THICKNESS = 1;
 	Scalar black(0,0,0);
 	N = (candidates.size() < N) ? candidates.size() : N;
 	for (unsigned int n = 0; n < N; ++n) {
@@ -85,7 +85,7 @@ void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, uns
 			rectangle(canvas, box, colors[p], LINE_THICKNESS);
 			if (display_confidence && p == 0) putText(canvas, confidence, Point(box.x, box.y-5), FONT_HERSHEY_SIMPLEX, 0.5f, black, 2);
 		}
-		rectangle(canvas, candidate.boundingBox(), Scalar(255, 0, 0), LINE_THICKNESS);
+		//rectangle(canvas, candidate.boundingBox(), Scalar(255, 0, 0), LINE_THICKNESS);
 	}
 }
 
