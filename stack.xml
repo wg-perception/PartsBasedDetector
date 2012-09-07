@@ -13,6 +13,8 @@
   <build_depends>openni-dev</build_depends>
   <build_depends>opencv2</build_depends>
   <build_depends>cvmatio</build_depends>
+  <build_depends>roscpp</build_depends>
+  <build_depends>image_geometry</build_depends>
   <depends>ecto</depends>
   <depends>opencv2</depends>
   <depends>object_recognition_core</depends>

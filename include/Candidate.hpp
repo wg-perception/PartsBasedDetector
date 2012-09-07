@@ -149,6 +149,73 @@ public:
 		return Rect3(minv, maxv);
 	}
 
+	/*! @brief suppress non-maximal candidates
+	 *
+	 * Given a vector of candidates, keep only the maximal candidates which
+	 * overlap less than a defined fractional area. If overlap is 0.0 (the
+	 * default value) no overlap is allowed. If, for example, the overlap is
+	 * 0.2, then two candidates' bounding boxes can intersect by 20%
+	 *
+	 * @param im the input image from which the candidates were found
+	 * @param candidates the vector of candidates
+	 * @param overlap the allowable overlap [0.0 1.0)
+	 */
+	static void nonMaximaSuppression(const cv::Mat& im, vectorCandidate& candidates, const float overlap=0.0f) {
+
+		// create a scratch space that we can draw on
+		const unsigned int N = candidates.size();
+		cv::Mat scratch = cv::Mat::zeros(im.size(), CV_8U);
+		cv::Rect bounds = cv::Rect(0,0,0,0) + im.size();
+
+		// the current insertion position in the vector
+		unsigned int keep = 0;
+
+		/* iterate through the boxes, checking:
+		 * 1) has the area under the box been painted?
+		 * 2) if so, is it under the threshold?
+		 * 3) if so, keep this box and paint the area
+		 * 4) repeat
+		 */
+		for (unsigned int n = 0; n < N; ++n) {
+			cv::Rect box = candidates[n].boundingBox() & bounds;
+			cv::Scalar boxsum = sum(scratch(box));
+			if (boxsum[0] / box.area() > overlap) continue;
+			scratch(box) = 1;
+			candidates[keep] = candidates[n];
+			keep++;
+		}
+
+		// simply delete the trailing end of the candidates
+		candidates.resize(keep);
+	}
+
+	/*! @brief return a masked representation of a set of candidates
+	 *
+	 * Given a vector of candidates which have already been non-maximally
+	 * suppressed, return an image mask where zero values represent
+	 * regions which do not contain objects, and all integer values
+	 * represent unique object locations.
+	 *
+	 * I.e. object_7 = (mask == 7) returns a mask where nonzero elements
+	 * bound the 7th best detection
+	 *
+	 * @param im the input image from which the candidates were found
+	 * @param candidates the vector of candidates
+	 * @param mask a mask of type CV_8U the same size as im
+	 */
+	static void mask(const cv::Mat& im, vectorCandidate& candidates, cv::Mat& mask) {
+
+		// allocate the mask
+		const unsigned int N = candidates.size();
+		mask = cv::Mat::zeros(im.size(), CV_8U);
+		cv::Rect bounds = cv::Rect(0,0,0,0) + im.size();
+
+		for (unsigned int n = 0; n < N; ++n) {
+			cv::Rect box = candidates[n].boundingBox() & bounds;
+			mask(box).setTo(n+1, mask(box) == 0);
+		}
+	}
+
 };
 
 #endif /* CANDIDATE_HPP_ */

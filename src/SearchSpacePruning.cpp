@@ -37,53 +37,13 @@
  */
 
 #include "nms.hpp"
+#include "Candidate.hpp"
 #include "SearchSpacePruning.hpp"
 #include "Math.hpp"
 #include <limits>
 #include <iostream>
 using namespace cv;
 using namespace std;
-
-template<typename T>
-void SearchSpacePruning<T>::nonMaxSuppression(vector2DMat& rootv, const vectorf& scales) {
-
-	const unsigned int N = rootv.size();
-	const unsigned int C = rootv[0].size();
-	/*
-	// TODO: non-maxima suppression across all scales simultaneously,
-	// so good detections at different scales cannot be overlaid
-	const Size maxsize = rootv[0][0].size();
-	vectorMat scaled(N*C);
-	for (unsigned int n = 0; n < N; ++n) {
-		for (unsigned int c = 0; c < C; ++c) {
-			Mat resized;
-			resize(rootv[n][c], resized, maxsize);
-			scaled[n*C+c] = resized;
-		}
-	}
-	Mat maxv, maxi;
-	Math::reduceMax<T>(scaled, maxv, maxi);
-	*/
-
-
-	T smallest;
-	if (numeric_limits<T>::is_signed) {
-		smallest = -numeric_limits<T>::max();
-	} else {
-		smallest = 0;
-	}
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-	for (unsigned int nc = 0; nc < N * C; ++nc) {
-		const unsigned int n = nc / C;
-		const unsigned int c = nc % C;
-		Mat maxima;
-		nonMaximaSuppression(rootv[n][c], scales[n] * 5, maxima);
-		rootv[n][c].setTo(smallest, maxima == 0);
-	}
-}
 
 template<typename T>
 void SearchSpacePruning<T>::filterResponseByDepth(vector2DMat& pdfs, const vector<Size>& fsizes, const Mat& depth, const vectorf& scales, const float X, const float fx) {

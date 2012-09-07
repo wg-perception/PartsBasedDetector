@@ -1,78 +1,49 @@
-# ----------------------------------------------------------------------------
-# With MatlabIO support
-# ----------------------------------------------------------------------------
+# -----------------------------------------------
+# BUILD THE PARTS BASED DETECTOR FROM SOURCE
+# -----------------------------------------------
+set(SRC_FILES   DepthConsistency.cpp 
+                DynamicProgram.cpp
+                FileStorageModel.cpp
+                HOGFeatures.cpp 
+                Math.cpp
+                PartsBasedDetector.cpp 
+                SearchSpacePruning.cpp
+                StereoCameraModel.cpp
+                Visualize.cpp
+                nms.cpp
+)
+
+set(LIBS        ${Boost_LIBRARIES}
+                ${OpenCV_LIBS}
+)
+
+# with cvmatio support
 if (cvmatio_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_MATLABIO")
-    set(SRC_FILES   DepthConsistency.cpp 
-                    DynamicProgram.cpp
-                    FileStorageModel.cpp
-                    HOGFeatures.cpp 
-                    Math.cpp
-                    MatlabIOModel.cpp
-                    nms.cpp
-                    PartsBasedDetector.cpp 
-                    SearchSpacePruning.cpp
-                    StereoCameraModel.cpp
-                    Visualize.cpp
-    )
-
-    # build as a standalone executable
-    if (BUILD_EXECUTABLE)
-        set(SRC_FILES ${SRC_FILES} main.cpp)
-        add_executable(${PROJECT_NAME} ${SRC_FILES})
-    else()
-        add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
-    endif()
-
+    set(SRC_FILES ${SRC_FILES} MatlabIOModel.cpp)
+    set(LIBS ${LIBS} ${ZLIB_LIBRARIES} ${cvmatio_LIBRARIES})
     add_executable(ModelTransfer ModelTransfer.cpp FileStorageModel.cpp MatlabIOModel.cpp)
-    target_link_libraries(ModelTransfer ${Boost_LIBRARIES}
-                                        ${OpenCV_LIBS} 
-                                        ${ZLIB_LIBRARIES} 
-                                        ${cvmatio_LIBRARIES}
+    target_link_libraries(ModelTransfer ${LIBS})
+    install(TARGETS ModelTransfer
+            RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin
     )
+endif()
 
-    target_link_libraries(${PROJECT_NAME}   ${Boost_LIBRARIES} 
-                                            ${OpenCV_LIBS} 
-                                            ${ZLIB_LIBRARIES} 
-                                            ${cvmatio_LIBRARIES}
-    )
+# as a library (always)
+add_library(${PROJECT_NAME}_lib SHARED ${SRC_FILES})
+target_link_libraries(${PROJECT_NAME}_lib ${LIBS})
+set_target_properties(${PROJECT_NAME}_lib PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+install(TARGETS ${PROJECT_NAME}_lib 
+        LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib
+)
 
-    #install
-    install(TARGETS ${PROJECT_NAME} ModelTransfer   RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin
-                                                    LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib
-    )
-
-# ----------------------------------------------------------------------------
-# Without MatlabIO support
-# ----------------------------------------------------------------------------
-else()
-    set(SRC_FILES   DepthConsistency.cpp 
-                    DynamicProgram.cpp
-                    FileStorageModel.cpp
-                    HOGFeatures.cpp 
-                    Math.cpp
-                    PartsBasedDetector.cpp 
-                    SearchSpacePruning.cpp
-                    StereoCameraModel.cpp
-                    Visualize.cpp
-                    nms.cpp
-    )
-
-    # build as a standalone executable
-    if (BUILD_EXECUTABLE)
-        set(SRC_FILES ${SRC_FILES} main.cpp)
-        add_executable(${PROJECT_NAME} ${SRC_FILES})
-    else()
-        add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
-    endif()
-
-    target_link_libraries(${PROJECT_NAME}   ${Boost_LIBRARIES} 
-                                            ${OpenCV_LIBS} 
-    )
-
-    #install
-    install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin
-                                    LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib
-
+# as an executable
+if (BUILD_EXECUTABLE)
+    set(SRC_FILES main.cpp)
+    add_executable(${PROJECT_NAME}_bin ${SRC_FILES})
+    target_link_libraries(${PROJECT_NAME}_bin ${LIBS} ${PROJECT_NAME}_lib)
+    set_target_properties(${PROJECT_NAME}_bin PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+    install(TARGETS ${PROJECT_NAME}_bin
+            RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin
     )
 endif()

@@ -1,7 +1,7 @@
-/* 
- *  Software License Agreement (BSD License)
+/*
+ * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2012, Willow Garage, Inc.
+ *  Copyright (c) 2009, Willow Garage, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -31,30 +31,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  File:    SearchSpacePruning.hpp
- *  Author:  Hilton Bristow
- *  Created: Aug 1, 2012
  */
+#ifndef PBD_SERIAL_H_
+#define PBD_SERIAL_H_
 
-#ifndef SEARCHSPACEPRUNING_HPP_
-#define SEARCHSPACEPRUNING_HPP_
 
-#include <opencv2/core/core.hpp>
-#include <limits>
-#include "Candidate.hpp"
-#include "Parts.hpp"
-#include "types.hpp"
-
-/*
- *
- */
-template<typename T>
-class SearchSpacePruning {
-public:
-	SearchSpacePruning() {}
-	virtual ~SearchSpacePruning() {}
-	void filterResponseByDepth(vector2DMat& pdfs, const std::vector<cv::Size>& fsizes, const cv::Mat& depth, const vectorf& scales, const float X, const float fx);
-	void filterCandidatesByDepth(Parts& parts, vectorCandidate& candidates, const cv::Mat& depth, const float zfactor);
-};
-
-#endif /* SEARCHSPACEPRUNING_HPP_ */

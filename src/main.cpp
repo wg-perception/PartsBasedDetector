@@ -107,10 +107,12 @@ int main(int argc, char** argv) {
 
 	// display the best candidates
 	Visualize visualize(model->name());
+	SearchSpacePruning<float> ssp;
 	if (candidates.size() > 0) {
         Mat canvas;
 		Candidate::sort(candidates);
-		visualize.candidates(im, candidates, 1, canvas, true);
+		Candidate::nonMaximaSuppression(im, candidates, 0.2);
+		visualize.candidates(im, candidates, canvas, true);
         visualize.image(canvas);
 		waitKey();
 	}

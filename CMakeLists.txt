@@ -2,63 +2,62 @@
 cmake_minimum_required(VERSION 2.8.6)
 
 # -----------------------------------------------
-# USER-DEFINED VARIABLES
-option(BUILD_EXECUTABLE "Build as executable to test functionality"     ON)
-option(BUILD_DOC        "Build documentation with Doxygen"              ON)
-option(USE_OPENMP       "Build with OpenMP support for multithreading"  ON)
+# USER DEFINED VARIABLES
+# -----------------------------------------------
+option(BUILD_EXECUTABLE "Build as executable to test functionality"                     ON)
+option(BUILD_DOC        "Build documentation with Doxygen"                              ON)
+option(WITH_OPENMP      "Build with OpenMP support for multithreading"                  ON)
+option(WITH_ECTO        "Build with ECTO bindings if building in a Catkin environment"  OFF)
+option(WITH_ROS         "Build with ROS bindings if building in a Catkin environment"   ON)
 
-# --------------------
+# -----------------------------------------------
 # CATKIN
-set(BUILD_CATKIN OFF)
+# -----------------------------------------------
+
 if (catkin_FOUND)
-    set(BUILD_CATKIN ON)
+    set(WITH_CATKIN ON)
     set(BUILD_EXECUTABLE OFF)
     project(object_recognition_by_parts)
     catkin_stack()
-    catkin_project(object_recognition_by_parts
-                   DEPENDS Boost OpenCV cvmatio
+    catkin_project(${PROJECT_NAME}
+                   DEPENDS Boost OpenCV cvmatio roscpp image_geometry
                    INCLUDE_DIRS include
     )
-    #install targets for all things python
-    catkin_python_setup()
-    find_package(ecto REQUIRED)
-    find_package(object_recognition_core REQUIRED)
+    # install targets for all things python
+    if (WITH_ECTO)
+        catkin_python_setup()
+        find_package(ecto REQUIRED)
+        find_package(object_recognition_core REQUIRED)
+    endif()
     # deal with cvmatio
     find_package(cvmatio QUIET) 
     include_directories(SYSTEM ${cvmatio_INCLUDE_DIRS})
 else()
+    set(WITH_CATKIN OFF)
+    set(WITH_ECTO   OFF)
+    set(WITH_ROS    OFF)
     project(PartsBasedDetector)
     # find cvmatio manually
     include_directories(../cvmatio/include)
     find_library(cvmatio_LIBRARIES cvmatio PATHS ../cvmatio/lib)
 endif()
 
-
-# --------------------
-# COMMON
+# -----------------------------------------------
+# COMPILER FLAGS
+# -----------------------------------------------
 
 # include all warning types
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter -pedantic")
 
-# check if the MatlabIO dependency was successfully found
-if (cvmatio_LIBRARIES)
-    set(cvmatio_FOUND ON)
-else()
-    set(cvmatio_FOUND OFF)
-endif()
-
+# set the build type
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING
         "Choose the type of build. Options are: None, Debug, Release, RelWithDebInfo, MinSizeRel"
     FORCE)
 endif()
 
-# find the dependencies
-find_package(Boost COMPONENTS system filesystem REQUIRED)
-find_package(OpenCV REQUIRED)
-
 # add OpenMP support
-if (USE_OPENMP)
+if (WITH_OPENMP)
     find_package(OpenMP)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   ${OpenMP_C_FLAGS}")
@@ -74,6 +73,12 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -O3")
 endif ()
 
+# -----------------------------------------------
+# DEPENDENCIES
+# -----------------------------------------------
+# find the dependencies
+find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # include the dependencies
 include_directories(SYSTEM  ${OPENCV_INCLUDE_DIRS}
@@ -81,6 +86,17 @@ include_directories(SYSTEM  ${OPENCV_INCLUDE_DIRS}
 )
 include_directories("include")
 
+# check if the MatlabIO dependency was successfully found
+if (cvmatio_LIBRARIES)
+    set(cvmatio_FOUND ON)
+else()
+    set(cvmatio_FOUND OFF)
+endif()
+
+
+# -----------------------------------------------
+# SUBDIRECTORIES
+# -----------------------------------------------
 # add the main executable/library
 add_subdirectory(src)
 
@@ -92,30 +108,39 @@ if(BUILD_DOC)
 endif()
 
 # add tests
-if(BUILD_TEST)
+if(WITH_ECTO AND BUILD_TEST)
   enable_testing()
   add_subdirectory(test)
 endif()
 
 # add ecto cells
-if (${ecto_FOUND} AND ${object_recognition_core_FOUND})    
+if (WITH_ECTO AND ${ecto_FOUND} AND ${object_recognition_core_FOUND})    
     add_subdirectory(cells)
     add_subdirectory(python)
 endif()
 
+# add ROS bindings if need be
+# does not build yet due to missing dependencies
+set(WITH_ROS OFF)
+if (WITH_ROS)
+    add_subdirectory(ros)
+endif()
 
-# --------------------
-# Build summary
+
+# -----------------------------------------------
+# BUILD SUMARY
+# -----------------------------------------------
 message("")
 message("---------------------------------------------")
-message(${PROJECT} " Configuration Summary")
+message(${PROJECT_NAME} " Configuration Summary")
 message("")
-message("Building with ECTO/Catkin:     ${BUILD_CATKIN}")
+message("Build type:                    ${CMAKE_BUILD_TYPE}")
+message("Building with Catkin:          ${WITH_CATKIN}")
+message("Building with ECTO bindings:   ${WITH_ECTO}")
+message("Building with ROS bindings:    ${WITH_ROS}")
+message("Build with cvmatio bindings:   ${cvmatio_FOUND}")
+message("Build with threading (OpenMP): ${WITH_OPENMP}")
 message("Build as executable:           ${BUILD_EXECUTABLE}")
 message("Build with documentation:      ${BUILD_DOC}")
-message("Build with threading (OpenMP): ${USE_OPENMP}")
-message("Build with MatlabIO support:   ${cvmatio_FOUND}")
-message("Build type:                    ${CMAKE_BUILD_TYPE}")
-message("")
 message("---------------------------------------------")
 message("")
