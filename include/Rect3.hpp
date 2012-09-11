@@ -161,6 +161,8 @@ public:
 };
 
 //! convenient typedef for integer type rectangular prisms
-typedef Rect3_<int> Rect3;
+typedef Rect3_<int>    Rect3;
+typedef Rect3_<float>  Rect3f;
+typedef Rect3_<double> Rect3d;
 
 #endif /* RECT3_HPP_ */

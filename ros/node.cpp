@@ -32,61 +32,58 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#include <cstdio>
 #include "node.hpp"
 using namespace cv;
 using namespace std;
 
- void convertMatToPointCloud(const Mat &points_mat, PointCloud2Ptr &points_msg, const Header header) {
-    
-    // populate the point cloud
-    Mat_<Vec3f> mat = points_mat;
-    points_msg = boost::make_shared<PointCloud2>();
-    points_msg->header = header;
-    points_msg->height = mat.rows;
-    points_msg->width = mat.cols;
-    points_msg->fields.resize (3);
-    points_msg->fields[0].name = "x";
-    points_msg->fields[0].offset = 0;
-    points_msg->fields[0].count = 1;
-    points_msg->fields[0].datatype = PointField::FLOAT32;
-    points_msg->fields[1].name = "y";
-    points_msg->fields[1].offset = 4;
-    points_msg->fields[1].count = 1;
-    points_msg->fields[1].datatype = PointField::FLOAT32;
-    points_msg->fields[2].name = "z";
-    points_msg->fields[2].offset = 8;
-    points_msg->fields[2].count = 1;
-    points_msg->fields[2].datatype = PointField::FLOAT32;
-    //points_msg->is_bigendian = false; ???
-    static const int STEP = 16;
-    points_msg->point_step = STEP;
-    points_msg->row_step = points_msg->point_step * points_msg->width;
-    points_msg->data.resize (points_msg->row_step * points_msg->height);
-    points_msg->is_dense = false; // there may be invalid points
-
-    // copy the data across
-    float bad_point = std::numeric_limits<float>::quiet_NaN ();
-    int offset = 0;
-    for (int v = 0; v < mat.rows; ++v) {
-        for (int u = 0; u < mat.cols; ++u, offset += STEP) {
-            if (isValidPoint(mat(v,u))) {
-                // x,y,z,rgba
-                memcpy (&points_msg->data[offset + 0], &mat(v,u)[0], sizeof (float));
-                memcpy (&points_msg->data[offset + 4], &mat(v,u)[1], sizeof (float));
-                memcpy (&points_msg->data[offset + 8], &mat(v,u)[2], sizeof (float));
-            } else {
-                memcpy (&points_msg->data[offset + 0], &bad_point, sizeof (float));
-                memcpy (&points_msg->data[offset + 4], &bad_point, sizeof (float));
-                memcpy (&points_msg->data[offset + 8], &bad_point, sizeof (float));
-            }
-        }
-    }
- }
+int main(int argc, char** argv) {
+	// register the node
+	ros::init(argc, argv, "object_recognition_by_parts");
+	PartsBasedDetectorNode pbdn;
+	bool ok = pbdn.init();
+	if (!ok) exit(-1);
+	ros::spin();
+	return 0;
+}
 
 
+bool PartsBasedDetectorNode::init(void) {
 
- void PartsBasedDetectorNode::detectorCB(const sensor_msgs::ImageConstPtr &msg_d, const sensor_msgs::ImageConstPtr &msg_rgb) {
+	// attempt to load the model file and distribute the parameters
+	string modelfile;
+	nh_.getParam("model", modelfile);
+	string ext = boost::filesystem::path(modelfile).extension().c_str();
 
+	// OpenCV FileStorageModel
+	if (ext.compare(".xml") == 0 || ext.compare(".yaml") == 0) {
+		FileStorageModel model;
+		bool ok = model.deserialize(modelfile);
+		if (!ok) { fprintf(stderr, "Error deserializing file\n"); return false; }
+		pbd_.distributeModel(model);
+	}
+#ifdef WITH_MATLABIO
+	// cvmatio MatlabIOModel
+	else if (ext.compare(".mat") == 0) {
+		MatlabIOModel model;
+		bool ok = model.deserialize(modelfile);
+		if (!ok) { fprintf(stderr, "Error deserializing file\n"); return false; }
+		pbd_.distributeModel(model);
+	}
+#endif
+	else {
+		fprintf(stderr, "Unsupported model format: %s\n", ext.c_str());
+		return false;
+	}
+
+	// if we got here, everything is okay
+	return true;
+}
+
+
+void PartsBasedDetectorNode::detectorCB(const ImageConstPtr& msg_d, const ImageConstPtr& msg_rgb) {
+
+	// UNPACK PREAMBLE
     // update the stereo camera parameters from the depth and rgb camera info
     cam_model_.fromCameraInfo(info_sub_rgb_, info_sub_d_);
 
@@ -105,20 +102,20 @@ using namespace std;
     Mat image_d   = cv_ptr_d->image;
     Mat image_rgb = cv_ptr_rgb->image;
 
-    // run the underlying OpenCV detection algorithm
-    // TODO: write the underlying OpenCV detection algorithm :p
-    vector<Rect> bounds;
-    int ndetections = bounds.size();
+    // DETECT
+    vectorCandidate candidates;
+    pbd_.detect(image_rgb, image_d, candidates);
 
-    // produce a PointCloud2 if there are any detections
-    if (ndetections > 0) {
-        Mat cloud;
-        cam_model_.projectDisparityTo3d(image_d, cloud);
-        PointCloud2Ptr points_msg;
-        convertMat2PointCloud(cloud, points_msg);
-        cloud_pub_.publish(points_msg);
+    // PUBLISH
+    if (candidates.size() > 0) {
+    	// perform non-maximal suppression
+    	Candidate::sort(candidates);
+    	Candidate::nonMaximaSuppression(image_rgb, candidates, 0.2);
+
+    	// publish on the various topics (only if there are subscribers)
+    	if (image_pub_d_.getNumSubscribers > 0)		messageImageDepth(image_d, msg_d);
+    	if (image_pub_rgb_.getNumSubscribers > 0)	messageImageRGB(candidates, image_rgb, msg_d);
+    	if (bb_pub_.getNumSubscribers() > 0)  		messageBoundingBox(candidates, image_d, msg_d, camera_);
+    	if (mask_pub_.getNumberSubscribers() > 0)	messageMask(candidates, image_rgb, msg_rgb);
     }
-    
-
-
  }

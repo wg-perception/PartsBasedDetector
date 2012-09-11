@@ -1,0 +1,13 @@
+<launch>
+    
+    <!-- ENABLE DEPTH REGISTRATION -->
+    <!--include filter="$(find openni_launch)/launch/openni.launch"/-->
+    <param name="/camera/depth_registration" type="bool" value="true" />
+
+    <!-- THE MODEL FILE TO LOAD -->
+    <param name="model" />
+
+    <node pkg="PartsBasedDetector" type="PartsBasedDetector" name="PartsBasedDetector">
+    </node>
+
+</launch>

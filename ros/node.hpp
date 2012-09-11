@@ -48,40 +48,82 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <boost/filesystem.hpp>
+#include "PartsBasedDetector.hpp"
+#include "Candidate.hpp"
+#include "FileStorageModel.hpp"
+#ifdef WITH_MATLABIO
+	#include "MatlabIOModel.hpp"
+#endif
+#include "types.hpp"
 
- namespace enc = sensor_msgs::image_encodings;
- using namespace cv;
- using namespace std;
+using namespace cv;
+using namespace std;
 
- class PartsBasedDetectorNode {
- private:
-    ros::NodeHandle nh_;
-    image_transport::ImageTransport it_;
-    typedef image_transport::SubscriberFilter ImageSubscriber;
-    typedef message_filters::Subscriber<sensor_msgs::CameraInfo> CameraInfo;
-    image_geometry::StereoCameraModel cam_model_;
-    ImageSubscriber image_sub_d_;       // the kinect subscriber
-    ImageSubscriber image_sub_rgb_;     // the rgb camera subscriber
-    ros::Publisher  cloud_pub_;         // the detected object point cloud publiser
-    CameraInfo      info_sub_d_;        // the kinect info subscriber
-    CameraInfo      info_sub_rgb_;      // the rgb camera info subscriber
-
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> KinectSyncPolicy;
-    message_filters::Synchronizer<KinectSyncPolicy> sync_;
-
+class PartsBasedDetectorNode {
 private:
-    PartsBasedDetectorNode() :  it_(nh_),
-                                image_sub_d_( it_, "camera/depth_registered/image_rect", 1),
-                                image_sub_rgb_( it_, "camera/rgb/image_rect_color", 1),
-                                cloud_pub_ ( nh_.advertise<sensor_msgs::PointCloud2> "pbd/cloud", 1),
-                                info_sub_d_( it_, "camera/depth_registered/camera_info", 1),
-                                info_sub_rgb_( it_, "camera/rgb/camera_info", 1),
-                                sync_( KinectSyncPolicy(10), image_sub_d_, image_sub_rgb_) {
-        // register the callback for synchronised depth and camera images
-        sync.registerCallback( boost::bind(&PartsBasedDetectorNode::detectorCB, this, _1, _2 ) );
-        // set the stereo camera parameters from the depth and rgb camera info
-        cam_model_.fromCameraInfo(info_sub_rgb_, info_sub_d_);
-    }
+	// types
+	typedef image_transport::SubscriberFilter ImageSubscriber;
+	typedef image_transport::Publisher ImagePublisher;
+	typedef message_filters::Subscriber<sensor_msgs::CameraInfo> CameraInfo;
+	typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> KinectSyncPolicy;
+	typedef visualization_msgs::MarkerArray MarkerArray;
+	typedef visualization_msgs::Marker Marker;
+	typedef sensor_msgs::ImageConstPtr ImageConstPtr;
+	typedef sensor_msgs::ImagePtr ImagePtr;
+	typedef image_geometry::StereoCameraModel StereoCameraModel;
+	typedef sensor_msgs::image_encodings::enc enc;
 
-    
-    void detectorCB(const sensor_msgs::ImageConstPtr &msg_d, const sensor_msgs::ImageConstPtr &msg_rgb);
+	// transports
+	ros::NodeHandle nh_;
+	image_transport::ImageTransport it_;
+	StereoCameraModel camera_;
+	message_filters::Synchronizer<KinectSyncPolicy> sync_;
+
+	// subscribers
+	ImageSubscriber image_sub_d_;       // the kinect subscriber
+	ImageSubscriber image_sub_rgb_;     // the rgb camera subscriber
+
+	// publishers
+	ImagePublisher  image_pub_d_;       // the raw image publisher
+	ImagePublisher  image_pub_rgb_;	 // the depth publisher
+	ImagePublisher  mask_pub_;          // the object mask publisher
+	ros::Publisher  bb_pub_;            // the bounding box publisher
+
+	// PartsBasedDetector members
+	PartsBasedDetector<float> pbd_;
+	MarkerArray bb_markers_;
+
+
+
+public:
+	PartsBasedDetectorNode() :
+							it_(nh_),
+							image_sub_d_( it_, "camera/depth_registered/image_rect", 1),
+							image_sub_rgb_( it_, "camera/rgb/image_rect_color", 1),
+							info_sub_d_( it_, "camera/depth_registered/camera_info", 1),
+							info_sub_rgb_( it_, "camera/rgb/camera_info", 1),
+							sync_( KinectSyncPolicy(10), image_sub_d_, image_sub_rgb_) {
+
+		// register the callback for synchronised depth and camera images
+		sync.registerCallback( boost::bind(&PartsBasedDetectorNode::detectorCB, this, _1, _2 ) );
+
+		// set the stereo camera parameters from the depth and rgb camera info
+        camera_.fromCameraInfo(info_sub_rgb_, info_sub_d_);
+
+        // initialise the publishers
+        image_pub_d_ = it_.advertize("pbd/depth_rect", 1);
+        image_pub_d_ = it_.advertize("pbd/candidates_rect_color", 1);
+        mask_pub_    = it_.advertize("pbd/mask", 1);
+        bb_pub_      = nh_.advertize("pbd/bounding_box", 1);
+	}
+
+    bool init(void);
+    void clearMarkerArray(MarkerArray& markers, ros::Publisher& publisher);
+    void messageBoundingBox(const vectorCandidate& candidates, cv::Mat& depth, const ImageConstPtr& msg, const StereoCameraModel& camera);
+    void messageFrustum(const vectorCandidate& candidates);
+    void messageImageRGB(const vectorCandidate& candidates, cv::Mat& rgb, const ImageConstPtr& msg_in);
+    void messageImageDepth(cv::Mat& depth, const ImageConstPtr& msg_in);
+    void messageMask(const vectorCandidate& candidates, cv::Mat& rgb, const ImageConstPtr& msg_in);
+    void detectorCB(const ImageConstPtr &msg_d, const ImageConstPtr& msg_rgb);
+};

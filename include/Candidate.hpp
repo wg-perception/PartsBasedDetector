@@ -212,7 +212,7 @@ public:
 	 * @param candidates the vector of candidates
 	 * @param mask a mask of type CV_8U the same size as im
 	 */
-	static void mask(const cv::Mat& im, vectorCandidate& candidates, cv::Mat& mask) {
+	static void mask(const cv::Mat& im, const vectorCandidate& candidates, cv::Mat& mask) {
 
 		// allocate the mask
 		const unsigned int N = candidates.size();
