@@ -39,15 +39,15 @@
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 #include <image_geometry/stereo_camera_model.h>
+#include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/PointCloud.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <boost/filesystem.hpp>
 #include "PartsBasedDetector.hpp"
 #include "Candidate.hpp"
@@ -57,43 +57,50 @@
 #endif
 #include "types.hpp"
 
-using namespace cv;
-using namespace std;
+namespace enc = sensor_msgs::image_encodings;
 
 class PartsBasedDetectorNode {
 private:
 	// types
 	typedef image_transport::SubscriberFilter ImageSubscriber;
 	typedef image_transport::Publisher ImagePublisher;
-	typedef message_filters::Subscriber<sensor_msgs::CameraInfo> CameraInfo;
+	typedef sensor_msgs::CameraInfo CameraInfo;
+	typedef sensor_msgs::CameraInfoConstPtr CameraInfoConstPtr;
+	typedef message_filters::Subscriber<CameraInfo> CameraInfoSubscriber;
 	typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> KinectSyncPolicy;
 	typedef visualization_msgs::MarkerArray MarkerArray;
 	typedef visualization_msgs::Marker Marker;
 	typedef sensor_msgs::ImageConstPtr ImageConstPtr;
 	typedef sensor_msgs::ImagePtr ImagePtr;
+	typedef image_geometry::PinholeCameraModel PinholeCameraModel;
 	typedef image_geometry::StereoCameraModel StereoCameraModel;
-	typedef sensor_msgs::image_encodings::enc enc;
 
 	// transports
 	ros::NodeHandle nh_;
 	image_transport::ImageTransport it_;
-	StereoCameraModel camera_;
-	message_filters::Synchronizer<KinectSyncPolicy> sync_;
 
 	// subscribers
 	ImageSubscriber image_sub_d_;       // the kinect subscriber
 	ImageSubscriber image_sub_rgb_;     // the rgb camera subscriber
+	CameraInfoSubscriber info_sub_d_;	// the kinect info subscriber
+	message_filters::Synchronizer<KinectSyncPolicy> sync_;
 
 	// publishers
 	ImagePublisher  image_pub_d_;       // the raw image publisher
-	ImagePublisher  image_pub_rgb_;	 // the depth publisher
+	ImagePublisher  image_pub_rgb_;	 	// the depth publisher
 	ImagePublisher  mask_pub_;          // the object mask publisher
 	ros::Publisher  bb_pub_;            // the bounding box publisher
 
 	// PartsBasedDetector members
 	PartsBasedDetector<float> pbd_;
 	MarkerArray bb_markers_;
+	std::string ns_;
+	std::string name_;
 
+	// camera parameters
+	bool depth_camera_initialized_;
+	CameraInfo depth_camera_;
+	PinholeCameraModel camera_;
 
 
 public:
@@ -101,29 +108,22 @@ public:
 							it_(nh_),
 							image_sub_d_( it_, "camera/depth_registered/image_rect", 1),
 							image_sub_rgb_( it_, "camera/rgb/image_rect_color", 1),
-							info_sub_d_( it_, "camera/depth_registered/camera_info", 1),
-							info_sub_rgb_( it_, "camera/rgb/camera_info", 1),
-							sync_( KinectSyncPolicy(10), image_sub_d_, image_sub_rgb_) {
+							info_sub_d_( nh_, "camera/depth_registered/camera_info", 1),
+							sync_( KinectSyncPolicy(10), image_sub_d_, image_sub_rgb_),
+							depth_camera_initialized_(false), ns_("/pbd/") {}
 
-		// register the callback for synchronised depth and camera images
-		sync.registerCallback( boost::bind(&PartsBasedDetectorNode::detectorCB, this, _1, _2 ) );
-
-		// set the stereo camera parameters from the depth and rgb camera info
-        camera_.fromCameraInfo(info_sub_rgb_, info_sub_d_);
-
-        // initialise the publishers
-        image_pub_d_ = it_.advertize("pbd/depth_rect", 1);
-        image_pub_d_ = it_.advertize("pbd/candidates_rect_color", 1);
-        mask_pub_    = it_.advertize("pbd/mask", 1);
-        bb_pub_      = nh_.advertize("pbd/bounding_box", 1);
-	}
-
+	// initialisation
     bool init(void);
+
+    // message construction
     void clearMarkerArray(MarkerArray& markers, ros::Publisher& publisher);
-    void messageBoundingBox(const vectorCandidate& candidates, cv::Mat& depth, const ImageConstPtr& msg, const StereoCameraModel& camera);
+    void messageBoundingBox(const vectorCandidate& candidates, cv::Mat& rgb, cv::Mat& depth, const ImageConstPtr& msg, const PinholeCameraModel& camera);
     void messageFrustum(const vectorCandidate& candidates);
     void messageImageRGB(const vectorCandidate& candidates, cv::Mat& rgb, const ImageConstPtr& msg_in);
     void messageImageDepth(cv::Mat& depth, const ImageConstPtr& msg_in);
     void messageMask(const vectorCandidate& candidates, cv::Mat& rgb, const ImageConstPtr& msg_in);
-    void detectorCB(const ImageConstPtr &msg_d, const ImageConstPtr& msg_rgb);
+
+    // callbacks
+    void depthCameraCallback(const CameraInfoConstPtr& info_msg);
+    void detectorCallback(const ImageConstPtr &msg_d, const ImageConstPtr& msg_rgb);
 };

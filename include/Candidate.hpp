@@ -131,32 +131,127 @@ public:
 
 	/*! @brief create a single bounding box in 3D
 	 *
-	 * Given a 3D image, return
-	 * @param depth
+	 * Given an image, its depth correspondences and a candidate,
+	 * return an approximate 3D bounding box which encapsulates the object
+	 * @param im the color image
+	 * @param depth the depth image (may be of different resolution to the color image)
 	 * @return
 	 */
-	Rect3 boundingBox3D(cv::Mat& depth) const {
+	Rect3d boundingBox3D(const cv::Mat& im, const cv::Mat& depth) const {
+
 		const unsigned int nparts = parts_.size();
-		cv::Point3_<int> minv(1,1,1); minv *=  std::numeric_limits<int>::max();
-		cv::Point3_<int> maxv(1,1,1); maxv *= -std::numeric_limits<int>::min();
+		const cv::Rect bounds = cv::Rect(0,0,0,0) + im.size();
+		const cv::Rect bb  = this->boundingBox();
+		const cv::Rect bbn = this->boundingBoxNorm();
+
+		cv::Size_<double> imsize = im.size();
+		cv::Size_<double> dsize  = depth.size();
+		cv::Point_<double> s = cv::Point_<double>(dsize.width / imsize.width, dsize.height / imsize.height);
+
+		cv::Mat_<float> points;
+		std::vector<cv::Rect> boxes;
 		for (unsigned int n = 0; n < nparts; ++n) {
-			int med;
-			switch (depth.depth()) {
-				case CV_16U: med = Math::median<uint16_t>(depth(parts_[n])); break;
-				case CV_32F: med = Math::median<float>(depth(parts_[n]))*1000; break;
-				case CV_64F: med = Math::median<double>(depth(parts_[n]))*1000; break;
+			// only keep the intersection of the part with the image frame
+			boxes.push_back(parts_[n] & bounds);
+		}
+		boxes.push_back(bbn & bounds);
+
+		for (unsigned int n = 0; n < boxes.size(); ++n) {
+			// scale the part down to match the depth image size
+			cv::Rect& r = boxes[n];
+			r.x = r.x * s.x;
+			r.y = r.y * s.y;
+			r.width  = r.width  * s.x;
+			r.height = r.height * s.y;
+
+			// add the valid points
+			cv::Mat_<float> part = depth(r);
+			for (cv::MatIterator_<float> it = part.begin(); it != part.end(); ++it) {
+				if (*it != 0 && !isnan(*it)) points.push_back(*it);
 			}
-			const cv::Rect r = parts_[n];
-			if (r.x + r.width/2  < minv.x) minv.x = r.x + r.width/2;
-			if (r.y + r.height/2 < minv.y) minv.y = r.y + r.height/2;
-			if (r.x + r.width/2  > maxv.x) maxv.x = r.x + r.width/2;
-			if (r.y + r.height/2 < maxv.y) maxv.y = r.y + r.height/2;
+		}
+
+		// sort the points
+		std::sort(points.begin(), points.end());
+		cv::resize(points, points, cv::Size(1, 400));
+
+		// get the median of the points
+		const unsigned int M = points.rows;
+		const unsigned int midx = M/2;
+		float median = points[midx][0];
+
+		// filter the points
+		cv::Mat_<float> g, dog, dpoints;
+		cv::Matx<float, 3, 1> diff(-1, 0, 1);
+		g= cv::getGaussianKernel(35, 4, CV_32F);
+		cv::filter2D(g, dog, -1, diff);
+		cv::filter2D(points, dpoints, -1, dog);
+
+		// starting at the median point, walk up and down until a gradient threshold (0.1)
+		unsigned int dminidx = midx, dmaxidx = midx;
+		for (unsigned int m = midx; m < M; ++m) {
+			if (fabs(dpoints[m][0]) > 0.035) break;
+			dmaxidx = m;
+		}
+		for (int m = midx; m >= 0; --m) {
+			if (fabs(dpoints[m][0]) > 0.035) break;
+			dminidx = m;
+		}
+
+		// construct the 3D bounding box
+		cv::Point3_<double> tl(bb.x,      bb.y,      points[dminidx][0]);
+		cv::Point3_<double> br(bb.br().x, bb.br().y, points[dmaxidx][0]);
+
+		return Rect3d(tl, br);
+	}
+/*
+
+		const unsigned int nparts = parts_.size();
+		cv::Size_<double> imsize = im.size();
+		cv::Size_<double> dsize  = depth.size();
+		const cv::Rect bounds = cv::Rect(0,0,0,0) + im.size();
+		cv::Point_<double> s = cv::Point_<double>(dsize.width / imsize.width, dsize.height / imsize.height);
+		cv::Point3_<double> minv(1,1,1); minv *=  std::numeric_limits<double>::max();
+		cv::Point3_<double> maxv(1,1,1); maxv *= -std::numeric_limits<double>::max();
+		for (unsigned int n = 0; n < nparts; ++n) {
+			double med;
+			// only keep the intersection of the part with the image frame
+			cv::Rect r = parts_[n] & bounds;
+
+			// scale the part down to match the depth image size
+			r.x = r.x * s.x;
+			r.y = r.y * s.y;
+			r.width  = r.width  * s.x;
+			r.height = r.height * s.y;
+
+			switch (depth.depth()) {
+				case CV_16U: med = Math::median<uint16_t>(depth(r)); break;
+				case CV_32F: med = Math::median<float>(depth(r)); 	 break;
+				case CV_64F: med = Math::median<double>(depth(r)); 	 break;
+			}
+
+			if (r.x < minv.x) minv.x = r.x;
+			if (r.y < minv.y) minv.y = r.y;
+			if (r.x + r.width  > maxv.x) maxv.x = r.x + r.width;
+			if (r.y + r.height > maxv.y) maxv.y = r.y + r.height;
 
 			if (med < minv.z) minv.z = med;
 			if (med > maxv.z) maxv.z = med;
 		}
-		return Rect3(minv, maxv);
+
+		// scale the parts back up to match the color image size
+		minv.x = minv.x / s.x;
+		minv.y = minv.y / s.y;
+		maxv.x = maxv.x / s.x;
+		maxv.y = maxv.y / s.y;
+
+		// extrapolate some depth
+		minv.z = minv.z - (maxv.z-minv.z);
+		maxv.z = maxv.z + (maxv.z-minv.z);
+
+		return Rect3d(minv, maxv);
 	}
+	*/
 
 	/*! @brief suppress non-maximal candidates
 	 *
@@ -173,8 +268,8 @@ public:
 
 		// create a scratch space that we can draw on
 		const unsigned int N = candidates.size();
+		const cv::Rect bounds = cv::Rect(0,0,0,0) + im.size();
 		cv::Mat scratch = cv::Mat::zeros(im.size(), CV_8U);
-		cv::Rect bounds = cv::Rect(0,0,0,0) + im.size();
 
 		// the current insertion position in the vector
 		unsigned int keep = 0;

@@ -5,9 +5,10 @@
     <param name="/camera/depth_registration" type="bool" value="true" />
 
     <!-- THE MODEL FILE TO LOAD -->
-    <param name="model" />
+    <arg name="model" default="" />
+    <param name="model" type="string" value="$(arg model)" />
 
-    <node pkg="PartsBasedDetector" type="PartsBasedDetector" name="PartsBasedDetector">
+    <node pkg="PartsBasedDetector" name="$(anon object_recognition_by_parts)" type="object_recognition_by_parts_node">
     </node>
 
 </launch>

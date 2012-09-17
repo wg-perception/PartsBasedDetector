@@ -58,6 +58,7 @@ void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, uns
 
 	// create a new canvas that we can modify
     cvtColor(im, canvas, CV_RGB2BGR);
+    if (candidates.size() == 0) return;
 
 	// generate a set of colors to display. Do this in HSV then convert it
 	const unsigned int ncolors = candidates[0].parts().size();
@@ -74,7 +75,7 @@ void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, uns
 	}
 
 	// draw each candidate to the canvas
-	const int LINE_THICKNESS = 1;
+	const int LINE_THICKNESS = 4;
 	Scalar black(0,0,0);
 	N = (candidates.size() < N) ? candidates.size() : N;
 	for (unsigned int n = 0; n < N; ++n) {

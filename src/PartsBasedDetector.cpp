@@ -96,7 +96,7 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vectorCandid
 	printf("DP argmin time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	if (!depth.empty()) {
-		ssp_.filterCandidatesByDepth(parts_, candidates, depth, 0.03);
+		//ssp_.filterCandidatesByDepth(parts_, candidates, depth, 0.03);
 	}
 
 }

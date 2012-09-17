@@ -83,6 +83,12 @@ public:
 		return stream;
 	}
 
+	//! down-conversion to a Rect
+	operator cv::Rect_<T> () {
+		cv::Rect rect;
+		rect.x = x; rect.y = y; rect.height = height; rect.width = width;
+		return rect;
+	}
 
 	//! the top left corner in 3-space
 	cv::Point3_<T> tl() const { return cv::Point3_<T>(x, y, z); }

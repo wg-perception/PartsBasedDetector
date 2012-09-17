@@ -33,13 +33,14 @@
  *
  */
 #include <cstdio>
-#include "node.hpp"
+#include "Node.hpp"
+
 using namespace cv;
 using namespace std;
 
 int main(int argc, char** argv) {
 	// register the node
-	ros::init(argc, argv, "object_recognition_by_parts");
+	ros::init(argc, argv, "object_recognition_by_parts", ros::init_options::AnonymousName);
 	PartsBasedDetectorNode pbdn;
 	bool ok = pbdn.init();
 	if (!ok) exit(-1);
@@ -61,6 +62,7 @@ bool PartsBasedDetectorNode::init(void) {
 		bool ok = model.deserialize(modelfile);
 		if (!ok) { fprintf(stderr, "Error deserializing file\n"); return false; }
 		pbd_.distributeModel(model);
+		name_ = model.name();
 	}
 #ifdef WITH_MATLABIO
 	// cvmatio MatlabIOModel
@@ -69,6 +71,7 @@ bool PartsBasedDetectorNode::init(void) {
 		bool ok = model.deserialize(modelfile);
 		if (!ok) { fprintf(stderr, "Error deserializing file\n"); return false; }
 		pbd_.distributeModel(model);
+		name_ = model.name();
 	}
 #endif
 	else {
@@ -76,23 +79,39 @@ bool PartsBasedDetectorNode::init(void) {
 		return false;
 	}
 
+	// setup the detector publishers
+	// register the callback for synchronised depth and camera images
+	sync_.registerCallback( boost::bind(&PartsBasedDetectorNode::detectorCallback, this, _1, _2 ) );
+	info_sub_d_.registerCallback(&PartsBasedDetectorNode::depthCameraCallback, this);
+
+    // initialise the publishers
+	image_pub_d_   = it_.advertise(ns_ + name_ + "/depth_rect", 1);
+    image_pub_rgb_ = it_.advertise(ns_ + name_ + "/candidates_rect_color", 1);
+    mask_pub_      = it_.advertise(ns_ + name_ + "/mask", 1);
+    bb_pub_        = nh_.advertise<MarkerArray>(ns_ + name_ + "/bounding_box", 1);
+
 	// if we got here, everything is okay
 	return true;
 }
 
+void PartsBasedDetectorNode::depthCameraCallback(const CameraInfoConstPtr& info_msg) {
+	depth_camera_ = *info_msg;
+	depth_camera_initialized_ = true;
+}
 
-void PartsBasedDetectorNode::detectorCB(const ImageConstPtr& msg_d, const ImageConstPtr& msg_rgb) {
+void PartsBasedDetectorNode::detectorCallback(const ImageConstPtr& msg_d, const ImageConstPtr& msg_rgb) {
 
 	// UNPACK PREAMBLE
     // update the stereo camera parameters from the depth and rgb camera info
-    cam_model_.fromCameraInfo(info_sub_rgb_, info_sub_d_);
+	if (!depth_camera_initialized_) return;
+	camera_.fromCameraInfo(depth_camera_);
 
     // convert the ROS image payloads to OpenCV structures
     cv_bridge::CvImagePtr cv_ptr_d;
     cv_bridge::CvImagePtr cv_ptr_rgb;
     try {
         cv_ptr_d   = cv_bridge::toCvCopy(msg_d, enc::TYPE_32FC1);
-        cv_ptr_rgb = cv_bridge::toCvCopy(msg_rgb, enc::TYPE_8UC3);
+        cv_ptr_rgb = cv_bridge::toCvCopy(msg_rgb, enc::BGR8);
     } catch (cv_bridge::Exception &e) {
         ROS_ERROR("cv_bridge exception: %s\n", e.what());
         return;
@@ -107,15 +126,15 @@ void PartsBasedDetectorNode::detectorCB(const ImageConstPtr& msg_d, const ImageC
     pbd_.detect(image_rgb, image_d, candidates);
 
     // PUBLISH
+	// perform non-maximal suppression
     if (candidates.size() > 0) {
-    	// perform non-maximal suppression
     	Candidate::sort(candidates);
     	Candidate::nonMaximaSuppression(image_rgb, candidates, 0.2);
-
-    	// publish on the various topics (only if there are subscribers)
-    	if (image_pub_d_.getNumSubscribers > 0)		messageImageDepth(image_d, msg_d);
-    	if (image_pub_rgb_.getNumSubscribers > 0)	messageImageRGB(candidates, image_rgb, msg_d);
-    	if (bb_pub_.getNumSubscribers() > 0)  		messageBoundingBox(candidates, image_d, msg_d, camera_);
-    	if (mask_pub_.getNumberSubscribers() > 0)	messageMask(candidates, image_rgb, msg_rgb);
     }
+
+	// publish on the various topics (only if there are subscribers)
+	if (image_pub_d_.getNumSubscribers() > 0)	messageImageDepth(image_d, msg_d);
+	if (image_pub_rgb_.getNumSubscribers() > 0)	messageImageRGB(candidates, image_rgb, msg_d);
+	if (bb_pub_.getNumSubscribers() > 0)  		messageBoundingBox(candidates, image_rgb, image_d, msg_d, camera_);
+	if (mask_pub_.getNumSubscribers() > 0)	    messageMask(candidates, image_rgb, msg_rgb);
  }

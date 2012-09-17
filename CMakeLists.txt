@@ -20,7 +20,7 @@ if (catkin_FOUND)
     project(object_recognition_by_parts)
     catkin_stack()
     catkin_project(${PROJECT_NAME}
-                   DEPENDS Boost OpenCV cvmatio roscpp image_geometry
+                   DEPENDS Boost OpenCV cvmatio roscpp vision_opencv message_filters
                    INCLUDE_DIRS include
     )
     # install targets for all things python
@@ -47,7 +47,7 @@ endif()
 # -----------------------------------------------
 
 # include all warning types
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter -pedantic")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter -pedantic")
 
 # set the build type
 if (NOT CMAKE_BUILD_TYPE)
@@ -77,7 +77,7 @@ endif ()
 # DEPENDENCIES
 # -----------------------------------------------
 # find the dependencies
-find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(Boost COMPONENTS system filesystem signals REQUIRED)
 find_package(OpenCV REQUIRED)
 
 # include the dependencies
@@ -121,7 +121,7 @@ endif()
 
 # add ROS bindings if need be
 # does not build yet due to missing dependencies
-set(WITH_ROS OFF)
+#set(WITH_ROS OFF)
 if (WITH_ROS)
     add_subdirectory(ros)
 endif()
