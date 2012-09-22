@@ -18,11 +18,15 @@ if (catkin_FOUND)
     set(WITH_CATKIN ON)
     set(BUILD_EXECUTABLE OFF)
     project(object_recognition_by_parts)
-    catkin_stack()
-    catkin_project(${PROJECT_NAME}
-                   DEPENDS Boost OpenCV cvmatio roscpp vision_opencv message_filters
-                   INCLUDE_DIRS include
-    )
+    if (${catkin_VERSION} VERSION_GERATER "0.5.26")
+        catkin_package()
+        catkin_package_export(INCLUDE_DIRS include)
+    else()
+        catkin_stack()
+        catkin_project(${PROJECT_NAME}
+                       INCLUDE_DIRS include
+        )
+    endif()
     # install targets for all things python
     if (WITH_ECTO)
         catkin_python_setup()

@@ -1,0 +1,26 @@
+<package>
+  <name>object_recognition_by_parts</name>
+  <version>0.0.1</version>
+  <description>A technique to recognize and estimate objects using mixtures of deformable parts models</description>
+  <author email="hbristow@willowgarage.com">Hilton Bristow</author>
+  <license>BSD</license>
+  <copyright>Willow Garage</copyright>
+  <url>http://ecto.willowgarage.com</url>
+
+  <build_depend>catkin</build_depend>
+  <build_depend>ecto</build_depend>
+  <build_depend>object_recognition_core</build_depend>
+  <build_depend>openni-dev</build_depend>
+  <build_depend>opencv2</build_depend>
+  <build_depend>cvmatio</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>vision_opencv</build_depend>
+  <build_depend>message_filters</build_depend>
+
+  <run_depend>ecto</run_depend>
+  <run_depend>opencv2</run_depend>
+  <run_depend>object_recognition_core</run_depend>
+  <run_depend>openni-dev</run_depend>
+  <run_depend>cvmatio</run_depend>
+  <run_depend>message_filters</run_depend>
+</package>
