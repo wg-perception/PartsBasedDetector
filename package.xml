@@ -3,6 +3,7 @@
   <version>0.0.1</version>
   <description>A technique to recognize and estimate objects using mixtures of deformable parts models</description>
   <author email="hbristow@willowgarage.com">Hilton Bristow</author>
+  <maintainer email="hbristow@willowgarage.com">Hilton Bristow</maintainer>
   <license>BSD</license>
   <copyright>Willow Garage</copyright>
   <url>http://ecto.willowgarage.com</url>
