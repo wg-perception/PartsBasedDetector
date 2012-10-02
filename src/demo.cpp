@@ -92,6 +92,10 @@ int main(int argc, char** argv) {
 	// load the image from file
 	Mat_<float> depth;
 	Mat im = imread(argv[2]);
+        if (im.empty()) {
+            printf("Image not found or invalid image format\n");
+            exit(-4);
+        }
 	if (argc == 4) {
 		depth = imread(argv[3], CV_LOAD_IMAGE_ANYDEPTH);
 		// convert the depth image from mm to m
@@ -108,15 +112,13 @@ int main(int argc, char** argv) {
 	// display the best candidates
 	Visualize visualize(model->name());
 	SearchSpacePruning<float> ssp;
-    Mat canvas;
+        Mat canvas;
 	if (candidates.size() > 0) {
-		Candidate::sort(candidates);
-		//Candidate::nonMaximaSuppression(im, candidates, 0.2);
-		visualize.candidates(im, candidates, canvas, true);
-        visualize.image(canvas);
-		waitKey();
+	    Candidate::sort(candidates);
+	    //Candidate::nonMaximaSuppression(im, candidates, 0.2);
+	    visualize.candidates(im, candidates, canvas, true);
+            visualize.image(canvas);
+	    waitKey();
 	}
-	cvtColor(canvas, canvas, CV_BGR2RGB);
-	imwrite("all_candidate.png", canvas);
 	return 0;
 }

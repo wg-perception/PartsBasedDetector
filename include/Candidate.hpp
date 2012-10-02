@@ -167,7 +167,7 @@ public:
 			// add the valid points
 			cv::Mat_<float> part = depth(r);
 			for (cv::MatIterator_<float> it = part.begin(); it != part.end(); ++it) {
-				if (*it != 0 && !isnan(*it)) points.push_back(*it);
+				if (*it != 0 && std::isnan(*it)) points.push_back(*it);
 			}
 		}
 

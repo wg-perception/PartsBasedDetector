@@ -46,7 +46,3 @@ if (BUILD_EXECUTABLE)
             RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin
     )
 endif()
-
-# blogpost
-add_executable(BlogPost blogpost.cpp)
-target_link_libraries(BlogPost ${LIBS} ${PROJECT_NAME}_lib)
