@@ -39,8 +39,12 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#include <assert.h>
 #include <math.h>
+#ifdef _WIN32
+inline double round(double x) { return (x > 0.0) ? floor(x + 0.5) : ceil(x - 0.5); }
+#endif
+#include <assert.h>
+#include <stdint.h>
 #include <cstdio>
 #include <iostream>
 #include <opencv2/imgproc/imgproc.hpp>

@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 
 	// determine the type of model to read
 	boost::scoped_ptr<Model> model;
-	string ext = boost::filesystem::path(argv[1]).extension().c_str();
+	string ext = boost::filesystem::path(argv[1]).extension().string();
 	if (ext.compare(".xml") == 0 || ext.compare(".yaml") == 0) {
 		model.reset(new FileStorageModel);
 	}

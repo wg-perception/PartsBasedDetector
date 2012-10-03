@@ -35,7 +35,7 @@
  *  Author:  Hilton Bristow
  *  Created: Jul 19, 2012
  */
-
+#include <stdint.h> 
 #include <stdio.h>
 #include <iostream>
 #include <limits>
