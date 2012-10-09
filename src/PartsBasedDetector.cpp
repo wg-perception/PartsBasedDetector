@@ -38,6 +38,8 @@
 
 #include "PartsBasedDetector.hpp"
 #include "nms.hpp"
+#include "HOGFeatures.hpp"
+#include "SpatialConvolutionEngine.hpp"
 #include <cstdio>
 using namespace cv;
 using namespace std;
@@ -75,7 +77,7 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vectorCandid
 	// to get probability density for each Part
 	double t = (double)getTickCount();
 	vector2DMat pdf;
-	features_->pdf(pyramid, pdf);
+	convolution_engine_->pdf(pyramid, pdf);
 	printf("Convolution time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	// use dynamic programming to predict the best detection candidates from the part responses
@@ -114,12 +116,15 @@ void PartsBasedDetector<T>::distributeModel(Model& model) {
 	// initialize the Feature engine
 	features_.reset(new HOGFeatures<T>(model.binsize(), model.nscales(), model.flen(), model.norient()));
 
+	//initialise the convolution engine
+	convolution_engine_.reset(new SpatialConvolutionEngine(DataType<T>::type, model.flen()));
+
 	// make sure the filters are of the correct precision for the Feature engine
 	const unsigned int nfilters = model.filters().size();
 	for (unsigned int n = 0; n < nfilters; ++n) {
 		model.filters()[n].convertTo(model.filters()[n], DataType<T>::type);
 	}
-	features_->setFilters(model.filters());
+	convolution_engine_->setFilters(model.filters());
 
 	// initialize the tree of Parts
 	parts_ = Parts(model.filters(), model.filtersi(), model.def(), model.defi(), model.bias(), model.biasi(),

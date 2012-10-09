@@ -1,4 +1,4 @@
-/* 
+/*
  *  Software License Agreement (BSD License)
  *
  *  Copyright (c) 2012, Willow Garage, Inc.
@@ -31,46 +31,42 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  File:    IFeatures.hpp
+ *  File:    ConvolutionEngine.hpp
  *  Author:  Hilton Bristow
- *  Created: Jun 21, 2012
+ *  Created: Oct 9, 2012
  */
 
-#ifndef FEATURES_HPP_
-#define FEATURES_HPP_
-#include <vector>
-#include <opencv2/core/core.hpp>
+#ifndef ICONVOLUTIONENGINE_HPP_
+#define ICONVOLUTIONENGINE_HPP_
+
 #include "types.hpp"
 
-/*! @class Feature interface
- *  @brief Interface for creating and comparing image features
- * IFeatures provides an interface for creating and comparing image features
- */
-class IFeatures {
+class IConvolutionEngine {
 public:
-	virtual ~IFeatures() {}
-	// get and set methods
-	//! retrieve the spatial binning size (1 if not relevant)
-	virtual unsigned int binsize(void) const = 0;
-	//! retrieve the number of scales the features are calculated over
-	virtual unsigned int nscales(void) const = 0;
-	// public methods
-	/*! @brief the vector of scales
-	 *
-	 * the vector of scales, 1 indicating the native image resolution,
-	 * values lower than 1 indicating downsampled images, and values greater
-	 * than 1 indicating hallucinated resolutions
-	 */
-	virtual vectorf scales(void) const = 0;
+	virtual ~IConvolutionEngine() {}
 
-	/*! @brief a pyramid of features
+	/*! @brief probability density function
 	 *
-	 * features calculated of a number of scales
-	 * @param im the input image to calculate features for
-	 * @param pyrafeatures an output vector of matrices of features, one matrix for each scale
+	 * A custom convolution-type operation for producing a map of probability density functions
+	 * where each pixel indicates the likelihood of a positive detection
+	 *
+	 * @param features the input pyramid of features
+	 * @param responses a 2D vector of pdfs, 1st dimension across scale, 2nd dimension across filter
 	 */
-	virtual void pyramid(const cv::Mat& im, vectorMat& pyrafeatures) = 0;
+	virtual void pdf(const vectorMat& features, vector2DMat& responses) = 0;
+
+	/*! @brief set the convolve engine filters
+	 *
+	 * In many situations, the filters are static during operation of the detector
+	 * so we can take advantage of some optimizations such as changing the memory layout
+	 * of the filters, or shifting the filters to the GPU, etc. This function enables
+	 * such a facility, and must necessarily be called before pdf()
+	 *
+	 * @param filters the vector of filters
+	 */
+	virtual void setFilters(const vectorMat& filters) = 0;
 };
 
-//IFeatures::~IFeatures() {}
-#endif /* FEATURES_HPP_ */
+
+
+#endif /* ICONVOLUTIONENGINE_HPP_ */

@@ -5,6 +5,7 @@ set(SRC_FILES   DepthConsistency.cpp
                 DynamicProgram.cpp
                 FileStorageModel.cpp
                 HOGFeatures.cpp 
+                SpatialConvolutionEngine.cpp
                 PartsBasedDetector.cpp 
                 SearchSpacePruning.cpp
                 StereoCameraModel.cpp

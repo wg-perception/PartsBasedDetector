@@ -45,7 +45,8 @@
 #include "Parts.hpp"
 #include "Model.hpp"
 #include "Candidate.hpp"
-#include "HOGFeatures.hpp"
+#include "IFeatures.hpp"
+#include "IConvolutionEngine.hpp"
 #include "DynamicProgram.hpp"
 #include "SearchSpacePruning.hpp"
 
@@ -155,6 +156,8 @@ private:
 	std::string name_;
 	//! produces features, feature pyramids and compares features with Parts
 	boost::scoped_ptr<IFeatures> features_;
+	//! compares features with Parts
+	boost::scoped_ptr<IConvolutionEngine> convolution_engine_;
 	//! dynamic program to predict part positions and candidate likelihoods from raw scores
 	DynamicProgram<T> dp_;
 	//! the tree of Parts

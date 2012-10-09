@@ -61,8 +61,6 @@ private:
 	unsigned int norient_;
 	//! the scales of the features
 	vectorf scales_;
-	//! the internal representation of the filters
-	vector2DFilterEngine filters_;
 	//! the scaling factor between successive levels in the pyramid
 	float sfactor_;
 	//! the interval between half resolution scales
@@ -71,7 +69,6 @@ private:
 	// private methods
 	void boundaryOcclusionFeature(cv::Mat& feature, const int flen, const int padsize);
 	template<typename IT> void features(const cv::Mat& im, cv::Mat& feature) const;
-	void convolve(const cv::Mat& feature, vectorFilterEngine& filter, cv::Mat& pdf, const unsigned int stride);
 public:
 	HOGFeatures() {}
 	HOGFeatures(unsigned int binsize, unsigned int nscales, unsigned int flen, unsigned int norient) :
@@ -87,9 +84,7 @@ public:
 	unsigned int binsize(void) const { return binsize_; }
 	unsigned int nscales(void) const { return nscales_; }
 	vectorf scales(void) const { return scales_; }
-	void setFilters(const vectorMat& filters);
 	void pyramid(const cv::Mat& im, vectorMat& pyrafeatures);
-	void pdf(const vectorMat& features, vector2DMat& responses);
 };
 
 #endif /* HOGFEATURES_HPP_ */
