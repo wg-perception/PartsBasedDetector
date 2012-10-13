@@ -3,8 +3,13 @@
 # -----------------------------------------------
 
 # automagically find the required packages
+if (${catkin_VERSION} VERSION_GREATER "0.5.28")
+find_package(catkin REQUIRED COMPONENTS catkin roscpp message_filters)
+include_directories(${catkin_INCLUDE_DIRS})
+else()
 find_package(ROS REQUIRED COMPONENTS catkin roscpp message_filters)
 include_directories(${ROS_INCLUDE_DIRS})
+endif()
 
 # manually get non-catkin packages
 find_library(IMAGE_TRANSPORT_LIBS  image_transport PATHS /opt/ros/fuerte/stacks/image_common/image_transport/lib)
@@ -22,6 +27,7 @@ include_directories(/opt/ros/groovy/include)
 set(SRC_FILES Node.cpp Messages.cpp)
 add_executable(${PROJECT_NAME}_node ${SRC_FILES})
 target_link_libraries(${PROJECT_NAME}_node  ${PROJECT_NAME}_lib 
+                                            ${catkin_LIBRARIES} 
                                             ${ROS_LIBRARIES} 
                                             ${OpenCV_LIBS} 
                                             ${IMAGE_TRANSPORT_LIBS} 
