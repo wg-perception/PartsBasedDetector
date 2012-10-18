@@ -40,7 +40,7 @@
 #include <opencv2/core/core.hpp>
 #include "FileStorageModel.hpp"
 
-bool FileStorageModel::serialize(std::string filename) {
+bool FileStorageModel::serialize(const std::string& filename) const {
 
 	// open the storage container for writing
 	cv::FileStorage fs;
@@ -94,7 +94,7 @@ bool FileStorageModel::serialize(std::string filename) {
 	return true;
 }
 
-bool FileStorageModel::deserialize(std::string filename) {
+bool FileStorageModel::deserialize(const std::string& filename) {
 
 	// open the storage container for writing
 	cv::FileStorage fs;

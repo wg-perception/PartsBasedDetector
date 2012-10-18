@@ -57,7 +57,7 @@ template class HOGFeatures<float>;
 template class HOGFeatures<double>;
 
 template<typename T>
-static inline T square(T x) { return x * x; }
+static inline T square(const T& x) { return x * x; }
 
 /*! @brief add ones to the final padded pixel in each 3D feature map
  *

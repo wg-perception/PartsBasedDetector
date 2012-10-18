@@ -117,8 +117,8 @@ public:
 	int norient(void) const { return norient_; }
 	int ncomponents(void) const { return filterid_.size(); }
 
-	virtual bool serialize(std::string filename) = 0;
-	virtual bool deserialize(std::string filename) = 0;
+	virtual bool serialize(const std::string& filename) const = 0;
+	virtual bool deserialize(const std::string& filename) = 0;
 };
 
 #endif /* MODEL_HPP_ */

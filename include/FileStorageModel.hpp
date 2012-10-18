@@ -50,8 +50,8 @@ public:
 	FileStorageModel() {}
 	virtual ~FileStorageModel() {}
 	// persistence methods
-	bool deserialize(std::string filename);
-	bool serialize(std::string filename);
+	bool deserialize(const std::string& filename);
+	bool serialize(const std::string& filename) const;
 };
 
 #endif /* FILESTORAGEMODEL_HPP_ */

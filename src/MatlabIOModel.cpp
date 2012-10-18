@@ -68,7 +68,7 @@ static inline void zeroIndex(vectorPoint& pt) {
  * version 5 file
  * @throws boost::bad_any_cast, exception
  */
-bool MatlabIOModel::deserialize(std::string filename) {
+bool MatlabIOModel::deserialize(const std::string& filename) {
 
 	// open the Mat File for reading
 	MatlabIO cvmatio;
@@ -188,7 +188,7 @@ bool MatlabIOModel::deserialize(std::string filename) {
 }
 
 
-bool MatlabIOModel::serialize(std::string filename) {
+bool MatlabIOModel::serialize(const std::string& filename) const {
 	/* TODO: implement */
 	filename[0];
 	return false;

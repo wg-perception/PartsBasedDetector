@@ -49,8 +49,8 @@ class MatlabIOModel: public Model {
 public:
 	MatlabIOModel() {}
 	virtual ~MatlabIOModel() {}
-	bool deserialize(std::string filename);
-	bool serialize(std::string filename);
+	bool deserialize(const std::string& filename);
+	bool serialize(const std::string& filename) const;
 };
 
 #endif /* MATLABIOMODEL_HPP_ */
