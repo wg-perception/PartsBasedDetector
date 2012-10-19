@@ -2,15 +2,12 @@
 # ROS NODE WRAPPER
 # -----------------------------------------------
 
-# automagically find the required packages
+# if one Groovy
 if (${catkin_VERSION} VERSION_GREATER "0.5.28")
 find_package(catkin REQUIRED COMPONENTS catkin roscpp message_filters)
 include_directories(${catkin_INCLUDE_DIRS})
 else()
-find_package(ROS REQUIRED COMPONENTS catkin roscpp message_filters)
-include_directories(${ROS_INCLUDE_DIRS})
-endif()
-
+# only Fuerte is supported otherwise
 # manually get non-catkin packages
 find_library(IMAGE_TRANSPORT_LIBS  image_transport PATHS /opt/ros/fuerte/stacks/image_common/image_transport/lib)
 include_directories(/opt/ros/fuerte/stacks/image_common/image_transport/include)
@@ -21,7 +18,9 @@ include_directories(/opt/ros/fuerte/stacks/vision_opencv/image_geometry/include)
 find_library(CV_BRIDGE_LIBS cv_bridge PATH /opt/ros/fuerte/stacks/vision_opencv/cv_bridge/lib)
 include_directories(/opt/ros/fuerte/stacks/vision_opencv/cv_bridge/include)
 
-include_directories(/opt/ros/groovy/include)
+find_package(ROS REQUIRED COMPONENTS catkin roscpp message_filters)
+include_directories(${ROS_INCLUDE_DIRS})
+endif()
 
 # source --> build --> link --> install
 set(SRC_FILES Node.cpp Messages.cpp)
