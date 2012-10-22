@@ -14,5 +14,5 @@ link_ecto(object_recognition_by_parts_cells     ${OpenCV_LIBRARIES}
                                                 ${Boost_LIBRARIES}
                                                 ${object_recognition_core_LIBRARIES}
                                                 ${MatlabIO_LIBRARIES}
-                                                object_recognition_by_parts
+                                                ${PROJECT_NAME}_lib
 )
