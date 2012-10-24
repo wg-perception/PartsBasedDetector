@@ -4,7 +4,7 @@
 
 # if one Groovy
 if (${catkin_VERSION} VERSION_GREATER "0.5.28")
-find_package(catkin REQUIRED COMPONENTS catkin roscpp message_filters)
+find_package(catkin REQUIRED COMPONENTS catkin cv_bridge image_geometry image_transport roscpp message_filters)
 include_directories(${catkin_INCLUDE_DIRS})
 else()
 # only Fuerte is supported otherwise
@@ -18,7 +18,7 @@ include_directories(/opt/ros/fuerte/stacks/vision_opencv/image_geometry/include)
 find_library(CV_BRIDGE_LIBS cv_bridge PATH /opt/ros/fuerte/stacks/vision_opencv/cv_bridge/lib)
 include_directories(/opt/ros/fuerte/stacks/vision_opencv/cv_bridge/include)
 
-find_package(ROS REQUIRED COMPONENTS catkin roscpp message_filters)
+find_package(ROS REQUIRED COMPONENTS catkin cv_bridge image_geometry image_transport roscpp message_filters)
 include_directories(${ROS_INCLUDE_DIRS})
 endif()
 
