@@ -4,15 +4,16 @@ source1:
 
 sink1:
   type: 'publisher'
+  module:' object_recognition_ros.io'
 
 sink2:
   type: 'by_parts_publisher'
   package: 'object_recognition_by_parts'
 
 pipeline1:
-  method: 'by_parts'
-  package: 'object_recognition_by_parts'
-  submethod: 'HOG'
+  type: 'by_parts'
+  module: 'object_recognition_by_parts'
+  subtype: 'HOG'
   sources: [source1]
   sinks: [sink1, sink2]
   parameters:

@@ -18,7 +18,7 @@ class PartsBasedDetectionPipeline(DetectionPipeline):
     @classmethod
     def detector(self, *args, **kwargs):
         visualize = kwargs.pop('visualize', False)
-        submethod = kwargs.pop('submethod')
+        submethod = kwargs.pop('subtype')
         parameters = kwargs.pop('parameters')
         object_ids = parameters['object_ids']
         object_db = ObjectDb(parameters['db'])
