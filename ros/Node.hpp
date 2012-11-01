@@ -36,6 +36,11 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseArray.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 #include <image_geometry/stereo_camera_model.h>
@@ -52,9 +57,11 @@
 #include "PartsBasedDetector.hpp"
 #include "Candidate.hpp"
 #include "FileStorageModel.hpp"
+
 #ifdef WITH_MATLABIO
-	#include "MatlabIOModel.hpp"
+#include "MatlabIOModel.hpp"
 #endif
+
 #include "types.hpp"
 
 namespace enc = sensor_msgs::image_encodings;
@@ -62,14 +69,20 @@ namespace enc = sensor_msgs::image_encodings;
 class PartsBasedDetectorNode {
 private:
 	// types
+	typedef pcl::PointXYZRGB PointType;
+	typedef pcl::PointCloud<PointType> PointCloud;
 	typedef image_transport::SubscriberFilter ImageSubscriber;
 	typedef image_transport::Publisher ImagePublisher;
 	typedef sensor_msgs::CameraInfo CameraInfo;
 	typedef sensor_msgs::CameraInfoConstPtr CameraInfoConstPtr;
 	typedef message_filters::Subscriber<CameraInfo> CameraInfoSubscriber;
-	typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> KinectSyncPolicy;
+	typedef message_filters::Subscriber<PointCloud> PointCloudSubscriber;
+	typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
+			sensor_msgs::Image, PointCloud> KinectSyncPolicy;
 	typedef visualization_msgs::MarkerArray MarkerArray;
 	typedef visualization_msgs::Marker Marker;
+	typedef geometry_msgs::Pose Pose;
+	typedef geometry_msgs::PoseArray PoseArray;
 	typedef sensor_msgs::ImageConstPtr ImageConstPtr;
 	typedef sensor_msgs::ImagePtr ImagePtr;
 	typedef image_geometry::PinholeCameraModel PinholeCameraModel;
@@ -83,17 +96,23 @@ private:
 	ImageSubscriber image_sub_d_;       // the kinect subscriber
 	ImageSubscriber image_sub_rgb_;     // the rgb camera subscriber
 	CameraInfoSubscriber info_sub_d_;	// the kinect info subscriber
+	PointCloudSubscriber pointcloud_sub_;	// the pointcloud subscriber
 	message_filters::Synchronizer<KinectSyncPolicy> sync_;
 
 	// publishers
-	ImagePublisher  image_pub_d_;       // the raw image publisher
-	ImagePublisher  image_pub_rgb_;	 	// the depth publisher
-	ImagePublisher  mask_pub_;          // the object mask publisher
-	ros::Publisher  bb_pub_;            // the bounding box publisher
+//	ImagePublisher image_pub_d_;       // the raw image publisher
+	ImagePublisher image_pub_rgb_;	 	// the depth publisher
+	ImagePublisher mask_pub_;          // the object mask publisher
+//	ImagePublisher segmented_pub_;		// the segmented image publisher
+	ros::Publisher bb_pub_;            // the bounding box publisher
+	ros::Publisher cloud_pub_;			// the clustered cloud publisher
+	ros::Publisher part_center_pub_;	// the parts center publisher
+	ros::Publisher object_pose_pub_;	// the object poses publisher
 
 	// PartsBasedDetector members
-	PartsBasedDetector<float> pbd_;
-	MarkerArray bb_markers_;
+	PartsBasedDetector<double> pbd_;
+	MarkerArray bounding_box_markers_;
+	MarkerArray part_center_markers_;
 	std::string ns_;
 	std::string name_;
 
@@ -102,28 +121,51 @@ private:
 	CameraInfo depth_camera_;
 	PinholeCameraModel camera_;
 
+	//utility functions
+	void hashStringToColor(const std::string& str, cv::Scalar& rgb);
 
 public:
 	PartsBasedDetectorNode() :
-							it_(nh_),
-							image_sub_d_( it_, "camera/depth_registered/image_rect", 1),
-							image_sub_rgb_( it_, "camera/rgb/image_rect_color", 1),
-							info_sub_d_( nh_, "camera/depth_registered/camera_info", 1),
-							sync_( KinectSyncPolicy(10), image_sub_d_, image_sub_rgb_),
-							depth_camera_initialized_(false), ns_("/pbd/") {}
+			nh_(),
+			it_(nh_),
+//							image_sub_d_( it_, "kinect_head/depth_registered/image_rect", 1),
+//							image_sub_rgb_( it_, "kinect_head/rgb/image_rect_color", 1),
+//							info_sub_d_( nh_, "kinect_head/depth_registered/camera_info", 1),
+//							pointcloud_sub_(nh_, "kinect_head/depth_registered/points", 1),
+			image_sub_d_(it_, "image_depth_in", 1),
+			image_sub_rgb_(it_, "image_rgb_in", 1),
+			info_sub_d_(nh_, "depth_camera_info_in", 1),
+			pointcloud_sub_(nh_, "cloud_in", 1),
+			sync_(KinectSyncPolicy(50), image_sub_d_, image_sub_rgb_, pointcloud_sub_),
+			ns_("/pbd/"),
+			depth_camera_initialized_(false) {	}
 
 	// initialisation
-    bool init(void);
+	bool init(void);
 
-    // message construction
-    void clearMarkerArray(MarkerArray& markers, ros::Publisher& publisher);
-    void messageBoundingBox(const vectorCandidate& candidates, cv::Mat& rgb, cv::Mat& depth, const ImageConstPtr& msg, const PinholeCameraModel& camera);
-    void messageFrustum(const vectorCandidate& candidates);
-    void messageImageRGB(const vectorCandidate& candidates, cv::Mat& rgb, const ImageConstPtr& msg_in);
-    void messageImageDepth(cv::Mat& depth, const ImageConstPtr& msg_in);
-    void messageMask(const vectorCandidate& candidates, cv::Mat& rgb, const ImageConstPtr& msg_in);
+	// pose functions
+	void computeBoundingBoxes(const vectorCandidate& candidates,
+			const cv::Mat& rgb, const cv::Mat& depth, const PointCloud& cloud,
+			std::vector<Rect3d>& bounding_boxes, std::vector<float>& scores,
+			MarkerArray& parts_centers);
+	void cleanCloud(const PointCloud::ConstPtr& cloud,
+			const std::vector<Rect3d>& bounding_boxes,
+			PointCloud& cleaned_cloud, PoseArray& object_poses);
 
-    // callbacks
-    void depthCameraCallback(const CameraInfoConstPtr& info_msg);
-    void detectorCallback(const ImageConstPtr &msg_d, const ImageConstPtr& msg_rgb);
+	// message construction
+	void clearMarkerArray(MarkerArray& markers, ros::Publisher& publisher);
+	void messageBoundingBox(const std::vector<Rect3d>& bounding_boxes,
+			const ImageConstPtr& msg);
+	void messageFrustum(const vectorCandidate& candidates);
+	void messageImageRGB(const vectorCandidate& candidates, cv::Mat& rgb,
+			const ImageConstPtr& msg_in);
+	void messageImageDepth(cv::Mat& depth, const ImageConstPtr& msg_in);
+	void messageMask(const vectorCandidate& candidates, cv::Mat& rgb,
+			const ImageConstPtr& msg_in);
+
+	// callbacks
+	void depthCameraCallback(const CameraInfoConstPtr& info_msg);
+	void detectorCallback(const ImageConstPtr &msg_d,
+			const ImageConstPtr& msg_rgb,
+			const PointCloud::ConstPtr& msg_cloud);
 };

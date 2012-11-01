@@ -4,7 +4,7 @@ source1:
 
 sink1:
   type: 'publisher'
-  module:' object_recognition_ros.io'
+  module: 'object_recognition_ros.io'
 
 sink2:
   type: 'by_parts_publisher'

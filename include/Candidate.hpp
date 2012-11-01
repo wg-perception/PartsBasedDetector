@@ -166,9 +166,19 @@ public:
 
 			// add the valid points
 			cv::Mat_<float> part = depth(r);
+			if(part.empty())
+				continue;
+
 			for (cv::MatIterator_<float> it = part.begin(); it != part.end(); ++it) {
-				if (*it != 0 && std::isnan(*it)) points.push_back(*it);
+				if (*it != 0 && !std::isnan(*it)) points.push_back(*it);
 			}
+
+			if(points.empty())
+			{
+				return Rect3d(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+						0, 0, 0);
+			}
+
 		}
 
 		// sort the points

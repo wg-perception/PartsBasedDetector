@@ -1,5 +1,5 @@
 # PartsBasedDetector CMakeLists.txt
-cmake_minimum_required(VERSION 2.8.6)
+cmake_minimum_required(VERSION 2.8.5)
 
 # -----------------------------------------------
 # USER DEFINED VARIABLES
@@ -7,13 +7,13 @@ cmake_minimum_required(VERSION 2.8.6)
 option(BUILD_EXECUTABLE "Build as executable to test functionality"                     ON)
 option(BUILD_DOC        "Build documentation with Doxygen"                              ON)
 option(WITH_OPENMP      "Build with OpenMP support for multithreading"                  ON)
-option(WITH_ECTO        "Build with ECTO bindings if building in a Catkin environment"  OFF)
+option(WITH_ECTO        "Build with ECTO bindings if building in a Catkin environment"  ON)
 option(WITH_ROS         "Build with ROS bindings if building in a Catkin environment"   ON)
 
 # -----------------------------------------------
 # CATKIN
 # -----------------------------------------------
-
+find_package(catkin QUIET)
 if (catkin_FOUND)
     set(WITH_CATKIN ON)
     set(BUILD_EXECUTABLE OFF)
@@ -30,6 +30,7 @@ if (catkin_FOUND)
     if (WITH_ECTO)
         catkin_python_setup()
         find_package(ecto REQUIRED)
+        find_package(ecto_pcl REQUIRED)
         find_package(object_recognition_core REQUIRED)
     endif()
     # deal with cvmatio
@@ -82,12 +83,14 @@ endif ()
 # find the dependencies
 find_package(Boost COMPONENTS system filesystem signals REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(PCL REQUIRED)
 
 # include the dependencies
 include_directories(SYSTEM  ${OPENCV_INCLUDE_DIRS}
                             ${Boost_INCLUDE_DIRS}
 )
-include_directories("include")
+include_directories(include)
+include_directories(${PCL_INCLUDE_DIRS})
 
 # check if the MatlabIO dependency was successfully found
 if (cvmatio_LIBRARIES)

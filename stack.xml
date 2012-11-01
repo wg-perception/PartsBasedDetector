@@ -19,6 +19,8 @@
   <build_depends>opencv2</build_depends>
   <build_depends>roscpp</build_depends>
   <build_depends>vision_opencv</build_depends>
+  <build_depends>pcl</build_depends>  
+  <build_depends>pcl_ros</build_depends>  
 
   <depends>ecto</depends>
   <depends>cv_bridge</depends>
@@ -29,4 +31,6 @@
   <depends>object_recognition_core</depends>
   <depends>openni-dev</depends>
   <depends>message_filters</depends>
+  <depends>pcl</depends>  
+  <depends>pcl_ros</depends>  
 </stack>

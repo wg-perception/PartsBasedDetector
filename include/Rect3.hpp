@@ -64,15 +64,15 @@ public:
 		height(pt2.y-pt1.y), width(pt2.x-pt1.x), depth(pt2.z-pt1.z) {}
 
 	//! equals operator
-	Rect3_<T>& operator = (const Rect3_<T>& r) { return Rect3_<T>(r); }
+	//Rect3_<T>& operator = (const Rect3_<T>& r) { return Rect3_<T>(r); }
 	//! addition operator
 	Rect3_<T>& operator + (const cv::Point3_<T>& r) { return Rect3_<T>(this->tl()+r, this->br()+r); }
 	//! subtraction operator
 	Rect3_<T>& operator - (const cv::Point3_<T>& r) { return Rect3_<T>(this->tl()-r, this->br()-r); }
 	//! addition in-place
-	Rect3_<T>& operator += (const cv::Point3_<T>& r) { x+=r.x; y+=r.y; z+=r.z; return this; }
+	Rect3_<T>& operator += (const cv::Point3_<T>& r) { x+=r.x; y+=r.y; z+=r.z; return *this; }
 	//! subtraction in-place
-	Rect3_<T>& operator -= (const cv::Point3_<T>& r) { x-=r.x; y-=r.y; z-=r.z; return this; }
+	Rect3_<T>& operator -= (const cv::Point3_<T>& r) { x-=r.x; y-=r.y; z-=r.z; return *this; }
 	//! intersection operator
 	Rect3_<T>& operator & (const Rect3_<T> r) { return intersection(this, r); }
 	//! convex hull operator

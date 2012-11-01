@@ -19,6 +19,8 @@
   <build_depend>opencv2</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>vision_opencv</build_depend>
+  <build_depend>pcl</build_depend>
+  <build_depend>pcl_ros</build_depend>  
 
   <run_depend>cvmatio</run_depend>
   <run_depend>cv_bridge</run_depend>
@@ -29,4 +31,6 @@
   <run_depend>opencv2</run_depend>
   <run_depend>object_recognition_core</run_depend>
   <run_depend>openni-dev</run_depend>
+  <run_depend>pcl</run_depend>
+  <run_depend>pcl_ros</run_depend>  
 </package>
