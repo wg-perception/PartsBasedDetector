@@ -5,7 +5,6 @@
   <author email="hbristow@willowgarage.com">Hilton Bristow</author>
   <maintainer email="hbristow@willowgarage.com">Hilton Bristow</maintainer>
   <license>BSD</license>
-  <copyright>Willow Garage</copyright>
   <url>http://ecto.willowgarage.com</url>
 
   <build_depend>catkin</build_depend>
