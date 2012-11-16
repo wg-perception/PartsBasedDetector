@@ -100,8 +100,8 @@ private:
 	message_filters::Synchronizer<KinectSyncPolicy> sync_;
 
 	// publishers
-//	ImagePublisher image_pub_d_;       // the raw image publisher
-	ImagePublisher image_pub_rgb_;	 	// the depth publisher
+//	ImagePublisher image_pub_d_;       // the depth publisher
+	ImagePublisher image_pub_rgb_;	 	// the raw image publisher
 	ImagePublisher mask_pub_;          // the object mask publisher
 //	ImagePublisher segmented_pub_;		// the segmented image publisher
 	ros::Publisher bb_pub_;            // the bounding box publisher
@@ -112,7 +112,6 @@ private:
 	// PartsBasedDetector members
 	PartsBasedDetector<double> pbd_;
 	MarkerArray bounding_box_markers_;
-	MarkerArray part_center_markers_;
 	std::string ns_;
 	std::string name_;
 
@@ -142,15 +141,6 @@ public:
 
 	// initialisation
 	bool init(void);
-
-	// pose functions
-	void computeBoundingBoxes(const vectorCandidate& candidates,
-			const cv::Mat& rgb, const cv::Mat& depth, const PointCloud& cloud,
-			std::vector<Rect3d>& bounding_boxes, std::vector<float>& scores,
-			MarkerArray& parts_centers);
-	void cleanCloud(const PointCloud::ConstPtr& cloud,
-			const std::vector<Rect3d>& bounding_boxes,
-			PointCloud& cleaned_cloud, PoseArray& object_poses);
 
 	// message construction
 	void clearMarkerArray(MarkerArray& markers, ros::Publisher& publisher);

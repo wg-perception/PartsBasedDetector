@@ -55,7 +55,7 @@ endif()
 
 # set the build type
 if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING
+    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
         "Choose the type of build. Options are: None, Debug, Release, RelWithDebInfo, MinSizeRel"
     FORCE)
 endif()
@@ -84,6 +84,10 @@ endif ()
 find_package(Boost COMPONENTS system filesystem signals REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL REQUIRED)
+find_package(Eigen REQUIRED)
+include_directories(${EIGEN_INCLUDE_DIRS})
+add_definitions(-DEIGEN_USE_NEW_STDVECTOR
+                -DEIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET)
 
 # include the dependencies
 include_directories(SYSTEM  ${OPENCV_INCLUDE_DIRS}

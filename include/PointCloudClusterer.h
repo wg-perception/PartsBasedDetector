@@ -53,15 +53,45 @@ class PointCloudClusterer
 
 public:
 	typedef pcl::PointCloud<PointType> PointCloud;
-  typedef boost::function<cv::Point3d (cv::Point)> PointProjectFunc;
+	typedef typename PointCloud::ConstPtr PointCloudConstPtr;
+	typedef boost::function<cv::Point3d(cv::Point)> PointProjectFunc;
 
+	/*! @brief this function computes the 3D bounding boxes around the candidates
+	 *
+	 * @param candidates the candidates returned by the parts based detector
+	 * @param rgb the rgb image
+	 * @param depth the depth image
+	 * @param camera_model_projecter the function that projects the 2d pixel into a 3d ray
+	 * @param cloud the pointcloud
+	 * @param bounding_boxes the 3D bounding boxes for each candidate
+	 * @param parts_centers a point cloud for each candidate, each point represents the center for a part
+	 */
 	static void computeBoundingBoxes(const std::vector<Candidate>& candidates,
-			const cv::Mat& rgb, const cv::Mat& depth, PointProjectFunc camera_model_projecter, const typename PointCloud::ConstPtr cloud,
-			std::vector<Rect3d>& bounding_boxes, std::vector<PointCloud>& parts_centers);
+			const cv::Mat& rgb, const cv::Mat& depth,
+			PointProjectFunc camera_model_projecter,
+			const typename PointCloud::ConstPtr cloud,
+			std::vector<Rect3d>& bounding_boxes,
+			std::vector<PointCloud>& parts_centers);
 
-	static void clusterObjects(const typename PointCloud::ConstPtr cloud,
+	/*! @brief this function uses the 3D bounding boxes to segment and extract a point cluster for each detected object
+	 *
+	 * @param cloud the input point cloud
+	 * @param bounding_boxes the 3D bunding boxes
+	 * @param object_clusters a vector of PointClouds is returned, a cluster for each bounding box
+	 * @param object_centers the centroid of each cluster
+	 */
+	static void clusterObjects(const PointCloudConstPtr cloud,
 			const std::vector<Rect3d>& bounding_boxes,
-			std::vector<PointCloud>& object_clusters, std::vector<PointType>& object_centers);
+			std::vector<PointCloud>& object_clusters,
+			std::vector<PointType>& object_centers);
+
+	/*! @brief this function removes planes from the (organized) input cloud
+	 *
+	 * @param cloud the input point cloud
+	 * @param cloud_no_plane the filtered input cloud (planes removed)
+	 */
+	static void organizedMultiplaneSegmentation(const PointCloudConstPtr& cloud,
+			PointCloud& cloud_no_plane);
 };
 
 // To instantiate the template

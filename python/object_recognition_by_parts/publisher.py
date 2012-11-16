@@ -24,7 +24,7 @@ class Publisher(ecto.BlackBox):
         i.forward('image', cell_name='_image_converter', cell_key='image')
 
     def configure(self, p, _i, _o):
-        self._image_converter = Mat2Image(swap_rgb=True)
+        self._image_converter = Mat2Image(swap_rgb=False)
         self._image_publisher = Publisher_Image(topic_name = 'by_parts_result')
 
     def connections(self):

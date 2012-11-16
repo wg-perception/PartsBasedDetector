@@ -5,10 +5,14 @@
     <param name="/camera/depth_registration" type="bool" value="true" />
 
     <!-- THE MODEL FILE TO LOAD -->
-    <arg name="model" default="" />
-    <param name="model" type="string" value="$(arg model)" />
+    <arg name="model" default="/path/to/model" />
 
-    <node pkg="PartsBasedDetector" name="$(anon object_recognition_by_parts)" type="object_recognition_by_parts_node">
+    <node pkg="object_recognition_by_parts" name="$(anon object_recognition_by_parts)" type="object_recognition_by_parts_node">
+      <param name="model" type="string" value="$(arg model)" />
+      <remap from="cloud_in" to="camera/depth_registered/points" />
+      <remap from="image_rgb_in" to="camera/rgb/image_rect_color" />
+      <remap from="image_depth_in" to="camera/depth_registered/image_rect" /> 
+      <remap from="depth_camera_info_in" to="camera/depth_registered/camera_info" />  
     </node>
 
 </launch>

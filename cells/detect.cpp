@@ -59,7 +59,8 @@ using object_recognition_core::db::ObjectId;
 using object_recognition_core::common::PoseResult;
 using object_recognition_core::db::ObjectDb;
 
-namespace parts_based_detector {
+namespace parts_based_detector
+{
 
 /*! @class PartsBasedDetectorCell
  *  @brief ECTO cell to wrap the PartsBasedDetector
@@ -67,31 +68,37 @@ namespace parts_based_detector {
  *  This class implements the detection cell of the ECTO
  *  pipeline using the PartsBasedDetector method
  */
-struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelReaderImpl {
+struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelReaderImpl
+{
+	typedef pcl::PointXYZ PointType;
+	typedef pcl::PointCloud<PointType> PointCloud;
 
 	// Parameters
 	spore<bool> visualize_;
+	spore<bool> remove_planes_;
 	spore<std::string> model_file_;
 	spore<float> max_overlap_;
+	spore<ObjectDb> object_db_;
 
 	// I/O
-	//spore<ecto::pcl::PointCloud> input_cloud_;
+	spore<PointCloud::ConstPtr> input_cloud_;
 	spore<cv::Mat> color_, depth_, camera_intrinsics_, output_;
 	spore<std::vector<PoseResult> > pose_results_;
-	spore<std::vector<ecto::pcl::PointCloud> > object_clusters_;
+	spore<std::vector<std::vector<PointCloud, Eigen::aligned_allocator<PointCloud> > > > object_clusters_;
 
 	// the detector classes
 	boost::scoped_ptr<Visualize> visualizer_;
 	boost::scoped_ptr<PartsBasedDetector<double> > detector_;
-  
-  // model_name
-  ObjectId model_name_;
+
+	// model_name
+	ObjectId model_name_;
 
 	/*! @brief parameter callback
 	 *
 	 * @param db_documents the recognition database documents
 	 */
-	void ParameterCallback(const object_recognition_core::db::Documents&) {
+	void ParameterCallback(const object_recognition_core::db::Documents&)
+	{
 	}
 
 	/*! @brief declare parameters used by the detector
@@ -103,13 +110,18 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 	 *
 	 * @param params the parameters
 	 */
-	static void declare_params(tendrils& params) {
+	static void declare_params(tendrils& params)
+	{
 		params.declare(&PartsBasedDetectorCell::visualize_, "visualize",
 				"Visualize results", false);
+		params.declare(&PartsBasedDetectorCell::remove_planes_, "remove_planes",
+				"The cell should remove planes from the scene before the cluster extraction", false);
 		params.declare(&PartsBasedDetectorCell::model_file_, "model_file",
 				"The path to the model file").required(true);
 		params.declare(&PartsBasedDetectorCell::max_overlap_, "max_overlap",
 				"The maximum overlap allowed between object detections", 0.1);
+		params.declare(&PartsBasedDetectorCell::object_db_, "db",
+				"The object db.", ObjectDb());
 	}
 
 	/*! @brief declare the I/O of the detector
@@ -123,21 +135,23 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 	 * @param outputs a hook to the outputs
 	 */
 	static void declare_io(const tendrils& params, tendrils& inputs,
-			tendrils& outputs) {
+			tendrils& outputs)
+	{
 		inputs.declare(&PartsBasedDetectorCell::color_, "image",
 				"An rgb full frame image.");
 		inputs.declare(&PartsBasedDetectorCell::depth_, "depth",
 				"The 16bit depth image.");
-    inputs.declare(&PartsBasedDetectorCell::camera_intrinsics_, "K", "The camera intrinsics matrix.");
-    //already declared by PclCell
-		//inputs.declare(&PartsBasedDetectorCell::input_cloud_, "input",
-		//		"The input point cloud.");
+		inputs.declare(&PartsBasedDetectorCell::camera_intrinsics_, "K",
+				"The camera intrinsics matrix.");
+		inputs.declare(&PartsBasedDetectorCell::input_cloud_, "input_cloud",
+				"The input point cloud.");
 
 		outputs.declare(&PartsBasedDetectorCell::pose_results_, "pose_results",
 				"The results of object recognition");
 		outputs.declare(&PartsBasedDetectorCell::output_, "image",
 				"The results of object recognition");
-		outputs.declare(&PartsBasedDetectorCell::object_clusters_, "clusters",
+		outputs.declare(&PartsBasedDetectorCell::object_clusters_,
+				"point3d_clusters",
 				"A vector containing a PointCloud for each recognized object");
 	}
 
@@ -152,8 +166,11 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 	 * @param inputs for initializing inputs, if necessary
 	 * @param outputs for initializing outputs, if necessary
 	 */
-	void configure(const tendrils& params, const tendrils& inputs, const tendrils& outputs) {
+	void configure(const tendrils& params, const tendrils& inputs,
+			const tendrils& outputs)
+	{
 
+		std::cout << "MODEL: " << *model_file_ << std::endl;
 		// create the model object and deserialize it
 		FileStorageModel model;
 		model.deserialize(*model_file_);
@@ -164,17 +181,25 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 		// create the PartsBasedDetector and distribute the model parameters
 		detector_.reset(new PartsBasedDetector<double>);
 		detector_->distributeModel(model);
-    
-    // set the model_name
-    model_name_ = model.name();
+
+		// set the model_name
+		model_name_ = model.name();
 	}
-	
-	cv::Point3d projectPixelToRay(image_pipeline::PinholeCameraModel camera, cv::Point2d pixel)
-  {
-    Eigen::Vector3d point = camera.projectPixelTo3dRay(Eigen::Vector2d(pixel.x, pixel.y));
-    
-    return cv::Point3d(point.x(), point.y(), point.z());
-  }
+
+	/*! @brief project a pixel from the 2D image into a 3D ray
+	 *
+	 * @param camera the pinhole camera model used for the projection
+	 * @param pixel the pixel to project
+	 * @return the ray that intersects the pixel
+	 */
+	cv::Point3d projectPixelToRay(image_pipeline::PinholeCameraModel camera,
+			cv::Point2d pixel)
+	{
+		Eigen::Vector3d point = camera.projectPixelTo3dRay(
+				Eigen::Vector2d(pixel.x, pixel.y));
+
+		return cv::Point3d(point.x(), point.y(), point.z());
+	}
 
 	/*! @brief the main processing callback of the ECTO pipeline
 	 *
@@ -187,28 +212,26 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 	 * @param outputs the output tendrils
 	 * @return
 	 */
-  template<typename PointType>
-  int process(const tendrils& inputs, const tendrils& outputs, const boost::shared_ptr<const pcl::PointCloud<PointType> >& input_cloud) 
-  {
-    // for comfort
-    typedef pcl::PointCloud<PointType> PointCloud;
-    //typedef PointCloudClusterer<PointType> PointCloudClusterer;
-    
+	int process(const tendrils& inputs, const tendrils& outputs)
+	{
 		std::cout << "detector: process" << std::endl;
-    
-    pose_results_->clear();
-    object_clusters_->clear();
-    
-    image_pipeline::PinholeCameraModel camera_model;
-    camera_model.setParams(color_->size(), *camera_intrinsics_, cv::Mat(), cv::Mat(), cv::Mat());
+
+		pose_results_->clear();
+		object_clusters_->clear();
+
+		image_pipeline::PinholeCameraModel camera_model;
+		camera_model.setParams(color_->size(), *camera_intrinsics_, cv::Mat(),
+				cv::Mat(), cv::Mat());
 
 		std::vector<Candidate> candidates;
 		detector_->detect(*color_, *depth_, candidates);
 
-		if (candidates.size() == 0) {
-			if (*visualize_) {
+		if (candidates.size() == 0)
+		{
+			if (*visualize_)
+			{
 				cv::cvtColor(*color_, *output_, CV_RGB2BGR);
-				cv::waitKey(30);
+				//cv::waitKey(30);
 			}
 
 			return ecto::OK;
@@ -217,57 +240,107 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 		Candidate::sort(candidates);
 		Candidate::nonMaximaSuppression(*color_, candidates, *max_overlap_);
 
-		if (*visualize_) {
-			visualizer_->candidates(*color_, candidates, 1, *output_, true);
-			cv::waitKey(30);
+		if (*visualize_)
+		{
+			visualizer_->candidates(*color_, candidates, candidates.size(), *output_, true);
+			cv::cvtColor(*output_, *output_, CV_RGB2BGR);
+			//cv::waitKey(30);
 		}
-    
-    std::vector<Rect3d> bounding_boxes;
-    std::vector<PointCloud> parts_centers;
-    
-    typename PointCloudClusterer<PointType>::PointProjectFunc projecter = boost::bind(&PartsBasedDetectorCell::projectPixelToRay, this, camera_model, _1);
-    PointCloudClusterer<PointType>::computeBoundingBoxes(candidates, *color_, *depth_, projecter, input_cloud, bounding_boxes, parts_centers);
-    
-    // output clusters (forget about object_centers because it's computed using the cluster cloud)
-    std::vector<PointType> object_centers;
-    std::vector<PointCloud> clusters;
-    PointCloudClusterer<PointType>::clusterObjects(input_cloud, bounding_boxes, clusters, object_centers);
-    
-    // compute poses (centroid of part centers)    
-    
-    // for each object
-    for (int object_it = 0; object_it < candidates.size(); ++object_it)
-    {
-      PoseResult result;
-      
-      // no db for now, only one model
-      result.set_object_id(ObjectDb(), model_name_);
-      result.set_confidence(candidates[object_it].score());      
-      
-      // current cloud
-      const PointCloud& part_centers_cloud = parts_centers[object_it];
-      
-      //compute centroid
-      Eigen::Vector4f centroid;
-           
-      int point_count = 0;
-      if ((point_count = pcl::compute3DCentroid(part_centers_cloud, centroid)) == 0)
-      {
-        //ROS_WARN("Centroid not found...");
-        continue;
-      }
-      
-      result.set_T(centroid);
-      
-      pose_results_->push_back(result);
-      object_clusters_->push_back(ecto::pcl::xyz_cloud_variant_t(clusters[object_it].makeShared()));
-    }  
-    
+
+		std::vector<Rect3d> bounding_boxes;
+		std::vector<PointCloud> parts_centers;
+
+		typename PointCloudClusterer<PointType>::PointProjectFunc projecter =
+				boost::bind(&PartsBasedDetectorCell::projectPixelToRay, this,
+						camera_model, _1);
+		PointCloudClusterer<PointType>::computeBoundingBoxes(candidates,
+				*color_, *depth_, projecter, *input_cloud_, bounding_boxes,
+				parts_centers);
+
+
+		// output clusters
+		std::vector<PointType> object_centers;
+		std::vector<PointCloud> clusters;
+
+		// remove planes from input cloud if needed
+		if(*remove_planes_)
+		{
+			PointCloud::Ptr clusterer_cloud (new PointCloud());
+			PointCloudClusterer<PointType>::organizedMultiplaneSegmentation(*input_cloud_, *clusterer_cloud);
+			PointCloudClusterer<PointType>::clusterObjects(clusterer_cloud,
+					bounding_boxes, clusters, object_centers);
+		}
+		else
+		{
+			PointCloudClusterer<PointType>::clusterObjects(*input_cloud_,
+					bounding_boxes, clusters, object_centers);
+		}
+
+
+
+
+		// compute poses (centroid of part centers)
+
+		// for each object
+		for (int object_it = 0; object_it < candidates.size(); ++object_it)
+		{
+			if(std::isnan(object_centers[object_it].x) || std::isnan(object_centers[object_it].y) || std::isnan(object_centers[object_it].z))
+				continue;
+
+			PoseResult result;
+
+			// no db for now, only one model
+			result.set_object_id(*object_db_, model_name_);
+			result.set_confidence(candidates[object_it].score());
+
+			// set the clustered cloud's center as a center...
+			result.set_T(Eigen::Vector3f(object_centers[object_it].getVector3fMap()));
+
+//			// For the rotation a minimum of two parts is needed
+//			if (part_centers_cloud.size() >= 2 &&
+//					!pcl_isnan(part_centers_cloud[0].x) &&
+//					!pcl_isnan(part_centers_cloud[0].y) &&
+//					!pcl_isnan(part_centers_cloud[0].z) &&
+//					!pcl_isnan(part_centers_cloud[1].x) &&
+//					!pcl_isnan(part_centers_cloud[1].y) &&
+//					!pcl_isnan(part_centers_cloud[1].z))
+//			{
+//				Eigen::Vector3f center(centroid.block<3, 1>(0, 0));
+//
+//				Eigen::Vector3f x_axis(
+//						part_centers_cloud[0].getVector3fMap() - center);
+//				x_axis.normalize();
+//				Eigen::Vector3f z_axis =
+//						(x_axis.cross(
+//								part_centers_cloud[1].getVector3fMap() - center)).normalized();
+//
+//				Eigen::Vector3f y_axis = x_axis.cross(z_axis); // should be normalized
+//
+//				Eigen::Matrix3f rot_matr;
+//				rot_matr << z_axis, y_axis, -x_axis;
+//				//rot_matr.transposeInPlace();
+//
+//				result.set_R(rot_matr);
+//			}
+//			else
+			{
+				result.set_R(Eigen::Quaternionf(1, 0, 0, 0));
+			}
+
+			// Only one point of view for this object...
+			std::vector<PointCloud, Eigen::aligned_allocator<PointCloud> > object_cluster (1);
+			object_cluster[0] = clusters[object_it];
+
+			pose_results_->push_back(result);
+			object_clusters_->push_back(object_cluster);
+		}
+
 		return ecto::OK;
 	}
 };
 }
 
 // register the ECTO cell
-ECTO_CELL(object_recognition_by_parts_cells, ecto::pcl::PclCell<parts_based_detector::PartsBasedDetectorCell>, "Detector",
+ECTO_CELL(object_recognition_by_parts_cells,
+		parts_based_detector::PartsBasedDetectorCell, "Detector",
 		"Detection of objects by parts")
