@@ -261,9 +261,9 @@ void PointCloudClusterer<PointType>::organizedMultiplaneSegmentation(
 	pcl::OrganizedMultiPlaneSegmentation<PointType, pcl::Normal, pcl::Label> plane_segmentation;
 	plane_segmentation.setInputCloud(cloud);
 	plane_segmentation.setInputNormals(normals);
-	plane_segmentation.setDistanceThreshold(0.03);
+	plane_segmentation.setDistanceThreshold(0.02);
 	//plane_segmentation.setAngularThreshold(pcl::deg2rad(5.0));
-	//plane_segmentation.setMaximumCurvature(0.01);
+	plane_segmentation.setMaximumCurvature(0.001);
 	plane_segmentation.setProjectPoints(true);
 
 	std::vector<pcl::PlanarRegion<PointType>,

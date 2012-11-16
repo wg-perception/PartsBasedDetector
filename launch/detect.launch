@@ -9,6 +9,7 @@
 
     <node pkg="object_recognition_by_parts" name="$(anon object_recognition_by_parts)" type="object_recognition_by_parts_node">
       <param name="model" type="string" value="$(arg model)" />
+      <param name="remove_planes" type="bool" value="false" />
       <remap from="cloud_in" to="camera/depth_registered/points" />
       <remap from="image_rgb_in" to="camera/rgb/image_rect_color" />
       <remap from="image_depth_in" to="camera/depth_registered/image_rect" /> 

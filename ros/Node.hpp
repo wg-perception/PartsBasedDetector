@@ -114,6 +114,7 @@ private:
 	MarkerArray bounding_box_markers_;
 	std::string ns_;
 	std::string name_;
+	bool remove_planes_;
 
 	// camera parameters
 	bool depth_camera_initialized_;
@@ -137,6 +138,7 @@ public:
 			pointcloud_sub_(nh_, "cloud_in", 1),
 			sync_(KinectSyncPolicy(50), image_sub_d_, image_sub_rgb_, pointcloud_sub_),
 			ns_("/pbd/"),
+			remove_planes_ (false),
 			depth_camera_initialized_(false) {	}
 
 	// initialisation

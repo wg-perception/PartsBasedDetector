@@ -67,6 +67,7 @@ bool PartsBasedDetectorNode::init(void)
 	// private nodehandle
 	ros::NodeHandle priv_nh("~");
 	priv_nh.getParam("model", modelfile);
+	priv_nh.getParam("remove_planes", remove_planes_);
   
 	string ext = boost::filesystem::path(modelfile).extension().c_str();
 	ROS_INFO("Loading model %s", modelfile.c_str());
@@ -202,8 +203,18 @@ void PartsBasedDetectorNode::detectorCallback(const ImageConstPtr& msg_d,
 	if (cloud_pub_.getNumSubscribers() > 0
 			|| object_pose_pub_.getNumSubscribers() > 0)
 	{
-		PointCloudClusterer::clusterObjects(msg_cloud, bounding_boxes, clusters,
+		if(remove_planes_)
+		{
+			PointCloud::Ptr cloud_no_planes (new PointCloud());
+			PointCloudClusterer::organizedMultiplaneSegmentation(msg_cloud, *cloud_no_planes);
+			PointCloudClusterer::clusterObjects(cloud_no_planes, bounding_boxes, clusters,
 				object_centers);
+		}
+		else
+		{
+			PointCloudClusterer::clusterObjects(msg_cloud, bounding_boxes, clusters,
+				object_centers);
+		}
 	}
 
 	// publish on the various topics (only if there are subscribers)
