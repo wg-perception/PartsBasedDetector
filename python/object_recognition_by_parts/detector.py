@@ -41,7 +41,6 @@ class PBDDetector(ecto.BlackBox):
         
         o.forward("pose_results", cell_name="detector")
         o.forward("image", cell_name="detector")
-        o.forward("point3d_clusters", cell_name="detector")
         o.forward("cloud_out", cell_name="mat_to_cloud", cell_key="point_cloud")
     
     def configure(self, p, _i, _o):

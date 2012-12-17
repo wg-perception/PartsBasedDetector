@@ -128,10 +128,6 @@ public:
 	PartsBasedDetectorNode() :
 			nh_(),
 			it_(nh_),
-//							image_sub_d_( it_, "kinect_head/depth_registered/image_rect", 1),
-//							image_sub_rgb_( it_, "kinect_head/rgb/image_rect_color", 1),
-//							info_sub_d_( nh_, "kinect_head/depth_registered/camera_info", 1),
-//							pointcloud_sub_(nh_, "kinect_head/depth_registered/points", 1),
 			image_sub_d_(it_, "image_depth_in", 1),
 			image_sub_rgb_(it_, "image_rgb_in", 1),
 			info_sub_d_(nh_, "depth_camera_info_in", 1),
@@ -154,6 +150,8 @@ public:
 	void messageImageDepth(cv::Mat& depth, const ImageConstPtr& msg_in);
 	void messageMask(const vectorCandidate& candidates, cv::Mat& rgb,
 			const ImageConstPtr& msg_in);
+	void messageClusters(const std::vector<PointCloud>& clusters);
+	void messagePoses(const std_msgs::Header& header, const std::vector<PointCloud>& parts_centers);
 
 	// callbacks
 	void depthCameraCallback(const CameraInfoConstPtr& info_msg);

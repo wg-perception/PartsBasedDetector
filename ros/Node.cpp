@@ -33,7 +33,6 @@
  *
  */
 #include <cstdio>
-#include <pcl/common/centroid.h>
 #include "Node.hpp"
 #include "PointCloudClusterer.h"
 
@@ -79,7 +78,7 @@ bool PartsBasedDetectorNode::init(void)
 		bool ok = model.deserialize(modelfile);
 		if (!ok)
 		{
-			fprintf(stderr, "Error deserializing file\n");
+			ROS_ERROR("Error deserializing file\n");
 			return false;
 		}
 		pbd_.distributeModel(model);
@@ -93,7 +92,7 @@ bool PartsBasedDetectorNode::init(void)
 		bool ok = model.deserialize(modelfile);
 		if (!ok)
 		{
-			fprintf(stderr, "Error deserializing file\n");
+			ROS_ERROR("Error deserializing file\n");
 			return false;
 		}
 		pbd_.distributeModel(model);
@@ -102,7 +101,7 @@ bool PartsBasedDetectorNode::init(void)
 #endif
 	else
 	{
-		fprintf(stderr, "Unsupported model format: %s\n", ext.c_str());
+		ROS_ERROR("Unsupported model format: %s\n", ext.c_str());
 		return false;
 	}
 
@@ -126,6 +125,7 @@ bool PartsBasedDetectorNode::init(void)
 	object_pose_pub_ = nh_.advertise<PoseArray>(ns_ + name_ + "/object_poses",
 			1);
 
+	ROS_INFO("Initialization successful");
 	// if we got here, everything is okay
 	return true;
 }
@@ -140,7 +140,6 @@ void PartsBasedDetectorNode::depthCameraCallback(
 void PartsBasedDetectorNode::detectorCallback(const ImageConstPtr& msg_d,
 		const ImageConstPtr& msg_rgb, const PointCloud::ConstPtr& msg_cloud)
 {
-
 	typedef PointCloudClusterer<PointType> PointCloudClusterer;
 
 	// UNPACK PREAMBLE
@@ -170,6 +169,8 @@ void PartsBasedDetectorNode::detectorCallback(const ImageConstPtr& msg_d,
 	vectorCandidate candidates;
 	pbd_.detect(image_rgb, image_d, candidates);
 
+	ROS_DEBUG("Found %zu candidates.", candidates.size());
+
 	if (candidates.size() == 0)
 		return;
 
@@ -180,8 +181,6 @@ void PartsBasedDetectorNode::detectorCallback(const ImageConstPtr& msg_d,
 		Candidate::sort(candidates);
 		Candidate::nonMaximaSuppression(image_rgb, candidates, 0.1); // 10% overlap allowed
 	}
-
-	ROS_INFO("Found %zu candidates.", candidates.size());
 
 	//pose calculation members
 	std::vector<Rect3d> bounding_boxes;
@@ -227,62 +226,7 @@ void PartsBasedDetectorNode::detectorCallback(const ImageConstPtr& msg_d,
 	if (mask_pub_.getNumSubscribers() > 0)
 		messageMask(candidates, image_rgb, msg_rgb);
 	if (cloud_pub_.getNumSubscribers() > 0)
-	{
-		PointCloud all_clusters = clusters[0]; //there is at least one candidate
-		for(size_t i = 1; i < clusters.size(); ++i)
-		{
-			all_clusters += clusters[i];
-		}
-
-		cloud_pub_.publish(all_clusters);
-	}
+		messageClusters(clusters);
 	if (object_pose_pub_.getNumSubscribers() > 0)
-	{
-		// Pose from part centers
-		PoseArray poses;
-		poses.header = msg_cloud->header;
-		poses.poses.clear();
-
-		// for each object
-		for (int object_it = 0; object_it < part_centers.size(); ++object_it)
-		{
-			const PointCloud& part_centers_cloud = part_centers[object_it];
-
-			//compute centroid
-			Eigen::Vector4f centroid;
-			Eigen::Matrix3f covMat;
-
-			int point_count = 0;
-			if ((point_count = computeMeanAndCovarianceMatrix(
-					part_centers_cloud, covMat, centroid)) == 0)
-			{
-				ROS_WARN("Centroid not found...");
-				continue;
-			}
-
-			// normalize matrix
-			covMat /= point_count;
-
-			//eigen33 -> RF
-			Eigen::Matrix3f evecs;
-			Eigen::Vector3f evals;
-			pcl::eigen33(covMat, evecs, evals);
-			Eigen::Quaternion<float> quat(evecs);
-			quat.normalize();
-
-			Pose pose;
-			pose.position.x = centroid.x();
-			pose.position.y = centroid.y();
-			pose.position.z = centroid.z();
-
-			pose.orientation.w = quat.w();
-			pose.orientation.x = quat.x();
-			pose.orientation.y = quat.y();
-			pose.orientation.z = quat.z();
-
-			poses.poses.push_back(pose);
-		}
-
-		object_pose_pub_.publish(poses);
-	}
+		messagePoses(msg_cloud->header, part_centers);
 }

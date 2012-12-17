@@ -36,13 +36,11 @@
  *  Created: Sep 10, 2012
  */
 
-#ifndef BOUNDINGBOX_HPP_
-#define BOUNDINGBOX_HPP_
-
 #include <boost/functional/hash.hpp>
 #include <opencv2/core/core.hpp>
 #include <ros/ros.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <pcl/common/centroid.h>
 #include "Candidate.hpp"
 #include "types.hpp"
 #include "Visualize.hpp"
@@ -172,5 +170,63 @@ void PartsBasedDetectorNode::messageMask(const vectorCandidate& candidates, Mat&
 	mask_pub_.publish(msg_out);
 }
 
+void PartsBasedDetectorNode::messageClusters(const std::vector<PointCloud>& clusters)
+{
+	PointCloud all_clusters = clusters[0]; //there is at least one candidate
+	for(size_t i = 1; i < clusters.size(); ++i)
+	{
+		all_clusters += clusters[i];
+	}
 
-#endif /* BOUNDINGBOX_HPP_ */
+	cloud_pub_.publish(all_clusters);
+}
+
+void PartsBasedDetectorNode::messagePoses(const std_msgs::Header& header, const std::vector<PointCloud>& parts_centers)
+{
+	// Pose from part centers
+	PoseArray poses;
+	poses.header = header;
+	poses.poses.clear();
+
+	// for each object
+	for (int object_it = 0; object_it < parts_centers.size(); ++object_it)
+	{
+		const PointCloud& part_centers_cloud = parts_centers[object_it];
+
+		//compute centroid
+		Eigen::Vector4f centroid;
+		Eigen::Matrix3f covMat;
+
+		int point_count = 0;
+		if ((point_count = computeMeanAndCovarianceMatrix(
+				part_centers_cloud, covMat, centroid)) == 0)
+		{
+			ROS_WARN("Centroid not found...");
+			continue;
+		}
+
+		// normalize matrix
+		covMat /= point_count;
+
+		//eigen33 -> RF
+		Eigen::Matrix3f evecs;
+		Eigen::Vector3f evals;
+		pcl::eigen33(covMat, evecs, evals);
+		Eigen::Quaternion<float> quat(evecs);
+		quat.normalize();
+
+		Pose pose;
+		pose.position.x = centroid.x();
+		pose.position.y = centroid.y();
+		pose.position.z = centroid.z();
+
+		pose.orientation.w = quat.w();
+		pose.orientation.x = quat.x();
+		pose.orientation.y = quat.y();
+		pose.orientation.z = quat.z();
+
+		poses.poses.push_back(pose);
+	}
+
+	object_pose_pub_.publish(poses);
+}

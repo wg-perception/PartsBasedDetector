@@ -4,4 +4,3 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/object_recognition_by_parts
   COMPONENT main
   FILES_MATCHING PATTERN "*.py"
 )
-

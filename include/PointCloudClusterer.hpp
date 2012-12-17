@@ -163,22 +163,32 @@ void PointCloudClusterer<PointType>::clusterObjects(
 
 	    // expand a bit the box
 		Rect3d bbox = bounding_boxes[i];
-		bbox -= cv::Point3d(bbox.width * 0.1, bbox.height * 0.1,
-				bbox.depth * 0.1);
-		bbox.width *= 1.2;
-		bbox.height *= 1.2;
-		bbox.depth *= 1.2;
 
-		crop_box.setMin(
-				Eigen::Vector4f(bbox.tl().x, bbox.tl().y, bbox.tl().z, 0));
-		crop_box.setMax(
-				Eigen::Vector4f(bbox.br().x, bbox.br().y, bbox.br().z, 0));
+		if(bbox.volume() >= 1E-6) // 1 cubic centimeter
+		{
+			bbox -= cv::Point3d(bbox.width * 0.1, bbox.height * 0.1,
+					bbox.depth * 0.1);
+			bbox.width *= 1.2;
+			bbox.height *= 1.2;
+			bbox.depth *= 1.2;
 
-		crop_box.filter(indices->indices);
+			crop_box.setMin(
+					Eigen::Vector4f(bbox.tl().x, bbox.tl().y, bbox.tl().z, 0));
+			crop_box.setMax(
+					Eigen::Vector4f(bbox.br().x, bbox.br().y, bbox.br().z, 0));
 
+			crop_box.filter(indices->indices);
+//			std::cout << "Cropped obj " << i << ", remaining indices: " << indices->indices.size() << std::endl;
+		}
+		else
+		{
+//			std::cout << "Bounding box for obj " << i << " empty." << std::endl;
+		}
 		// add the points belonging to the bbox
 		boxed_indices[i] = indices;
 	}
+
+	std::cout << "Cropping ok..." << std::endl;
 
 	// Extract different clusters to remove parts of other objects appearing into the bounding boxes
 	pcl::EuclideanClusterExtraction<PointType> boxes_clusterer;
@@ -198,9 +208,11 @@ void PointCloudClusterer<PointType>::clusterObjects(
 			continue;
 		}
 
+		std::cout << "Start clustering " << i << std::endl;
 		// keep the biggest one (should be the object)
 		boxes_clusterer.setIndices(boxed_indices[i]);
 		boxes_clusterer.extract(clusters);
+//		std::cout << "Clusterer extraction for object " << i << " succeeded with " << clusters.size() << " results" << std::endl;
 
 		// ROS_INFO("Extracted %zu clusters", clusters.size());
 

@@ -39,6 +39,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <Eigen/Core>
 
 #include <object_recognition_core/common/pose_result.h>
 #include <object_recognition_core/db/ModelReader.h>
@@ -84,7 +85,6 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 	spore<PointCloud::ConstPtr> input_cloud_;
 	spore<cv::Mat> color_, depth_, camera_intrinsics_, output_;
 	spore<std::vector<PoseResult> > pose_results_;
-	spore<std::vector<std::vector<PointCloud, Eigen::aligned_allocator<PointCloud> > > > object_clusters_;
 
 	// the detector classes
 	boost::scoped_ptr<Visualize> visualizer_;
@@ -150,9 +150,6 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 				"The results of object recognition");
 		outputs.declare(&PartsBasedDetectorCell::output_, "image",
 				"The results of object recognition");
-		outputs.declare(&PartsBasedDetectorCell::object_clusters_,
-				"point3d_clusters",
-				"A vector containing a PointCloud for each recognized object");
 	}
 
 	/*! @brief configure the detector state
@@ -217,7 +214,6 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 		std::cout << "detector: process" << std::endl;
 
 		pose_results_->clear();
-		object_clusters_->clear();
 
 		image_pipeline::PinholeCameraModel camera_model;
 		camera_model.setParams(color_->size(), *camera_intrinsics_, cv::Mat(),
@@ -328,11 +324,16 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 			}
 
 			// Only one point of view for this object...
+			sensor_msgs::PointCloud2Ptr cluster_cloud (new sensor_msgs::PointCloud2());
+	        std::vector<sensor_msgs::PointCloud2ConstPtr> ros_clouds (1);
+	        pcl::toROSMsg(clusters[object_it], *(cluster_cloud));
+	        ros_clouds[0] = cluster_cloud;
+	        result.set_clouds(ros_clouds);
+
 			std::vector<PointCloud, Eigen::aligned_allocator<PointCloud> > object_cluster (1);
 			object_cluster[0] = clusters[object_it];
 
 			pose_results_->push_back(result);
-			object_clusters_->push_back(object_cluster);
 		}
 
 		return ecto::OK;

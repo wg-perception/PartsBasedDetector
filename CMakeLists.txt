@@ -18,20 +18,21 @@ if (catkin_FOUND)
     set(WITH_CATKIN ON)
     set(BUILD_EXECUTABLE OFF)
     project(object_recognition_by_parts)
-    if (${catkin_VERSION} VERSION_GREATER "0.5.28")
-        catkin_package(INCLUDE_DIRS include)
-    else()
-        catkin_stack()
-        catkin_project(${PROJECT_NAME}
-                       INCLUDE_DIRS include
-        )
-    endif()
     # install targets for all things python
     if (WITH_ECTO)
         catkin_python_setup()
         find_package(ecto REQUIRED)
         find_package(ecto_pcl REQUIRED)
         find_package(object_recognition_core REQUIRED)
+    endif()
+    
+    if (${catkin_VERSION} VERSION_GREATER "0.5.28")
+        catkin_package(INCLUDE_DIRS include)
+    else()
+        catkin_stack()
+        catkin_project(${PROJECT_NAME}
+                       INCLUDE_DIRS include
+    )
     endif()
     # deal with cvmatio
     find_package(cvmatio QUIET) 
@@ -124,7 +125,7 @@ if(WITH_ECTO AND BUILD_TEST)
 endif()
 
 # add ecto cells
-if (WITH_ECTO AND ${ecto_FOUND} AND ${object_recognition_core_FOUND})    
+if (WITH_ECTO AND ${ecto_FOUND} AND ${object_recognition_core_FOUND})
     add_subdirectory(cells)
     add_subdirectory(python)
 endif()
