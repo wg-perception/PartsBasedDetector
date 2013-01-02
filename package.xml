@@ -7,7 +7,6 @@
   <license>BSD</license>
   <url>http://ecto.willowgarage.com</url>
 
-  <build_depend>catkin</build_depend>
   <build_depend>cvmatio</build_depend>
   <build_depend>cv_bridge</build_depend>
   <build_depend>ecto</build_depend>
@@ -33,4 +32,6 @@
   <run_depend>openni-dev</run_depend>
   <run_depend>pcl</run_depend>
   <run_depend>pcl_ros</run_depend>  
+
+  <buildtool_depend>catkin</buildtool_depend>
 </package>
