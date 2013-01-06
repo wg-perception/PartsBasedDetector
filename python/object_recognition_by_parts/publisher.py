@@ -6,6 +6,7 @@ from ecto_ros import Mat2Image
 from ecto_ros.ecto_sensor_msgs import Publisher_Image
 from object_recognition_core.io.sink import Sink
 import ecto
+from ecto import BlackBoxForward as Forward
 
 ########################################################################################################################
 
@@ -13,22 +14,17 @@ class Publisher(ecto.BlackBox):
     """
     Class publishing some outputs from the part based detection
     """
-    _image_converter = Mat2Image
-    _image_publisher = Publisher_Image
+    def declare_cells(self, p):
+        return {'image_converter': Mat2Image(swap_rgb=False)}
 
-    def declare_params(self, p):
-        #p.declare('marker_hull_topic', 'The ROS topic to use for the table message.', 'marker_table')
-        pass
-
-    def declare_io(self, _p, i, _o):
-        i.forward('image', cell_name='_image_converter', cell_key='image')
+    def declare_forwards(self, _p):
+        return ({},{'image_converter': [Forward('image')]},{})
 
     def configure(self, p, _i, _o):
-        self._image_converter = Mat2Image(swap_rgb=False)
-        self._image_publisher = Publisher_Image(topic_name = 'by_parts_result')
+        self.image_publisher = Publisher_Image(topic_name = 'by_parts_result')
 
-    def connections(self):
-        connections = [self._image_converter['image'] >> self._image_publisher['input'] ]
+    def connections(self, _p):
+        connections = [self.image_converter['image'] >> self.image_publisher['input'] ]
 
         return connections
 

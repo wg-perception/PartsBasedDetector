@@ -11,50 +11,48 @@ from object_recognition_by_parts_cells import Detector
 import object_recognition_core
 import object_recognition_by_parts_cells
 import ecto
+from ecto import BlackBoxCellInfo as CellInfo, BlackBoxForward as Forward
 
 class PBDDetector(ecto.BlackBox):
-    mat_to_cloud = MatToPointCloudXYZOrganized
-    detector = Detector
   
-  
-    def __init__(self, object_db, object_ids, model_file, visualize, max_overlap, remove_planes, *args, **kwargs):
+    def __init__(self, object_db, object_ids, visualize, *args, **kwargs):
         self.object_db = object_db
         self.object_ids = object_ids
-        self.model_file = model_file
         self.visualize = visualize
-        self.max_overlap = max_overlap
-        self.remove_planes = remove_planes
         ecto.BlackBox.__init__(self, *args, **kwargs)
-    
-    def declare_params(self, p):
-        #p.forward("model_file", cell_name="detector")
-        #p.forward("visualize", cell_name="detector")
-        #p.forward("max_overlap", cell_name="detector")
-        #p.forward("db", cell_name="detector")
-        pass
-      
-    def declare_io(self, _p, i, o):
-        i.forward("image", cell_name="detector")
-        i.forward("depth", cell_name="detector")
-        i.forward("K", cell_name="detector")
-        i.forward("points3d", cell_name="mat_to_cloud", cell_key="points")
-        
-        o.forward("pose_results", cell_name="detector")
-        o.forward("image", cell_name="detector")
-        o.forward("cloud_out", cell_name="mat_to_cloud", cell_key="point_cloud")
-    
-    def configure(self, p, _i, _o):
-        params = { 'db': self.object_db, 'model_file' : self.model_file, 'visualize': self.visualize, 'max_overlap': self.max_overlap , 'remove_planes': self.remove_planes }
-        self.detector = Detector("PB detector", **params)
-        pass
-  
-    def connections(self):
+
+    def declare_cells(self, _p):
+        return {'detector': CellInfo(Detector), 'mat_to_cloud': MatToPointCloudXYZOrganized()}
+
+    def declare_forwards(self, _p):
+        p = {'detector': 'all'}
+        i = {'detector': [Forward('image'), Forward('depth'), Forward('K')],
+             'mat_to_cloud': [Forward('points', 'points3d')]}
+        o = {'detector': 'all', 'mat_to_cloud': [Forward('point_cloud', 'cloud_out')]}
+
+        return (p,i,o)
+
+    def connections(self, _p):
         return [ self.mat_to_cloud['point_cloud'] >> self.detector['input_cloud'] ]
 
 
 #####################################################################################################################
 
 class PartsBasedDetectionPipeline(DetectionPipeline):
+
+    @classmethod
+    def config_doc(cls):
+        return  """
+                    # The subtype can be any YAML that will help differentiate
+                    # between TOD methods: we usually use the descriptor name
+                    # but anything like parameters could be used
+                    subtype:
+                        type: ""
+                    # TOD requires several parameters
+                    parameters:
+                        # TODO
+                """
+
     @classmethod
     def type_name(cls):
         return 'by_parts'
@@ -67,7 +65,4 @@ class PartsBasedDetectionPipeline(DetectionPipeline):
         object_ids = parameters['object_ids']
         object_db = ObjectDb(parameters['db'])
         model_documents = Models(object_db, object_ids, self.type_name(), json_helper.dict_to_cpp_json_str(submethod))
-        model_file = parameters['extra'].get('model_file')
-        max_overlap = parameters['extra'].get('max_overlap', 0.1)
-        remove_planes = parameters['extra'].get('remove_planes', False)
-        return PBDDetector(object_db, object_ids, model_file, visualize, max_overlap, remove_planes, *args, **kwargs)
+        return PBDDetector(object_db, object_ids, visualize, *args, **parameters['extra'])
