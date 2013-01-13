@@ -58,7 +58,7 @@ using ecto::tendrils;
 using ecto::spore;
 using object_recognition_core::db::ObjectId;
 using object_recognition_core::common::PoseResult;
-using object_recognition_core::db::ObjectDb;
+using object_recognition_core::db::ObjectDbPtr;
 
 namespace parts_based_detector
 {
@@ -79,7 +79,7 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 	spore<bool> remove_planes_;
 	spore<std::string> model_file_;
 	spore<float> max_overlap_;
-	spore<ObjectDb> object_db_;
+	spore<ObjectDbPtr> object_db_;
 
 	// I/O
 	spore<PointCloud::ConstPtr> input_cloud_;
@@ -121,7 +121,7 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 		params.declare(&PartsBasedDetectorCell::max_overlap_, "max_overlap",
 				"The maximum overlap allowed between object detections", 0.1);
 		params.declare(&PartsBasedDetectorCell::object_db_, "db",
-				"The object db.", ObjectDb());
+				"The object db.");
 	}
 
 	/*! @brief declare the I/O of the detector
