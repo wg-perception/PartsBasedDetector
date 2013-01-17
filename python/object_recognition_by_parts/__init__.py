@@ -1,3 +1,3 @@
 #from .trainer import *
-from .detector import PartsBasedDetectionPipeline
-from .publisher import PublisherSink
+from .detector import PartsBasedDetector
+from .publisher import Publisher

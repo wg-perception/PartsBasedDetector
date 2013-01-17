@@ -69,7 +69,7 @@ namespace parts_based_detector
  *  This class implements the detection cell of the ECTO
  *  pipeline using the PartsBasedDetector method
  */
-struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelReaderImpl
+struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelReaderBase
 {
 	typedef pcl::PointXYZ PointType;
 	typedef pcl::PointCloud<PointType> PointCloud;
@@ -97,7 +97,7 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 	 *
 	 * @param db_documents the recognition database documents
 	 */
-	void ParameterCallback(const object_recognition_core::db::Documents&)
+	void parameter_callback(const object_recognition_core::db::Documents&)
 	{
 	}
 
@@ -112,6 +112,7 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 	 */
 	static void declare_params(tendrils& params)
 	{
+		object_recognition_core::db::bases::declare_params_impl(params);
 		params.declare(&PartsBasedDetectorCell::visualize_, "visualize",
 				"Visualize results", false);
 		params.declare(&PartsBasedDetectorCell::remove_planes_, "remove_planes",
@@ -120,8 +121,6 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 				"The path to the model file").required(true);
 		params.declare(&PartsBasedDetectorCell::max_overlap_, "max_overlap",
 				"The maximum overlap allowed between object detections", 0.1);
-		params.declare(&PartsBasedDetectorCell::object_db_, "db",
-				"The object db.");
 	}
 
 	/*! @brief declare the I/O of the detector
@@ -166,7 +165,7 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 	void configure(const tendrils& params, const tendrils& inputs,
 			const tendrils& outputs)
 	{
-
+		configure_impl();
 		std::cout << "MODEL: " << *model_file_ << std::endl;
 		// create the model object and deserialize it
 		FileStorageModel model;
