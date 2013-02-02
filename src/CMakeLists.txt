@@ -34,7 +34,7 @@ add_library(${PROJECT_NAME}_lib SHARED ${SRC_FILES})
 target_link_libraries(${PROJECT_NAME}_lib ${LIBS})
 set_target_properties(${PROJECT_NAME}_lib PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 install(TARGETS ${PROJECT_NAME}_lib 
-        LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib
+        DESTINATION ${PROJECT_SOURCE_DIR}/lib
 )
 
 # as an executable
