@@ -83,6 +83,7 @@ endif ()
 # DEPENDENCIES
 # -----------------------------------------------
 # find the dependencies
+include(cmake/FindEigen.cmake)
 find_package(Boost COMPONENTS system filesystem signals REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL REQUIRED)
