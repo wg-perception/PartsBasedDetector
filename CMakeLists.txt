@@ -86,7 +86,6 @@ endif ()
 include(cmake/FindEigen.cmake)
 find_package(Boost COMPONENTS system filesystem signals REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(PCL REQUIRED)
 find_package(Eigen REQUIRED)
 include_directories(${EIGEN_INCLUDE_DIRS})
 add_definitions(-DEIGEN_USE_NEW_STDVECTOR
@@ -97,7 +96,6 @@ include_directories(SYSTEM  ${OPENCV_INCLUDE_DIRS}
                             ${Boost_INCLUDE_DIRS}
 )
 include_directories(include)
-include_directories(${PCL_INCLUDE_DIRS})
 
 # check if the MatlabIO dependency was successfully found
 if (cvmatio_LIBRARIES)
@@ -136,6 +134,8 @@ endif()
 # does not build yet due to missing dependencies
 #set(WITH_ROS OFF)
 if (WITH_ROS)
+    find_package(PCL REQUIRED)
+    include_directories(${PCL_INCLUDE_DIRS})
     add_subdirectory(ros)
 endif()
 
