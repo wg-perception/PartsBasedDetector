@@ -19,10 +19,12 @@ class PartsBasedDetector(ecto.BlackBox, DetectorBase):
         ecto.BlackBox.__init__(self, *args, **kwargs)
         DetectorBase.__init__(self)
 
-    def declare_cells(self, _p):
+    @staticmethod
+    def declare_cells(_p):
         return {'detector': CellInfo(Detector), 'mat_to_cloud': MatToPointCloudXYZOrganized()}
 
-    def declare_forwards(self, _p):
+    @staticmethod
+    def declare_forwards(_p):
         p = {'detector': 'all'}
         i = {'detector': [Forward('image'), Forward('depth'), Forward('K')],
              'mat_to_cloud': [Forward('points', 'points3d')]}

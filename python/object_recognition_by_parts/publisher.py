@@ -18,10 +18,12 @@ class Publisher(ecto.BlackBox):
         ecto.BlackBox.__init__(self, *args, **kwargs)
         #SinkBase.__init__(self)
 
-    def declare_cells(self, p):
+    @staticmethod
+    def declare_cells(p):
         return {'image_converter': Mat2Image(swap_rgb=False)}
 
-    def declare_forwards(self, _p):
+    @staticmethod
+    def declare_forwards(_p):
         return ({},{'image_converter': [Forward('image')]},{})
 
     def configure(self, p, _i, _o):
