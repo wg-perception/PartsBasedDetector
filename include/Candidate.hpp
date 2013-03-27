@@ -46,6 +46,8 @@
 #include "Rect3.hpp"
 #include "Math.hpp"
 
+#include <boost/math/special_functions/fpclassify.hpp> // isnan
+
 /*! @class Candidate
  *  @brief detection candidate
  *
@@ -170,7 +172,7 @@ public:
 				continue;
 
 			for (cv::MatIterator_<float> it = part.begin(); it != part.end(); ++it) {
-				if (*it != 0 && !std::isnan(*it)) points.push_back(*it);
+				if (*it != 0 && !boost::math::isnan(*it)) points.push_back(*it);
 			}
 
 			if(points.empty())

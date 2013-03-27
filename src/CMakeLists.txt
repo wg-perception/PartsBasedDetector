@@ -30,7 +30,7 @@ if (cvmatio_FOUND)
 endif()
 
 # as a library (always)
-add_library(${PROJECT_NAME}_lib SHARED ${SRC_FILES})
+add_library(${PROJECT_NAME}_lib STATIC ${SRC_FILES})
 target_link_libraries(${PROJECT_NAME}_lib ${LIBS})
 set_target_properties(${PROJECT_NAME}_lib PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 install(TARGETS ${PROJECT_NAME}_lib 
