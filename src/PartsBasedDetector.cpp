@@ -84,7 +84,8 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vectorCandid
 	vector4DMat Ix, Iy, Ik;
 	vector2DMat rootv, rooti;
 	t = (double)getTickCount();
-	dp_.min(parts_, pdf, Ix, Iy, Ik, rootv, rooti);
+	// dp_.min(parts_, pdf, Ix, Iy, Ik, rootv, rooti);
+	dp_.min_with_backtracking(parts_, pdf, Ix, Iy, Ik, rootv, rooti, features_->scales(), candidates);
 	printf("DP min time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	// suppress non-maximal candidates
@@ -94,7 +95,7 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vectorCandid
 
 	// walk back down the tree to find the part locations
 	t = (double)getTickCount();
-	dp_.argmin(parts_, rootv, rooti, features_->scales(), Ix, Iy, Ik, candidates);
+	// dp_.argmin(parts_, rootv, rooti, features_->scales(), Ix, Iy, Ik, candidates);
 	printf("DP argmin time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	if (!depth.empty()) {

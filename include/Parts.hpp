@@ -171,7 +171,7 @@ public:
 	//! the part's bias
 	vectorf bias(unsigned int mixture = 0) const {
 		const int offset = (*biasid_)[self_][mixture];
-		return vectorf(&((*biasw_)[offset]), &((*biasw_)[offset+nmixtures()]));
+		return vectorf((*biasw_).begin() + offset, (*biasw_).begin() + offset + nmixtures());
 	}
 	//! the part's bias index
 	int biasi(unsigned int mixture = 0) const { return (*biasi_)[(*biasid_)[self_][mixture]]; }
