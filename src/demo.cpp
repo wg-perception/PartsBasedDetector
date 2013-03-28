@@ -115,7 +115,6 @@ int main(int argc, char** argv) {
         Mat canvas;
 	if (candidates.size() > 0) {
 	    Candidate::sort(candidates);
-        candidates.resize(1);
 	    //Candidate::nonMaximaSuppression(im, candidates, 0.2);
 	    visualize.candidates(im, candidates, canvas, true);
             visualize.image(canvas);

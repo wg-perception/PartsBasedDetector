@@ -30,7 +30,12 @@ if (cvmatio_FOUND)
 endif()
 
 # as a library (always)
-add_library(${PROJECT_NAME}_lib STATIC ${SRC_FILES})
+if(MSVC)
+    # no symbol exported, so make static library instead
+    add_library(${PROJECT_NAME}_lib STATIC ${SRC_FILES})
+else()
+    add_library(${PROJECT_NAME}_lib SHARED ${SRC_FILES})
+endif()
 target_link_libraries(${PROJECT_NAME}_lib ${LIBS})
 set_target_properties(${PROJECT_NAME}_lib PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 install(TARGETS ${PROJECT_NAME}_lib 
