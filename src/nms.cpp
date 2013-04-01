@@ -105,7 +105,11 @@ void nonMaximaSuppression(const Mat& src, const int sz, Mat& dst, const Mat mask
 			// get the maximal candidate within the block
 			Range ic(m, min(m+sz+1,M));
 			Range jc(n, min(n+sz+1,N));
-			minMaxLoc(src(ic,jc), NULL, &vcmax, NULL, &ijmax, masked ? mask(ic,jc) : noArray());
+			if (masked)
+				minMaxLoc(src(ic,jc), NULL, &vcmax, NULL, &ijmax, mask(ic,jc));
+			else
+				minMaxLoc(src(ic,jc), NULL, &vcmax, NULL, &ijmax, noArray());
+
 			Point cc = ijmax + Point(jc.start,ic.start);
 
 			// search the neighbours centered around the candidate for the true maxima
