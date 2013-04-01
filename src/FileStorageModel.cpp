@@ -37,6 +37,7 @@
  */
 
 #include <sstream>
+#include <iostream>
 #include <opencv2/core/core.hpp>
 #include "FileStorageModel.hpp"
 
@@ -145,7 +146,12 @@ bool FileStorageModel::deserialize(const std::string& filename) {
 			part["parentid"] >> parentid_[c][p];
 			part["filterid"] >> filterid_[c][p];
 			part["biasid"]   >> biasid_[c][p];
-			part["defid"]    >> defid_[c][p];
+
+			cv::FileNode defid = part["defid"];
+			if(defid.isInt())
+				defid >> defid_[c][p];
+			else
+				defid_[c][p].push_back(0);
 		}
 	}
 
