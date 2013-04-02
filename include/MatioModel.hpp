@@ -31,60 +31,30 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  File:    ModelTransfer.cpp
- *  Author:  Hilton Bristow
- *  Created: Jul 27, 2012
+ *  File:    MatlabIOModel.hpp
+ *  Author:  Tim Sheerman-Chase
+ *  Created: Apr 1, 2013
  */
 
-#include <iostream>
-#ifdef WITH_MATLABIO
-#include "MatlabIOModel.hpp"
-#elif defined WITH_MATIO
-#include "MatioModel.hpp"
-#endif
-#include "FileStorageModel.hpp"
-using namespace std;
+#ifndef MATIOMODEL_HPP_
+#define MATIOMODEL_HPP_
 
-int main(int argc, char** argv) {
+#include "Model.hpp"
+#include "types.hpp"
 
-	// check for usage
-	if (argc != 3) {
-		cerr << "Usage: ModelTransfer /path/to/mat/file /path/to/xml/file" << endl;
-		exit(-1);
-	}
-	// allocate two models
-#ifdef WITH_MATLABIO
-	Model* matlab = new MatlabIOModel;
-#elif defined WITH_MATIO
-	Model* matlab = new MatioModel;
-#endif
+/*! @class MatlabIOModel
+ *  @brief Model implementation with Matlab .Mat file deserialization
+ */
+class MatioModel: public Model
+{
+public:
+	MatioModel() {}
+	virtual ~MatioModel() {}
+	bool deserialize(const std::string& filename);
+	bool serialize(const std::string& filename) const;
 
-	Model* cv     = new FileStorageModel;
+protected:
+	bool readModelData(struct mat_t *matfp, struct matvar_t *model);
+};
 
-	// deserialize the Matlab model, cast sideways and serialize
-	// an OpenCV FileStorage model
-	cout << "-------------------------------" << endl;
-	cout << "        Model Transfer         " << endl;
-	cout << "-------------------------------" << endl;
-	cout << "" << endl;
-	cout << "deserializing Matlab (.mat) model..." << endl;
-	bool ret = matlab->deserialize(argv[1]);
-	if(ret == false)
-	{
-		cout << "Error reading input " << argv[1] << endl;
-	}
-	else
-	{
-		cout << "converting..." << endl;
-		(*cv) = (*matlab);
-		cout << "serializing to OpenCV (.xml) model..." << endl;
-		cv->serialize(argv[2]);
-		cout << "Conversion complete" << endl;
-		cout << "-------------------------------" << endl;
-	}
-
-	// cleanup
-	delete matlab;
-	delete cv;
-	return 0;
-}
+#endif /* MATIOMODEL_HPP_ */

@@ -47,6 +47,8 @@
 #include "FileStorageModel.hpp"
 #ifdef WITH_MATLABIO
 	#include "MatlabIOModel.hpp"
+#elif defined WITH_MATIO
+	#include "MatioModel.hpp"
 #endif
 #include "Visualize.hpp"
 #include "types.hpp"
@@ -73,6 +75,10 @@ int main(int argc, char** argv) {
 #ifdef WITH_MATLABIO
 	else if (ext.compare(".mat") == 0) {
 		model.reset(new MatlabIOModel);
+	}
+#elif defined WITH_MATIO
+	else if (ext.compare(".mat") == 0) {
+		model.reset(new MatioModel);
 	}
 #endif
 	else {
@@ -115,10 +121,14 @@ int main(int argc, char** argv) {
         Mat canvas;
 	if (candidates.size() > 0) {
 	    Candidate::sort(candidates);
-	    //Candidate::nonMaximaSuppression(im, candidates, 0.2);
+	    Candidate::nonMaximaSuppression(im, candidates, 0.2);
 	    visualize.candidates(im, candidates, canvas, true);
             visualize.image(canvas);
 	    waitKey();
 	}
+	int *test = new int[5];	
+	test[0] = 1;
+	test[0];
+	delete [] test;
 	return 0;
 }
