@@ -40,6 +40,7 @@
 #include <iostream>
 #include <boost/filesystem.hpp>
 #include <matio.h>
+#include <assert.h>
 #include "MatioModel.hpp"
 using namespace std;
 
@@ -62,8 +63,6 @@ bool MatioModel::deserialize(const std::string& filename)
         return false;
     }
 
-	cout << "Matrix open" << endl;
-
 	//Read struct container
 	matvar_t *cont1 = Mat_VarReadNext(matfp);
 	if(cont1==NULL) {Mat_Close(matfp); return false;}
@@ -75,22 +74,40 @@ bool MatioModel::deserialize(const std::string& filename)
 	matvar_t *name = Mat_VarGetStructField(cont1, (void *)"name", BY_NAME, 0);
 	if(name==NULL) {cout << "Model name not found" << endl;}
 
-	matvar_t *pa = Mat_VarGetStructField(cont1, (void *)"pa", BY_NAME, 0);
-	if(pa==NULL) {cout << "Model pa not found" << endl;}
+	//matvar_t *pa = Mat_VarGetStructField(cont1, (void *)"pa", BY_NAME, 0);
+	//if(pa==NULL) {cout << "Model pa not found" << endl;}
 
 	matvar_t *sbin = Mat_VarGetStructField(cont1, (void *)"sbin", BY_NAME, 0);
 	if(sbin==NULL) {cout << "Model sbin not found" << endl;}
 
 	//Return if something is missing
-	if(model==NULL || name==NULL || pa==NULL || sbin==NULL)
+	if(model==NULL || name==NULL || sbin==NULL) //|| pa==NULL
 	{
 		if(model!=NULL) Mat_VarFree(model);
-		if(name!=NULL) Mat_VarFree(model);
-		if(pa!=NULL) Mat_VarFree(pa);
+		if(name!=NULL) Mat_VarFree(name);
+		//if(pa!=NULL) Mat_VarFree(pa);
 		if(sbin!=NULL) Mat_VarFree(sbin);
 		Mat_VarFree(cont1);
 	}
+	
+	//cout << (name->data_type == MAT_T_UINT8) << "," << name->data_size << endl;
+	//cout << (model->data_type == MAT_T_STRUCT) << "," << model->data_size << endl;
+	this->name_ = (char *)name->data;
 
+	//assert(pa->data_type==MAT_T_DOUBLE);
+	//assert(sizeof(double) == pa->data_size);
+	//double *paVal = (double *)pa->data;
+
+	assert(sbin->data_type==MAT_T_DOUBLE);
+	assert(sizeof(double) == sbin->data_size);
+	double *sbinVal = (double *)sbin->data;
+	this->binsize_ = *sbinVal;
+
+	//Clear matio objects
+	//if(model!=NULL) Mat_VarFree(model);
+	//if(name!=NULL) Mat_VarFree(name);
+	//if(pa!=NULL) Mat_VarFree(pa);
+	//if(sbin!=NULL) Mat_VarFree(sbin);
 	Mat_VarFree(cont1);
 	Mat_Close(matfp);
 	return true;
@@ -103,4 +120,5 @@ bool MatioModel::serialize(const std::string& filename) const
 	filename[0];
 	return false;
 }
+
 
