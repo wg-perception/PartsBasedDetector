@@ -37,7 +37,11 @@
  */
 
 #include <iostream>
+#ifdef WITH_MATLABIO
 #include "MatlabIOModel.hpp"
+#elif defined WITH_MATIO
+#include "MatioModel.hpp"
+#endif
 #include "FileStorageModel.hpp"
 using namespace std;
 
@@ -49,7 +53,12 @@ int main(int argc, char** argv) {
 		exit(-1);
 	}
 	// allocate two models
+#ifdef WITH_MATLABIO
 	Model* matlab = new MatlabIOModel;
+#elif defined WITH_MATIO
+	Model* matlab = new MatioModel;
+#endif
+
 	Model* cv     = new FileStorageModel;
 
 	// deserialize the Matlab model, cast sideways and serialize

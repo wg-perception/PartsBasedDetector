@@ -48,8 +48,8 @@
 class MatioModel: public Model
 {
 public:
-	Matio() {}
-	virtual ~Matio() {}
+	MatioModel() {}
+	virtual ~MatioModel() {}
 	bool deserialize(const std::string& filename);
 	bool serialize(const std::string& filename) const;
 };
