@@ -56,22 +56,35 @@ using namespace std;
  */
 bool MatioModel::deserialize(const std::string& filename)
 {
-	cout << "x " << filename << endl;
 	//Open output file for reading via matio
-    mat_t *matfp = Mat_Open(filename.c_str(),MAT_ACC_RDONLY);
+    mat_t *matfp = Mat_Open(filename.c_str(),MAT_ACC_RDWR);
     if ( NULL == matfp ) {
         return false;
     }
 
 	cout << "Matrix open" << endl;
-	matvar_t *test = NULL;
-	do
-	{
-		test = Mat_VarReadNextInfo(matfp);
-		if(test==NULL) continue;
-		cout << test->name << endl;
-	}
-	while(test);
+
+	//Read struct container
+	matvar_t *cont1 = Mat_VarReadNext(matfp);
+	if(cont1==NULL) return false;
+
+	//cout << "Found " << cont1->name << endl;;	
+	//cout << Mat_VarGetNumberOfFields(cont1) << endl;
+
+	//Read struct members
+	matvar_t *model = Mat_VarGetStructField(cont1, (void *)"model", BY_NAME, 0);
+	if(model==NULL) {cout << "Model not found" << endl; return false;}
+
+	matvar_t *name = Mat_VarGetStructField(cont1, (void *)"name", BY_NAME, 0);
+	if(name==NULL) {cout << "Model name not found" << endl; return false;}
+
+	matvar_t *pa = Mat_VarGetStructField(cont1, (void *)"pa", BY_NAME, 0);
+	if(pa==NULL) {cout << "Model pa not found" << endl; return false;}
+
+	matvar_t *sbin = Mat_VarGetStructField(cont1, (void *)"sbin", BY_NAME, 0);
+	if(sbin==NULL) {cout << "Model sbin not found" << endl; return false;}
+
+
 
 	return true;
 }
