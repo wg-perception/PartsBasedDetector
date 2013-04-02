@@ -105,6 +105,20 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 		return false;
 	}
 
+	matvar_t *intervalField = Mat_VarGetStructField(model, (void *)"interval", BY_NAME, 0);
+	assert(intervalField!=NULL);
+	this->nscales_ = *(double *)intervalField->data;
+
+	matvar_t *threshField = Mat_VarGetStructField(model, (void *)"thresh", BY_NAME, 0);
+	assert(threshField!=NULL);
+	this->thresh_  = *(double *)threshField->data;
+
+	matvar_t *sbinField = Mat_VarGetStructField(model, (void *)"sbin", BY_NAME, 0);
+	assert(sbinField!=NULL);
+	this->binsize_ = *(double *)sbinField->data;
+
+	this->norient_ = 18;
+
 	assert(filters->data_type==MAT_T_STRUCT);
 	//cout << filters->rank << "," << filters->dims[0] <<"," << filters->dims[1] << endl;
 
@@ -274,8 +288,6 @@ bool MatioModel::deserialize(const std::string& filename)
 	assert(sizeof(double) == sbin->data_size);
 	double *sbinVal = (double *)sbin->data;
 	this->binsize_ = *sbinVal;
-
-	this->norient_ = 18;
 
 	bool ret = this->readModelData(matfp, model);
 
