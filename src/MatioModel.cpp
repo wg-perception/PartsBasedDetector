@@ -124,6 +124,7 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 		//cout <<structInd << ","<<filtersw->data_type<< "," << filtersw->dims[0] <<"," << filtersw->dims[1]<<"," << filtersw->dims[2] << endl;
 		
 		int C = filtersw->dims[2];
+		this->flen_ = C;
 		cv::Mat filter_flat(cv::Size(C, 1), cv::DataType<double>::type);
 
 		double *buff = new double[filtersw->dims[0]*filtersw->dims[1]*filtersw->dims[2]];
@@ -136,7 +137,7 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 			filter_flat.at<double>(c,1) = buff[c];
 		delete buff;
 
-		filtersw_.push_back(filter_flat);
+		this->filtersw_.push_back(filter_flat);
 	}
 
 	//Copy components into memory
