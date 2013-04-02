@@ -44,6 +44,37 @@
 #include "MatioModel.hpp"
 using namespace std;
 
+
+bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
+{
+	matvar_t *filters = Mat_VarGetStructField(model, (void *)"filters", BY_NAME, 0);
+	if(filters==NULL) {cout << "Model filters not found" << endl;}
+
+	matvar_t *components = Mat_VarGetStructField(model, (void *)"components", BY_NAME, 0);
+	if(components==NULL) {cout << "Model components not found" << endl;}
+
+	matvar_t *defs = Mat_VarGetStructField(model, (void *)"defs", BY_NAME, 0);
+	if(defs==NULL) {cout << "Model filters not found" << endl;}
+
+	matvar_t *bias = Mat_VarGetStructField(model, (void *)"bias", BY_NAME, 0);
+	if(bias==NULL) {cout << "Model bias not found" << endl;}
+
+	//Return if something is missing
+	if(filters==NULL || components==NULL || defs==NULL || bias == NULL)
+	{
+		if(filters!=NULL) Mat_VarFree(filters);
+		if(components!=NULL) Mat_VarFree(components);
+		if(defs!=NULL) Mat_VarFree(defs);
+		if(bias!=NULL) Mat_VarFree(bias);
+		return false;
+	}
+
+	//Get values
+	cout << "xx" << endl;
+
+	return true;
+}
+
 /*! @brief deserialize a Matlab .Mat file into memory
  *
  * deserialize a valid version 5 .Mat file using the underlying
@@ -102,6 +133,8 @@ bool MatioModel::deserialize(const std::string& filename)
 	assert(sizeof(double) == sbin->data_size);
 	double *sbinVal = (double *)sbin->data;
 	this->binsize_ = *sbinVal;
+
+	this->readModelData(matfp, model);
 
 	//Clear matio objects
 	//if(model!=NULL) Mat_VarFree(model);
