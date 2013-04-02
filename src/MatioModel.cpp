@@ -44,6 +44,42 @@
 #include "MatioModel.hpp"
 using namespace std;
 
+//************ Utility Functions ****************************
+
+//! convert a vector of integers from Matlab 1-based indexing to C++ 0-based indexing
+static inline void zeroIndex(vectori& idx) {
+	for (unsigned int n = 0; n < idx.size(); ++n) idx[n] -= 1;
+}
+
+//! convert an integer from Matlab 1-based indexing to C++ 0-based indexing
+static inline void zeroIndex(int& idx) {
+	idx -= 1;
+}
+
+//! convert a vector of Point from Matlab 1-based indexing to C++ 0-based indexing
+static inline void zeroIndex(vectorPoint& pt) {
+	cv::Point one(1,1);
+	for (unsigned int n = 0; n < pt.size(); ++n) pt[n] = pt[n] - one;
+}
+
+template<class mytype> mytype Matio2DToVec(matvar_t *m)
+{
+	assert(m->data_type==MAT_T_DOUBLE);
+	assert(m->rank==2);
+
+	double arr[m->dims[0]*m->dims[1]];
+	int start[] = {0,0};
+	int stride[] = {1,1};
+	int *edge = m->dims;
+	int ret = Mat_VarReadData(m->fp, m, arr, start, stride, edge);
+	assert(ret==0);
+	mytype out;
+	for(unsigned int i=0;i<m->dims[0]*m->dims[1];i++)
+		out.push_back(arr[i]);
+	return out;
+}
+
+//************* Main Class ************************************************************
 
 bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 {
@@ -103,7 +139,44 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 		filtersw_.push_back(filter_flat);
 	}
 
-	//TODO components
+	//Copy components into memory
+	assert(components->data_type==MAT_T_CELL);
+	//cout <<components->data_type<< "," << components->dims[0] <<"," << components->dims[1]<<"," << components->dims[2] << endl;
+	biasid_.resize(components->dims[1]);
+	filterid_.resize(components->dims[1]);
+	defid_.resize(components->dims[1]);
+	parentid_.resize(components->dims[1]);
+
+	for(int cellInd = 0; cellInd < components->dims[1]; cellInd++)
+	{
+		matvar_t *cell = Mat_VarGetCell(components, cellInd);
+		assert(cell!=NULL);
+		assert(cell->data_type==MAT_T_STRUCT);
+		biasid_[cellInd].resize(cell->dims[1]);
+		filterid_[cellInd].resize(cell->dims[1]);
+		defid_[cellInd].resize(cell->dims[1]);
+		parentid_[cellInd].resize(cell->dims[1]);
+
+		for(int structInd = 0; structInd < cell->dims[1]; structInd++)
+		{
+			matvar_t *defid = Mat_VarGetStructField(cell, (void *)"defid", BY_NAME, structInd);
+			matvar_t *filterid = Mat_VarGetStructField(cell, (void *)"filterid", BY_NAME, structInd);
+			matvar_t *parent = Mat_VarGetStructField(cell, (void *)"parent", BY_NAME, structInd);
+			matvar_t *biasid = Mat_VarGetStructField(cell, (void *)"biasid", BY_NAME, structInd);
+			assert(defid!=NULL && filterid != NULL && parent != NULL && biasid != NULL);
+
+			this->biasid_[cellInd][structInd] = Matio2DToVec<vectori>(biasid);
+			this->parentid_[cellInd][structInd] = *(double *)parent->data;
+			this->filterid_[cellInd][structInd] = Matio2DToVec<vectori>(filterid);
+			this->defid_[cellInd][structInd]    = Matio2DToVec<vectori>(biasid);
+
+			//re-index from zero (Matlab uses 1-based indexing)
+			zeroIndex(biasid_[cellInd][structInd]);
+			zeroIndex(parentid_[cellInd][structInd]);
+			zeroIndex(filterid_[cellInd][structInd]);
+			zeroIndex(defid_[cellInd][structInd]);
+		}
+	}
 
 	//Copy defs to memory
 	for(int structInd = 0; structInd < defs->dims[1]; structInd++)
@@ -112,16 +185,7 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 		matvar_t *defsanchor = Mat_VarGetStructField(defs, (void *)"anchor", BY_NAME, structInd);
 		assert(defsw!=NULL && defsanchor!=NULL);
 
-		assert(defsw->data_type==MAT_T_DOUBLE);
-		double w[defsw->dims[0]*defsw->dims[1]];
-		int start[] = {0,0};
-		int stride[] = {1,1};
-		int *edge = defsw->dims;
-		int ret1 = Mat_VarReadData(matfp, defsw, w, start, stride, edge);
-		assert(ret1==0);
-		vector<float> wv;
-		for(int i=0;i<defsw->dims[0]*defsw->dims[1];i++)
-			wv.push_back(w[i]);
+		vector<float> wv = Matio2DToVec<vectorf>(defsw);
 		this->defw_.push_back(wv);
 
 		assert(defsanchor->data_type==MAT_T_DOUBLE);
@@ -133,6 +197,7 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 		assert(ret==0);
 		this->anchors_.push_back(cv::Point(p[0], p[1]));
 	}
+	zeroIndex(this->anchors_);
 
 	//Read bias into memory
 	for(int structInd = 0; structInd < bias->dims[1]; structInd++)
