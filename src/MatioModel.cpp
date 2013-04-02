@@ -37,9 +37,11 @@
  */
 
 #include <exception>
+#include <iostream>
 #include <boost/filesystem.hpp>
 #include <matio.h>
 #include "MatioModel.hpp"
+using namespace std;
 
 /*! @brief deserialize a Matlab .Mat file into memory
  *
@@ -54,7 +56,22 @@
  */
 bool MatioModel::deserialize(const std::string& filename)
 {
+	cout << "x " << filename << endl;
+	//Open output file for reading via matio
+    mat_t *matfp = Mat_Open(filename.c_str(),MAT_ACC_RDONLY);
+    if ( NULL == matfp ) {
+        return false;
+    }
 
+	cout << "Matrix open" << endl;
+	matvar_t *test = NULL;
+	do
+	{
+		test = Mat_VarReadNextInfo(matfp);
+		if(test==NULL) continue;
+		cout << test->name << endl;
+	}
+	while(test);
 
 	return true;
 }

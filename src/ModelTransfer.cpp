@@ -68,13 +68,20 @@ int main(int argc, char** argv) {
 	cout << "-------------------------------" << endl;
 	cout << "" << endl;
 	cout << "deserializing Matlab (.mat) model..." << endl;
-	matlab->deserialize(argv[1]);
-	cout << "converting..." << endl;
-	(*cv) = (*matlab);
-	cout << "serializing to OpenCV (.xml) model..." << endl;
-	cv->serialize(argv[2]);
-	cout << "Conversion complete" << endl;
-	cout << "-------------------------------" << endl;
+	bool ret = matlab->deserialize(argv[1]);
+	if(ret == false)
+	{
+		cout << "Error reading input " << argv[1] << endl;
+	}
+	else
+	{
+		cout << "converting..." << endl;
+		(*cv) = (*matlab);
+		cout << "serializing to OpenCV (.xml) model..." << endl;
+		cv->serialize(argv[2]);
+		cout << "Conversion complete" << endl;
+		cout << "-------------------------------" << endl;
+	}
 
 	// cleanup
 	delete matlab;
