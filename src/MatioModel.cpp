@@ -66,26 +66,33 @@ bool MatioModel::deserialize(const std::string& filename)
 
 	//Read struct container
 	matvar_t *cont1 = Mat_VarReadNext(matfp);
-	if(cont1==NULL) return false;
-
-	//cout << "Found " << cont1->name << endl;;	
-	//cout << Mat_VarGetNumberOfFields(cont1) << endl;
+	if(cont1==NULL) {Mat_Close(matfp); return false;}
 
 	//Read struct members
 	matvar_t *model = Mat_VarGetStructField(cont1, (void *)"model", BY_NAME, 0);
-	if(model==NULL) {cout << "Model not found" << endl; return false;}
+	if(model==NULL) {cout << "Model data not found" << endl;}
 
 	matvar_t *name = Mat_VarGetStructField(cont1, (void *)"name", BY_NAME, 0);
-	if(name==NULL) {cout << "Model name not found" << endl; return false;}
+	if(name==NULL) {cout << "Model name not found" << endl;}
 
 	matvar_t *pa = Mat_VarGetStructField(cont1, (void *)"pa", BY_NAME, 0);
-	if(pa==NULL) {cout << "Model pa not found" << endl; return false;}
+	if(pa==NULL) {cout << "Model pa not found" << endl;}
 
 	matvar_t *sbin = Mat_VarGetStructField(cont1, (void *)"sbin", BY_NAME, 0);
-	if(sbin==NULL) {cout << "Model sbin not found" << endl; return false;}
+	if(sbin==NULL) {cout << "Model sbin not found" << endl;}
 
+	//Return if something is missing
+	if(model==NULL || name==NULL || pa==NULL || sbin==NULL)
+	{
+		if(model!=NULL) Mat_VarFree(model);
+		if(name!=NULL) Mat_VarFree(model);
+		if(pa!=NULL) Mat_VarFree(pa);
+		if(sbin!=NULL) Mat_VarFree(sbin);
+		Mat_VarFree(cont1);
+	}
 
-
+	Mat_VarFree(cont1);
+	Mat_Close(matfp);
 	return true;
 }
 
