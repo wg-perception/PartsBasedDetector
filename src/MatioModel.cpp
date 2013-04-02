@@ -186,10 +186,10 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 			this->defid_[cellInd][structInd]    = Matio2DToVec<vectori>(biasid);
 
 			//re-index from zero (Matlab uses 1-based indexing)
-			zeroIndex(biasid_[cellInd][structInd]);
-			zeroIndex(parentid_[cellInd][structInd]);
-			zeroIndex(filterid_[cellInd][structInd]);
-			zeroIndex(defid_[cellInd][structInd]);
+			zeroIndex(this->biasid_[cellInd][structInd]);
+			zeroIndex(this->parentid_[cellInd][structInd]);
+			zeroIndex(this->filterid_[cellInd][structInd]);
+			zeroIndex(this->defid_[cellInd][structInd]);
 		}
 	}
 
