@@ -70,7 +70,7 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 	}
 
 	assert(filters->data_type==MAT_T_STRUCT);
-	cout << filters->rank << "," << filters->dims[0] <<"," << filters->dims[1] << endl;
+	//cout << filters->rank << "," << filters->dims[0] <<"," << filters->dims[1] << endl;
 
 	for(int structInd = 0; structInd < filters->dims[1]; structInd++)
 	{
@@ -89,10 +89,16 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 		
 		int C = filtersw->dims[2];
 		cv::Mat filter_flat(cv::Size(C, 1), cv::DataType<double>::type);
+
+		double buff[filtersw->dims[0]*filtersw->dims[1]*filtersw->dims[2]];
+		int start[] = {0,0,0};
+		int stride[] = {1,1,1};
+		int edge[] = {filtersw->dims[0],filtersw->dims[1],filtersw->dims[2]};
+		int ret = Mat_VarReadData(matfp, filtersw, buff, start, stride, edge);
+		assert(ret==0);
 		for(int c=0; c<C; c++)
-		{
-			//filter_flat.at<double>(c,1) = 
-		}
+			filter_flat.at<double>(c,1) = buff[c];
+
 		filtersw_.push_back(filter_flat);
 	}
 
