@@ -90,7 +90,7 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 		int C = filtersw->dims[2];
 		cv::Mat filter_flat(cv::Size(C, 1), cv::DataType<double>::type);
 
-		double buff[filtersw->dims[0]*filtersw->dims[1]*filtersw->dims[2]];
+		double *buff = new double[filtersw->dims[0]*filtersw->dims[1]*filtersw->dims[2]];
 		int start[] = {0,0,0};
 		int stride[] = {1,1,1};
 		int edge[] = {filtersw->dims[0],filtersw->dims[1],filtersw->dims[2]};
@@ -98,13 +98,50 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 		assert(ret==0);
 		for(int c=0; c<C; c++)
 			filter_flat.at<double>(c,1) = buff[c];
+		delete buff;
 
 		filtersw_.push_back(filter_flat);
 	}
 
 	//TODO components
-	//TODO defs
-	//TODO bias
+
+	//Copy defs to memory
+	for(int structInd = 0; structInd < defs->dims[1]; structInd++)
+	{
+		matvar_t *defsw = Mat_VarGetStructField(defs, (void *)"w", BY_NAME, structInd);
+		matvar_t *defsanchor = Mat_VarGetStructField(defs, (void *)"anchor", BY_NAME, structInd);
+		assert(defsw!=NULL && defsanchor!=NULL);
+
+		assert(defsw->data_type==MAT_T_DOUBLE);
+		double w[defsw->dims[0]*defsw->dims[1]];
+		int start[] = {0,0};
+		int stride[] = {1,1};
+		int *edge = defsw->dims;
+		int ret1 = Mat_VarReadData(matfp, defsw, w, start, stride, edge);
+		assert(ret1==0);
+		vector<float> wv;
+		for(int i=0;i<defsw->dims[0]*defsw->dims[1];i++)
+			wv.push_back(w[i]);
+		this->defw_.push_back(wv);
+
+		assert(defsanchor->data_type==MAT_T_DOUBLE);
+		double p[defsanchor->dims[0]*defsanchor->dims[1]];
+		int start2[] = {0,0};
+		int stride2[] = {1,1};
+		int *edge2 = defsanchor->dims;
+		int ret = Mat_VarReadData(matfp, defsanchor, p, start2, stride2, edge2);
+		assert(ret==0);
+		this->anchors_.push_back(cv::Point(p[0], p[1]));
+	}
+
+	//Read bias into memory
+	for(int structInd = 0; structInd < bias->dims[1]; structInd++)
+	{
+		matvar_t *biasw = Mat_VarGetStructField(bias, (void *)"w", BY_NAME, structInd);
+		assert(biasw!=NULL);
+		assert(biasw->data_type==MAT_T_DOUBLE);
+		this->biasw_.push_back(*(double *)biasw->data);
+	}
 
 	//if(filters!=NULL) Mat_VarFree(filters);
 	//if(components!=NULL) Mat_VarFree(components);
