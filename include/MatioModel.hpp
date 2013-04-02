@@ -52,6 +52,9 @@ public:
 	virtual ~MatioModel() {}
 	bool deserialize(const std::string& filename);
 	bool serialize(const std::string& filename) const;
+
+protected:
+	bool readModelData(struct mat_t *matfp, struct matvar_t *model);
 };
 
 #endif /* MATIOMODEL_HPP_ */
