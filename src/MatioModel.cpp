@@ -69,9 +69,41 @@ bool MatioModel::readModelData(mat_t *matfp, matvar_t *model)
 		return false;
 	}
 
-	//Get values
-	cout << "xx" << endl;
+	assert(filters->data_type==MAT_T_STRUCT);
+	cout << filters->rank << "," << filters->dims[0] <<"," << filters->dims[1] << endl;
 
+	for(int structInd = 0; structInd < filters->dims[1]; structInd++)
+	{
+		//Get filteri values
+		//matvar_t *filtersi = Mat_VarGetStructField(filters, (void *)"i", BY_NAME, structInd);
+		//if(filtersi==NULL) {cout << "Model filtersi not found" << endl;}	
+		//assert(filtersi->data_type==MAT_T_DOUBLE);
+
+		//Get filterw values
+		matvar_t *filtersw = Mat_VarGetStructField(filters, (void *)"w", BY_NAME, structInd);
+		if(filtersw==NULL) {cout << "Model filtersw not found" << endl;}	
+		assert(filtersw->data_type==MAT_T_DOUBLE);
+		assert(filtersw->rank==3);
+
+		//cout <<structInd << ","<<filtersw->data_type<< "," << filtersw->dims[0] <<"," << filtersw->dims[1]<<"," << filtersw->dims[2] << endl;
+		
+		int C = filtersw->dims[2];
+		cv::Mat filter_flat(cv::Size(C, 1), cv::DataType<double>::type);
+		for(int c=0; c<C; c++)
+		{
+			//filter_flat.at<double>(c,1) = 
+		}
+		filtersw_.push_back(filter_flat);
+	}
+
+	//TODO components
+	//TODO defs
+	//TODO bias
+
+	//if(filters!=NULL) Mat_VarFree(filters);
+	//if(components!=NULL) Mat_VarFree(components);
+	//if(defs!=NULL) Mat_VarFree(defs);
+	//if(bias!=NULL) Mat_VarFree(bias);
 	return true;
 }
 
@@ -134,7 +166,9 @@ bool MatioModel::deserialize(const std::string& filename)
 	double *sbinVal = (double *)sbin->data;
 	this->binsize_ = *sbinVal;
 
-	this->readModelData(matfp, model);
+	this->norient_ = 18;
+
+	bool ret = this->readModelData(matfp, model);
 
 	//Clear matio objects
 	//if(model!=NULL) Mat_VarFree(model);
@@ -143,7 +177,7 @@ bool MatioModel::deserialize(const std::string& filename)
 	//if(sbin!=NULL) Mat_VarFree(sbin);
 	Mat_VarFree(cont1);
 	Mat_Close(matfp);
-	return true;
+	return ret;
 }
 
 
