@@ -72,6 +72,7 @@ public:
 	virtual ~DynamicProgram() {}
 	// public methods
 	void min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vector4DMat& Iy, vector4DMat& Ik, vector2DMat& rootv, vector2DMat& rooti);
+	void min_with_backtracking(Parts& parts, vector2DMat& scores, vector4DMat& Ix, vector4DMat& Iy, vector4DMat& Ik, vector2DMat& rootv, vector2DMat& rooti, const vectorf &scales, vectorCandidate &candidates);
 	void argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, vectorCandidate& candidates);
 	void distanceTransform(const cv::Mat& score_in, const vectorf w, cv::Point os, cv::Mat& score_out, cv::Mat& Ix, cv::Mat& Iy);
 };
