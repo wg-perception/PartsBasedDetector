@@ -37,7 +37,6 @@
  */
 
 #include <sstream>
-#include <iostream>
 #include <opencv2/core/core.hpp>
 #include "FileStorageModel.hpp"
 
