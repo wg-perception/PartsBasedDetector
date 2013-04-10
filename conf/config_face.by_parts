@@ -1,7 +1,8 @@
 source1:
   type: RosKinect
   module: object_recognition_ros.io
-  rgb_frame_id: '/camera_rgb_optical_frame'
+  parameters:
+    rgb_frame_id: '/camera_rgb_optical_frame'
 
 sink1:
   type: Publisher
@@ -14,7 +15,6 @@ sink2:
 pipeline1:
   type: PartsBasedDetector
   module: 'object_recognition_by_parts'
-  submethod: 'HOG'
   inputs: [source1]
   outputs: [sink1, sink2]
   parameters:

@@ -112,7 +112,7 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 	 */
 	static void declare_params(tendrils& params)
 	{
-		object_recognition_core::db::bases::declare_params_impl(params);
+		object_recognition_core::db::bases::declare_params_impl(params, "PartsBased");
 		params.declare(&PartsBasedDetectorCell::visualize_, "visualize",
 				"Visualize results", false);
 		params.declare(&PartsBasedDetectorCell::remove_planes_, "remove_planes",
