@@ -26,10 +26,10 @@ The project can be built in one of two modes:
 To configure the project, set the options at the top of CMakeLists.txt
 To build the project, follow the normal cmake routine from the root folder:
 
-> mkdir build
-> cd build
-> cmake ..
-> make
+ 1. mkdir build
+ 2. cd build
+ 3. cmake ..
+ 4. make
 
 Detecting:
 ----------
