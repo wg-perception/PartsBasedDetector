@@ -10,7 +10,7 @@ from ecto import BlackBoxForward as Forward
 
 ########################################################################################################################
 
-class Publisher(ecto.BlackBox):
+class Publisher(ecto.BlackBox, SinkBase):
     """
     Class publishing some outputs from the part based detection
     """

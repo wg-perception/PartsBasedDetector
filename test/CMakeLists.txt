@@ -6,5 +6,5 @@ if (object_recognition_core_FOUND)
     object_recognition_core_config_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/config_person.by_parts)
     #object_recognition_core_config_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/config_training.by_parts)
     # publisher tests
-    #object_recognition_core_sink_test(Publisher "object_recognition_by_parts" "{}")
+    object_recognition_core_sink_test(Publisher "object_recognition_by_parts" "{}")
 endif()
