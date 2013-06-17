@@ -83,7 +83,7 @@ endif ()
 # DEPENDENCIES
 # -----------------------------------------------
 # find the dependencies
-include(cmake/FindEigen.cmake)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Boost COMPONENTS system filesystem signals REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Eigen REQUIRED)
