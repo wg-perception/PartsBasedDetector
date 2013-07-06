@@ -38,8 +38,8 @@
 
 #include <iostream>
 #include <cstdio>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/filesystem.hpp>
 #include "PartsBasedDetector.hpp"
@@ -97,16 +97,14 @@ int main(int argc, char** argv) {
             exit(-4);
         }
 	if (argc == 4) {
-		depth = imread(argv[3], CV_LOAD_IMAGE_ANYDEPTH);
+		depth = imread(argv[3], IMREAD_ANYDEPTH);
 		// convert the depth image from mm to m
 		depth = depth / 1000.0f;
 	}
 
 	// detect potential candidates in the image
-	double t = (double)getTickCount();
 	vector<Candidate> candidates;
 	pbd.detect(im, depth, candidates);
-	printf("Detection time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 	printf("Number of candidates: %ld\n", candidates.size());
 
 	// display the best candidates

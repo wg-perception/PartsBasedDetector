@@ -37,7 +37,7 @@
  */
 
 #include <sstream>
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 #include "FileStorageModel.hpp"
 
 bool FileStorageModel::serialize(const std::string& filename) const {

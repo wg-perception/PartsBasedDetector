@@ -39,7 +39,7 @@
 #ifndef DEPTHCONSISTENCY_HPP_
 #define DEPTHCONSISTENCY_HPP_
 #include <vector>
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 #include "StereoCameraModel.hpp"
 #include "types.hpp"
 

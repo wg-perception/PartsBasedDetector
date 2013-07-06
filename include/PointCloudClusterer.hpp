@@ -41,7 +41,7 @@
 
 #include "PointCloudClusterer.h"
 #include <vector>
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 #include <pcl/PointIndices.h>
 #include <pcl/filters/crop_box.h>
 #include <pcl/filters/extract_indices.h>

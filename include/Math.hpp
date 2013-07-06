@@ -39,8 +39,9 @@
 #ifndef MATH_HPP_
 #define MATH_HPP_
 
+#include <cassert>
 #include <vector>
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 #include <iostream>
 #include "types.hpp"
 /*

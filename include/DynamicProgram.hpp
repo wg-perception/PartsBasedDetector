@@ -39,7 +39,7 @@
 #ifndef DYNAMICPROGRAM_HPP_
 #define DYNAMICPROGRAM_HPP_
 #include <vector>
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 #include "Candidate.hpp"
 #include "DistanceTransform.hpp"
 #include "Model.hpp"

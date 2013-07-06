@@ -5,6 +5,10 @@ This project implements a Parts Based Detector in C++, described in the followin
 
     Yi Yang, Deva Ramanan, "Articulated Pose Estimation with Flexible Mixtures-of-Parts," CVPR 2011
 
+Windows Support:
+----------------
+This is an open source project, developed on open platforms. At this point I do not have the desire or resources to support non-compliant compilers such as MSVC. If you are using GCC or Clang and run into issues, be sure to let me know. If you are running MSVC, I can only offer you limited assistance (mostly due to lack of knowledge about MSVC idiosyncracies). 
+
 Dependencies:
 -------------
 The project has the following dependencies:

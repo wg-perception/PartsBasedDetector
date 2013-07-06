@@ -75,27 +75,19 @@ void PartsBasedDetector<T>::detect(const Mat& im, const Mat& depth, vectorCandid
 
 	// convolve the feature pyramid with the Part experts
 	// to get probability density for each Part
-	double t = (double)getTickCount();
 	vector2DMat pdf;
 	convolution_engine_->pdf(pyramid, pdf);
-	printf("Convolution time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	// use dynamic programming to predict the best detection candidates from the part responses
 	vector4DMat Ix, Iy, Ik;
 	vector2DMat rootv, rooti;
-	t = (double)getTickCount();
 	dp_.min(parts_, pdf, Ix, Iy, Ik, rootv, rooti);
-	printf("DP min time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	// suppress non-maximal candidates
-	t = (double)getTickCount();
 	//ssp_.nonMaxSuppression(rootv, features_->scales());
-	printf("non-maxima suppression time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	// walk back down the tree to find the part locations
-	t = (double)getTickCount();
 	dp_.argmin(parts_, rootv, rooti, features_->scales(), Ix, Iy, Ik, candidates);
-	printf("DP argmin time: %f\n", ((double)getTickCount() - t)/getTickFrequency());
 
 	if (!depth.empty()) {
 		//ssp_.filterCandidatesByDepth(parts_, candidates, depth, 0.03);

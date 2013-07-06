@@ -39,7 +39,7 @@
 #ifndef SEARCHSPACEPRUNING_HPP_
 #define SEARCHSPACEPRUNING_HPP_
 
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 #include <limits>
 #include "Candidate.hpp"
 #include "Parts.hpp"

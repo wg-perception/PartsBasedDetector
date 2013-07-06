@@ -43,11 +43,11 @@
 #ifdef _WIN32
 inline double round(double x) { return (x > 0.0) ? floor(x + 0.5) : ceil(x - 0.5); }
 #endif
-#include <assert.h>
+#include <cassert>
 #include <stdint.h>
 #include <cstdio>
 #include <iostream>
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc.hpp>
 #include "HOGFeatures.hpp"
 using namespace std;
 using namespace cv;
@@ -143,7 +143,7 @@ void HOGFeatures<T>::pyramid(const Mat& im, vectorMat& pyrafeatures) {
 			case CV_64F: features<double>(pyraimages[n], feature); break;
 			case CV_8U:  features<uint8_t>(pyraimages[n], feature); break;
 			case CV_16U: features<uint16_t>(pyraimages[n], feature); break;
-			default: CV_Error(CV_StsUnsupportedFormat, "Unsupported image type"); break;
+			default: CV_Error(cv::Error::StsUnsupportedFormat, "Unsupported image type"); break;
 		}
 		//copyMakeBorder(feature, padded, 3, 3, 3*flen_, 3*flen_, BORDER_CONSTANT, 0);
 		//boundaryOcclusionFeature(padded, flen_, 3);

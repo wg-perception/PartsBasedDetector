@@ -39,7 +39,7 @@
 #ifndef FEATURES_HPP_
 #define FEATURES_HPP_
 #include <vector>
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 #include "types.hpp"
 
 /*! @class Feature interface

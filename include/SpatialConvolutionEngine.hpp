@@ -12,10 +12,10 @@
 
 class SpatialConvolutionEngine: public IConvolutionEngine {
 private:
-	//! the number of layers to each filter
-	unsigned int flen_;
 	//! the internally supported convolution type, taken from the filter type
 	int type_;
+	//! the number of layers to each filter
+	unsigned int flen_;
 	//! the internal representation of the filters
 	vector2DFilterEngine filters_;
 	void convolve(const cv::Mat& feature, vectorFilterEngine& filter, cv::Mat& pdf, const unsigned int stride);

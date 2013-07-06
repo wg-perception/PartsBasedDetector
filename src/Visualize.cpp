@@ -38,7 +38,7 @@
 
 #include <cstdio>
 #include <iostream>
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Visualize.hpp"
 using namespace cv;
@@ -57,8 +57,8 @@ using namespace std;
 void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, unsigned int N, Mat& canvas, bool display_confidence) const {
 
 	// create a new canvas that we can modify
-    cvtColor(im, canvas, CV_RGB2BGR);
-    if (candidates.size() == 0) return;
+  cvtColor(im, canvas, COLOR_RGB2BGR);
+  if (candidates.size() == 0) return;
 
 	// generate a set of colors to display. Do this in HSV then convert it
 	const unsigned int ncolors = candidates[0].parts().size();
@@ -69,7 +69,7 @@ void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, uns
 		color.at<float>(0) = (360) / ncolors * n;
 		color.at<float>(1) = 1.0;
 		color.at<float>(2) = 0.7;
-		cvtColor(color, color, CV_HSV2BGR);
+		cvtColor(color, color, COLOR_HSV2BGR);
 		color = color * 255;
 		colors.push_back(Scalar(color.at<float>(0), color.at<float>(1), color.at<float>(2)));
 	}
@@ -122,7 +122,7 @@ void Visualize::candidates(const Mat& im, const Candidate& candidate, Mat& canva
  */
 void Visualize::image(const Mat& im) const {
     Mat canvas;
-    cvtColor(im, canvas, CV_RGB2BGR);
-	namedWindow(name_, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED);
+    cvtColor(im, canvas, COLOR_RGB2BGR);
+	namedWindow(name_, WINDOW_NORMAL | WINDOW_KEEPRATIO);
 	imshow(name_, canvas);
 }

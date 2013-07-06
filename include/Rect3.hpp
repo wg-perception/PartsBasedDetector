@@ -38,7 +38,7 @@
 
 #ifndef RECT3_HPP_
 #define RECT3_HPP_
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 #include <vector>
 
 /*! @class Rect3_

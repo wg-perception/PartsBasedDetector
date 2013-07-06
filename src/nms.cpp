@@ -39,8 +39,8 @@
 #include <stdio.h>
 #include <iostream>
 #include <limits>
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 #include "nms.hpp"
 using namespace std;
 using namespace cv;

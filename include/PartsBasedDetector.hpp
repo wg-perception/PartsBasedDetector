@@ -40,7 +40,7 @@
 #define PARTSBASEDDETECTOR_HPP_
 #include <string>
 #include <vector>
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 #include <boost/scoped_ptr.hpp>
 #include "Parts.hpp"
 #include "Model.hpp"
