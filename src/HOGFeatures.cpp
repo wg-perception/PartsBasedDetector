@@ -39,15 +39,10 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#include <math.h>
 #ifdef _WIN32
 inline double round(double x) { return (x > 0.0) ? floor(x + 0.5) : ceil(x - 0.5); }
 #endif
 #include <cassert>
-#include <stdint.h>
-#include <cstdio>
-#include <iostream>
-#include <opencv2/imgproc.hpp>
 #include "HOGFeatures.hpp"
 using namespace std;
 using namespace cv;
@@ -68,15 +63,15 @@ static inline T square(const T& x) { return x * x; }
 template<typename T>
 void HOGFeatures<T>::boundaryOcclusionFeature(Mat& feature, const int flen, const int padsize) {
 
-	const unsigned int M = feature.rows;
-	const unsigned int N = feature.cols;
-	const unsigned int fmstart = padsize-1;
-	const unsigned int fnstart = padsize*flen-1;
-	const unsigned int fmstop  = M - padsize;
-	const unsigned int fnstop  = N - (padsize)*flen;
+	const size_t M = feature.rows;
+	const size_t N = feature.cols;
+	const size_t fmstart = padsize-1;
+	const size_t fnstart = padsize*flen-1;
+	const size_t fmstop  = M - padsize;
+	const size_t fnstop  = N - (padsize)*flen;
 
-	for (unsigned int m = 0; m < M; ++m) {
-		for (unsigned int n = 0; n < N; n+=flen) {
+	for (size_t m = 0; m < M; ++m) {
+		for (size_t n = 0; n < N; n+=flen) {
 			if (m > fmstart && m < fmstop && n > fnstart && n < fnstop) continue;
 			feature.at<T>(m,n+flen-1) = 1;
 		}
@@ -116,13 +111,13 @@ void HOGFeatures<T>::pyramid(const Mat& im, vectorMat& pyrafeatures) {
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for (unsigned int i = 0; i < interval_; ++i) {
+	for (size_t i = 0; i < interval_; ++i) {
 		Mat scaled;
 		resize(im, scaled, imsize * (1.0f/pow(sfactor_,(int)i)));
 		pyraimages[i] = scaled;
 		scales_[i] = pow(sfactor_,(int)i)*binsize_;
 		// perform subsequent power of two scaling
-		for (unsigned int j = i+interval_; j < nscales_; j+=interval_) {
+		for (size_t j = i+interval_; j < nscales_; j+=interval_) {
 			Mat scaled2;
 			pyrDown(scaled, scaled2);
 			pyraimages[j] = scaled2;
@@ -135,7 +130,7 @@ void HOGFeatures<T>::pyramid(const Mat& im, vectorMat& pyrafeatures) {
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for (unsigned int n = 0; n < nscales_; ++n) {
+	for (size_t n = 0; n < nscales_; ++n) {
 		Mat feature;
 		Mat padded;
 		switch (im.depth()) {
@@ -181,10 +176,10 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 	featm     = Mat::zeros(Size(outsize.width*flen_,   outsize.height), DataType<T>::type);
 
 	// get the stride of each of the matrices
-	const unsigned int imstride   = imm.step1();
-	const unsigned int histstride = histm.step1();
-	const unsigned int normstride = normm.step1();
-	const unsigned int featstride = featm.step1();
+	const size_t imstride   = imm.step1();
+	const size_t histstride = histm.step1();
+	const size_t normstride = normm.step1();
+	const size_t featstride = featm.step1();
 
 	// epsilon to avoid division by zero
 	const double eps = 0.0001;
@@ -200,13 +195,13 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 	T* const feat = featm.ptr<T>(0);
 
 	// TODO: source image may not be continuous!
-	for (unsigned int y = 1; y < (unsigned int)visible.height-1; ++y) {
-		for (unsigned int x = 1; x < (unsigned int)visible.width-1; ++x) {
+	for (size_t y = 1; y < (size_t)visible.height-1; ++y) {
+		for (size_t x = 1; x < (size_t)visible.width-1; ++x) {
 			T dx, dy, v;
 
 			// grayscale image
 			if (!color) {
-				const IT* s = im + min(x, (unsigned int)imm.cols-2) + min(y, (unsigned int)imm.rows-2)*imstride;
+				const IT* s = im + min(x, (size_t)imm.cols-2) + min(y, (size_t)imm.rows-2)*imstride;
 				dy = *(s+imstride) - *(s-imstride);
 				dx = *(s+1) - *(s-1);
 				 v = dx*dx + dy*dy;
@@ -216,7 +211,7 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 			// OpenCV uses an interleaved format: BGR-BGR-BGR
 			// Matlab uses a planar format:       RRR-GGG-BBB
 			if (color) {
-				const IT* s = im + 3 * min(x, (unsigned int)imm.cols-2) + min(y, (unsigned int)imm.rows-2)*imstride;
+				const IT* s = im + 3 * min(x, (size_t)imm.cols-2) + min(y, (size_t)imm.rows-2)*imstride;
 
 				// blue image channel
 				T dyb = *(s+imstride) - *(s-imstride);
@@ -242,8 +237,8 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 
 			// snap to one of 18 orientations
 			T best_dot = 0;
-			unsigned int best_o = 0;
-			for (unsigned int o = 0; o < norient_/2; ++o) {
+			size_t best_o = 0;
+			for (size_t o = 0; o < norient_/2; ++o) {
 				T dot = uu[o]*dx + vv[o]*dy;
 				if (dot > best_dot) { best_dot = dot; best_o = o; }
 				else if (-dot > best_dot) { best_dot = -dot; best_o = o+norient_/2; }
@@ -268,13 +263,13 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 	}
 
 	// compute the energy in each block by summing over orientations
-	for (unsigned int y = 0; y < (unsigned int)blocks.height; ++y) {
+	for (size_t y = 0; y < (size_t)blocks.height; ++y) {
 		const T* src = hist + y*histstride;
 		T* dst = norm + y*normstride;
 		T const * const dst_end = dst + blocks.width;
 		while (dst < dst_end) {
 			*dst = 0;
-			for (unsigned int o = 0; o < norient_/2; ++o) {
+			for (size_t o = 0; o < norient_/2; ++o) {
 				*dst += square( *src + *(src+norient_/2) );
 				src++;
 			}
@@ -284,8 +279,8 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 	}
 
 	// compute the features
-	for (unsigned int y = 0; y < (unsigned int)outsize.height; ++y) {
-		for (unsigned int x = 0; x < (unsigned int)outsize.width; ++x) {
+	for (size_t y = 0; y < (size_t)outsize.height; ++y) {
+		for (size_t x = 0; x < (size_t)outsize.width; ++x) {
 			T* dst = feat + y*featstride + x*flen_;
 			T* p, n1, n2, n3, n4;
 			const T* src;
@@ -303,7 +298,7 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 
 			// contrast-sensitive features
 			src = hist + (y+1)*histstride + (x+1)*norient_;
-			for (unsigned int o = 0; o < norient_; ++o) {
+			for (size_t o = 0; o < norient_; ++o) {
 				T val = *src;
 				T h1 = min(val * n1, (T)0.2);
 				T h2 = min(val * n2, (T)0.2);
@@ -319,7 +314,7 @@ void HOGFeatures<T>::features(const Mat& imm, Mat& featm) const {
 
 			// contrast-insensitive features
 			src = hist + (y+1)*histstride + (x+1)*norient_;
-			for (unsigned int o = 0; o < norient_/2; ++o) {
+			for (size_t o = 0; o < norient_/2; ++o) {
 				T sum = *src + *(src+norient_/2);
 				T h1 = min(sum * n1, (T)0.2);
 				T h2 = min(sum * n2, (T)0.2);

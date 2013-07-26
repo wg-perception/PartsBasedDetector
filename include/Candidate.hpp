@@ -41,7 +41,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
-#include <opencv2/core.hpp>
+#include <opencv2/core/core.hpp>
 #include "types.hpp"
 #include "Rect3.hpp"
 #include "Math.hpp"
@@ -80,7 +80,7 @@ public:
 	int component(void) { return component_; }
 	//! rescale the parts
 	void resize(const float factor) {
-		for (unsigned int n = 0; n < parts_.size(); ++n) {
+		for (size_t n = 0; n < parts_.size(); ++n) {
 			parts_[n].height *= factor;
 			parts_[n].width  *= factor;
 			parts_[n].y      *= factor;
@@ -104,7 +104,7 @@ public:
 	 */
 	cv::Rect boundingBox(void) const {
 		cv::Rect hull = parts_[0];
-		for (unsigned int n = 0; n < parts_.size(); ++n) {
+		for (size_t n = 0; n < parts_.size(); ++n) {
 			hull = hull | parts_[n];
 		}
 		return hull;
@@ -115,10 +115,10 @@ public:
 	 * @return a bounding box
 	 */
 	cv::Rect boundingBoxNorm(void) const {
-		const unsigned int nparts = parts_.size();
+		const size_t nparts = parts_.size();
 		cv::Mat_<int> xpts(cv::Size(1,nparts));
 		cv::Mat_<int> ypts(cv::Size(1,nparts));
-		for (unsigned int n = 0; n < nparts; ++n) {
+		for (size_t n = 0; n < nparts; ++n) {
 			const cv::Point centroid = (parts_[n].tl() + parts_[n].br())*0.5;
 			xpts(n) = centroid.x;
 			ypts(n) = centroid.y;
@@ -139,7 +139,7 @@ public:
 	 */
 	Rect3d boundingBox3D(const cv::Mat& im, const cv::Mat& depth) const {
 
-		const unsigned int nparts = parts_.size();
+		const size_t nparts = parts_.size();
 		const cv::Rect bounds = cv::Rect(0,0,0,0) + im.size();
 		const cv::Rect bb  = this->boundingBox();
 		const cv::Rect bbn = this->boundingBoxNorm();
@@ -150,13 +150,13 @@ public:
 
 		cv::Mat_<float> points;
 		std::vector<cv::Rect> boxes;
-		for (unsigned int n = 0; n < nparts; ++n) {
+		for (size_t n = 0; n < nparts; ++n) {
 			// only keep the intersection of the part with the image frame
 			boxes.push_back(parts_[n] & bounds);
 		}
 		boxes.push_back(bbn & bounds);
 
-		for (unsigned int n = 0; n < boxes.size(); ++n) {
+		for (size_t n = 0; n < boxes.size(); ++n) {
 			// scale the part down to match the depth image size
 			cv::Rect& r = boxes[n];
 			r.x = r.x * s.x;
@@ -186,8 +186,8 @@ public:
 		cv::resize(points, points, cv::Size(1, 400));
 
 		// get the median of the points
-		const unsigned int M = points.rows;
-		const unsigned int midx = M/2;
+		const size_t M = points.rows;
+		const size_t midx = M/2;
 		float median = points[midx][0];
 
 		// filter the points
@@ -198,8 +198,8 @@ public:
 		cv::filter2D(points, dpoints, -1, dog);
 
 		// starting at the median point, walk up and down until a gradient threshold (0.1)
-		unsigned int dminidx = midx, dmaxidx = midx;
-		for (unsigned int m = midx; m < M; ++m) {
+		size_t dminidx = midx, dmaxidx = midx;
+		for (size_t m = midx; m < M; ++m) {
 			if (fabs(dpoints[m][0]) > 0.035) break;
 			dmaxidx = m;
 		}
@@ -216,14 +216,14 @@ public:
 	}
 /*
 
-		const unsigned int nparts = parts_.size();
+		const size_t nparts = parts_.size();
 		cv::Size_<double> imsize = im.size();
 		cv::Size_<double> dsize  = depth.size();
 		const cv::Rect bounds = cv::Rect(0,0,0,0) + im.size();
 		cv::Point_<double> s = cv::Point_<double>(dsize.width / imsize.width, dsize.height / imsize.height);
 		cv::Point3_<double> minv(1,1,1); minv *=  std::numeric_limits<double>::max();
 		cv::Point3_<double> maxv(1,1,1); maxv *= -std::numeric_limits<double>::max();
-		for (unsigned int n = 0; n < nparts; ++n) {
+		for (size_t n = 0; n < nparts; ++n) {
 			double med;
 			// only keep the intersection of the part with the image frame
 			cv::Rect r = parts_[n] & bounds;
@@ -277,12 +277,12 @@ public:
 	static void nonMaximaSuppression(const cv::Mat& im, vectorCandidate& candidates, const float overlap=0.0f) {
 
 		// create a scratch space that we can draw on
-		const unsigned int N = candidates.size();
+		const size_t N = candidates.size();
 		const cv::Rect bounds = cv::Rect(0,0,0,0) + im.size();
 		cv::Mat scratch = cv::Mat::zeros(im.size(), CV_8U);
 
 		// the current insertion position in the vector
-		unsigned int keep = 0;
+		size_t keep = 0;
 
 		/* iterate through the boxes, checking:
 		 * 1) has the area under the box been painted?
@@ -290,7 +290,7 @@ public:
 		 * 3) if so, keep this box and paint the area
 		 * 4) repeat
 		 */
-		for (unsigned int n = 0; n < N; ++n) {
+		for (size_t n = 0; n < N; ++n) {
 			cv::Rect box = candidates[n].boundingBox() & bounds;
 			cv::Scalar boxsum = sum(scratch(box));
 			if (boxsum[0] / box.area() > overlap) continue;
@@ -320,11 +320,11 @@ public:
 	static void mask(const cv::Mat& im, const vectorCandidate& candidates, cv::Mat& mask) {
 
 		// allocate the mask
-		const unsigned int N = candidates.size();
+		const size_t N = candidates.size();
 		mask = cv::Mat::zeros(im.size(), CV_8U);
 		cv::Rect bounds = cv::Rect(0,0,0,0) + im.size();
 
-		for (unsigned int n = 0; n < N; ++n) {
+		for (size_t n = 0; n < N; ++n) {
 			cv::Rect box = candidates[n].boundingBox() & bounds;
 			mask(box).setTo(n+1, mask(box) == 0);
 		}

@@ -36,9 +36,6 @@
  *  Created: Jun 21, 2012
  */
 
-#include <cstdio>
-#include <iostream>
-#include <opencv2/imgproc.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Visualize.hpp"
 using namespace cv;
@@ -54,16 +51,16 @@ using namespace std;
  * @param display_confidence display the detection confidence above each bounding box
  * for each part
  */
-void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, unsigned int N, Mat& canvas, bool display_confidence) const {
+void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, size_t N, Mat& canvas, bool display_confidence) const {
 
 	// create a new canvas that we can modify
   cvtColor(im, canvas, COLOR_RGB2BGR);
   if (candidates.size() == 0) return;
 
 	// generate a set of colors to display. Do this in HSV then convert it
-	const unsigned int ncolors = candidates[0].parts().size();
+	const size_t ncolors = candidates[0].parts().size();
 	vector<Scalar> colors;
-	for (unsigned int n = 0; n < ncolors; ++n) {
+	for (size_t n = 0; n < ncolors; ++n) {
 		Mat color(Size(1,1), CV_32FC3);
 		// Hue is in degrees, not radians (because consistency is over-rated)
 		color.at<float>(0) = (360) / ncolors * n;
@@ -78,9 +75,9 @@ void Visualize::candidates(const Mat& im, const vectorCandidate& candidates, uns
 	const int LINE_THICKNESS = 4;
 	Scalar black(0,0,0);
 	N = (candidates.size() < N) ? candidates.size() : N;
-	for (unsigned int n = 0; n < N; ++n) {
+	for (size_t n = 0; n < N; ++n) {
 		Candidate candidate = candidates[n];
-		for (unsigned int p = 0; p < candidate.parts().size(); ++p) {
+		for (size_t p = 0; p < candidate.parts().size(); ++p) {
 			Rect box = candidate.parts()[p];
 			string confidence  = boost::lexical_cast<string>(candidate.confidence()[p]);
 			rectangle(canvas, box, colors[p], LINE_THICKNESS);
@@ -123,6 +120,6 @@ void Visualize::candidates(const Mat& im, const Candidate& candidate, Mat& canva
 void Visualize::image(const Mat& im) const {
     Mat canvas;
     cvtColor(im, canvas, COLOR_RGB2BGR);
-	namedWindow(name_, WINDOW_NORMAL | WINDOW_KEEPRATIO);
+	namedWindow(name_, WINDOW_AUTOSIZE | WINDOW_KEEPRATIO);
 	imshow(name_, canvas);
 }

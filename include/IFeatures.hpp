@@ -39,7 +39,7 @@
 #ifndef FEATURES_HPP_
 #define FEATURES_HPP_
 #include <vector>
-#include <opencv2/core.hpp>
+#include <opencv2/core/core.hpp>
 #include "types.hpp"
 
 /*! @class Feature interface
@@ -51,9 +51,9 @@ public:
 	virtual ~IFeatures() {}
 	// get and set methods
 	//! retrieve the spatial binning size (1 if not relevant)
-	virtual unsigned int binsize(void) const = 0;
+	virtual size_t binsize(void) const = 0;
 	//! retrieve the number of scales the features are calculated over
-	virtual unsigned int nscales(void) const = 0;
+	virtual size_t nscales(void) const = 0;
 	// public methods
 	/*! @brief the vector of scales
 	 *

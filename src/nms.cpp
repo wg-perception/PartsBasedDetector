@@ -35,12 +35,6 @@
  *  Author:  Hilton Bristow
  *  Created: Jul 19, 2012
  */
-#include <stdint.h> 
-#include <stdio.h>
-#include <iostream>
-#include <limits>
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
 #include "nms.hpp"
 using namespace std;
 using namespace cv;
@@ -90,15 +84,15 @@ using namespace cv;
 void nonMaximaSuppression(const Mat& src, const int sz, Mat& dst, const Mat mask) {
 
 	// initialise the block mask and destination
-	const unsigned int M = src.rows;
-	const unsigned int N = src.cols;
+	const size_t M = src.rows;
+	const size_t N = src.cols;
 	const bool masked = !mask.empty();
 	Mat block = 255*Mat_<uint8_t>::ones(Size(2*sz+1,2*sz+1));
 	dst = Mat_<uint8_t>::zeros(src.size());
 
 	// iterate over image blocks
-	for (unsigned int m = 0; m < M; m+=sz+1) {
-		for (unsigned int n = 0; n < N; n+=sz+1) {
+	for (size_t m = 0; m < M; m+=sz+1) {
+		for (size_t n = 0; n < N; n+=sz+1) {
 			Point  ijmax;
 			double vcmax, vnmax;
 
@@ -113,8 +107,8 @@ void nonMaximaSuppression(const Mat& src, const int sz, Mat& dst, const Mat mask
 			Point cc = ijmax + Point(jc.start,ic.start);
 
 			// search the neighbours centered around the candidate for the true maxima
-			Range in(max(cc.y-sz,0), min((unsigned int)cc.y+sz+1,M));
-			Range jn(max(cc.x-sz,0), min((unsigned int)cc.x+sz+1,N));
+			Range in(max(cc.y-sz,0), min((size_t)cc.y+sz+1,M));
+			Range jn(max(cc.x-sz,0), min((size_t)cc.x+sz+1,N));
 
 			// mask out the block whose maxima we already know
 			Mat_<uint8_t> blockmask;

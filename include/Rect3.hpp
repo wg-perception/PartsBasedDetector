@@ -38,7 +38,7 @@
 
 #ifndef RECT3_HPP_
 #define RECT3_HPP_
-#include <opencv2/core.hpp>
+#include <opencv2/core/core.hpp>
 #include <vector>
 
 /*! @class Rect3_
@@ -135,7 +135,7 @@ public:
 	static Rect3_<T> convexHull(const std::vector<Rect3_<T> >& r) {
 		Rect3_<T> hull = r[0];
 		const int N = r.size();
-		for (unsigned int n = 1; n < N; ++n) {
+		for (size_t n = 1; n < N; ++n) {
 			hull = convexHull(hull, r[n]);
 		}
 		return hull;

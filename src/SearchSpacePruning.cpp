@@ -40,23 +40,21 @@
 #include "Candidate.hpp"
 #include "SearchSpacePruning.hpp"
 #include "Math.hpp"
-#include <limits>
-#include <iostream>
 using namespace cv;
 using namespace std;
 
 template<typename T>
 void SearchSpacePruning<T>::filterResponseByDepth(vector2DMat& pdfs, const vector<Size>& fsizes, const Mat& depth, const vectorf& scales, const float X, const float fx) {
 
-	const unsigned int N  = pdfs.size();
-	const unsigned int F  = pdfs[0].size();
+	const size_t N  = pdfs.size();
+	const size_t F  = pdfs[0].size();
 
 #ifdef _OPENMP
 	#pragma omp parallel for
 #endif
-	for (unsigned int nf = 0; nf < N*F; ++nf) {
-		const unsigned int n = nf / F;
-		const unsigned int f = nf % F;
+	for (size_t nf = 0; nf < N*F; ++nf) {
+		const size_t n = nf / F;
+		const size_t f = nf % F;
 
 		// create a mask of plausible depths given the object size
 		// and the scale of the image
@@ -75,12 +73,12 @@ template<typename T>
 void SearchSpacePruning<T>::filterCandidatesByDepth(Parts& parts, vectorCandidate& candidates, const Mat& depth, const float zfactor) {
 
 	vectorCandidate new_candidates;
-	const unsigned int N = candidates.size();
-	for (unsigned int n = 0; n < N; ++n) {
-		const unsigned int c = candidates[n].component();
-		const unsigned int nparts = parts.nparts(c);
+	const size_t N = candidates.size();
+	for (size_t n = 0; n < N; ++n) {
+		const size_t c = candidates[n].component();
+		const size_t nparts = parts.nparts(c);
 		const vector<Rect>& boxes = candidates[n].parts();
-		for (unsigned int p = nparts-1; p >= 1; --p) {
+		for (size_t p = nparts-1; p >= 1; --p) {
 			ComponentPart part = parts.component(c,p);
 			Point anchor = part.anchor(0);
 			Rect child   = boxes[part.self()];

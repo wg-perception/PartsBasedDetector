@@ -6,6 +6,7 @@ set(SRC_FILES   DepthConsistency.cpp
                 FileStorageModel.cpp
                 HOGFeatures.cpp 
                 SpatialConvolutionEngine.cpp
+                FourierConvolutionEngine.cpp
                 PartsBasedDetector.cpp 
                 SearchSpacePruning.cpp
                 StereoCameraModel.cpp
@@ -18,7 +19,7 @@ set(LIBS        ${Boost_LIBRARIES}
 )
 
 # with cvmatio support
-if (cvmatio_FOUND)
+if (WITH_CVMATIO)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_MATLABIO")
     set(SRC_FILES ${SRC_FILES} MatlabIOModel.cpp)
     set(LIBS ${LIBS} ${ZLIB_LIBRARIES} ${cvmatio_LIBRARIES})

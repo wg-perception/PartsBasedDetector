@@ -40,7 +40,7 @@
 #define POINTCLOUDCLUSTERER_H_
 
 #include <vector>
-#include <opencv2/core.hpp>
+#include <opencv2/core/core.hpp>
 #include <image_geometry/pinhole_camera_model.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>

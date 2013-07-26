@@ -41,7 +41,7 @@
 
 #include <cassert>
 #include <vector>
-#include <opencv2/core.hpp>
+#include <opencv2/core/core.hpp>
 #include <iostream>
 #include "types.hpp"
 /*
@@ -83,11 +83,11 @@ public:
 	static void find(const cv::Mat& binary, std::vector<cv::Point>& idx) {
 
 		assert(binary.depth() == CV_8U);
-		const unsigned int M = binary.rows;
-		const unsigned int N = binary.cols;
-		for (unsigned int m = 0; m < M; ++m) {
+		const size_t M = binary.rows;
+		const size_t N = binary.cols;
+		for (size_t m = 0; m < M; ++m) {
 			const unsigned char* bin_ptr = binary.ptr<unsigned char>(m);
-			for (unsigned int n = 0; n < N; ++n) if (bin_ptr[n] > 0) idx.push_back(cv::Point(n,m));
+			for (size_t n = 0; n < N; ++n) if (bin_ptr[n] > 0) idx.push_back(cv::Point(n,m));
 		}
 	}
 
@@ -108,26 +108,26 @@ public:
 	static void reducePickIndex(const vectorMat& in, const cv::Mat& idx, cv::Mat& out) {
 
 		// error checking
-		const unsigned int K = in.size();
+		const size_t K = in.size();
 		if (K == 1) { in[0].copyTo(out); return; }
 		double minv, maxv;
 		minMaxLoc(idx, &minv, &maxv);
 		assert(minv >= 0 && maxv < K);
-		for (unsigned int k = 0; k < K; ++k) assert(in[k].size() == idx.size());
+		for (size_t k = 0; k < K; ++k) assert(in[k].size() == idx.size());
 
 		// allocate the output array
 		out.create(in[0].size(), in[0].type());
 
 		// perform the indexing
-		unsigned int M = in[0].rows;
-		unsigned int N = in[0].cols;
+		size_t M = in[0].rows;
+		size_t N = in[0].cols;
 		std::vector<const T*> in_ptr(K);
 		if (in[0].isContinuous()) { N = M*N; M = 1; }
-		for (unsigned int m = 0; m < M; ++m) {
+		for (size_t m = 0; m < M; ++m) {
 			T* out_ptr = out.ptr<T>(m);
 			const int*   idx_ptr = idx.ptr<int>(m);
-			for (unsigned int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<T>(m);
-			for (unsigned int n = 0; n < N; ++n) {
+			for (size_t k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<T>(m);
+			for (size_t n = 0; n < N; ++n) {
 				out_ptr[n] = in_ptr[idx_ptr[n]][n];
 			}
 		}
@@ -149,7 +149,7 @@ public:
 
 		// TODO: flatten the input into a multi-channel matrix for faster indexing
 		// error checking
-		const unsigned int K = in.size();
+		const size_t K = in.size();
 		if (K == 1) {
 			// just return
 			in[0].copyTo(maxv);
@@ -158,25 +158,25 @@ public:
 		}
 
 		assert (K > 1);
-		for (unsigned int k = 1; k < K; ++k) assert(in[k].size() == in[k-1].size());
+		for (size_t k = 1; k < K; ++k) assert(in[k].size() == in[k-1].size());
 
 		// allocate the output matrices
 		maxv.create(in[0].size(), in[0].type());
 		maxi.create(in[0].size(), cv::DataType<int>::type);
 
-		unsigned int M = in[0].rows;
-		unsigned int N = in[0].cols;
+		size_t M = in[0].rows;
+		size_t N = in[0].cols;
 
 		std::vector<const T*> in_ptr(K);
 		if (in[0].isContinuous()) { N = M*N; M = 1; }
-		for (unsigned int m = 0; m < M; ++m) {
+		for (size_t m = 0; m < M; ++m) {
 			T* maxv_ptr = maxv.ptr<T>(m);
 			int* maxi_ptr = maxi.ptr<int>(m);
-			for (unsigned int k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<T>(m);
-			for (unsigned int n = 0; n < N; ++n) {
+			for (size_t k = 0; k < K; ++k) in_ptr[k] = in[k].ptr<T>(m);
+			for (size_t n = 0; n < N; ++n) {
 				T v = -std::numeric_limits<T>::infinity();
 				int i = 0;
-				for (unsigned int k = 0; k < K; ++k) if (in_ptr[k][n] > v) { i = k; v = in_ptr[k][n]; }
+				for (size_t k = 0; k < K; ++k) if (in_ptr[k][n] > v) { i = k; v = in_ptr[k][n]; }
 				maxi_ptr[n] = i;
 				maxv_ptr[n] = v;
 			}

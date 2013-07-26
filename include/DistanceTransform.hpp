@@ -40,7 +40,7 @@
 #define DISTANCETRANSFORM_HPP_
 
 #include <limits>
-#include <opencv2/core.hpp>
+#include <opencv2/core/core.hpp>
 
 // ---------------------------------------------------------------------------
 // SAMPLED FUNCTION INTERFACE
@@ -123,7 +123,7 @@ public:
 template<typename T>
 class DistanceTransform {
 private:
-	inline void computeRow(T const * const src, T * const dst, int * const ptr, const unsigned int N, const PenaltyFunction& f, int os=0) const;
+	inline void computeRow(T const * const src, T * const dst, int * const ptr, const size_t N, const PenaltyFunction& f, int os=0) const;
 public:
 	DistanceTransform() {}
 	virtual ~DistanceTransform() {}
@@ -149,7 +149,7 @@ public:
  * @param os the anchor offset
  */
 template<typename T>
-inline void DistanceTransform<T>::computeRow(T const * const src, T * const dst, int * const ptr, const unsigned int N, const PenaltyFunction& f, int os) const {
+inline void DistanceTransform<T>::computeRow(T const * const src, T * const dst, int * const ptr, const size_t N, const PenaltyFunction& f, int os) const {
 
 	int * const v = new int[N];
 	T   * const z = new T[N+1];
@@ -157,7 +157,7 @@ inline void DistanceTransform<T>::computeRow(T const * const src, T * const dst,
 	v[0] = 0;
 	z[0] = -std::numeric_limits<T>::infinity();
 	z[1] = +std::numeric_limits<T>::infinity();
-	for (unsigned int q = 1; q < N; ++q) {
+	for (size_t q = 1; q < N; ++q) {
 		T s = f(v[k], q, src[v[k]], src[q]);
 		while (s <= z[k] && k > 0) {
 			k--;
@@ -170,7 +170,7 @@ inline void DistanceTransform<T>::computeRow(T const * const src, T * const dst,
 	}
 
 	k = 0;
-	for (unsigned int q = 0; q < N; ++q) {
+	for (size_t q = 0; q < N; ++q) {
 		while (z[k+1] < os) k++;
 		dst[q] = f(os-v[k], src[v[k]]);
 		ptr[q] = v[k];
@@ -203,8 +203,8 @@ template<typename T>
 void DistanceTransform<T>::compute(const cv::Mat_<T>& score_in, const PenaltyFunction& fx, const PenaltyFunction& fy, const cv::Point os, cv::Mat_<T>& score_out, cv::Mat_<int>& Ix, cv::Mat_<int>& Iy) const {
 
 	// get the dimensionality of the score
-	const unsigned int M = score_in.rows;
-	const unsigned int N = score_in.cols;
+	const size_t M = score_in.rows;
+	const size_t N = score_in.cols;
 
 	// allocate the output and working matrices
 	score_out.create(cv::Size(M, N));
@@ -213,7 +213,7 @@ void DistanceTransform<T>::compute(const cv::Mat_<T>& score_in, const PenaltyFun
 	cv::Mat_<T> score_tmp(cv::Size(N, M));
 
 	// compute the distance transform across the rows
-	for (unsigned int m = 0; m < M; ++m) {
+	for (size_t m = 0; m < M; ++m) {
 		computeRow(score_in[m], score_tmp[m], Ix[m], N, fx, os.x);
 	}
 
@@ -221,7 +221,7 @@ void DistanceTransform<T>::compute(const cv::Mat_<T>& score_in, const PenaltyFun
 	transpose(score_tmp, score_tmp);
 
 	// compute the distance transform down the columns
-	for (unsigned int n = 0; n < N; ++n) {
+	for (size_t n = 0; n < N; ++n) {
 		computeRow(score_tmp[n], score_out[n], Iy[n], M, fy, os.y);
 	}
 
@@ -232,13 +232,13 @@ void DistanceTransform<T>::compute(const cv::Mat_<T>& score_in, const PenaltyFun
 	// get argmins
 	cv::Mat_<int> row(cv::Size(N, 1));
 	int * const row_ptr = row[0];
-	for (unsigned int m = 0; m < M; ++m) {
+	for (size_t m = 0; m < M; ++m) {
 		int * const Iy_ptr = Iy[m];
 		int * const Ix_ptr = Ix[m];
-		for (unsigned int n = 0; n < N; ++n) {
+		for (size_t n = 0; n < N; ++n) {
 			row_ptr[n] = Iy_ptr[Ix_ptr[n]];
 		}
-		for (unsigned int n = 0; n < N; ++n) {
+		for (size_t n = 0; n < N; ++n) {
 			Iy_ptr[n] = row_ptr[n];
 		}
 	}

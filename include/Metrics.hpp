@@ -39,7 +39,7 @@
 #ifndef METRICS_HPP_
 #define METRICS_HPP_
 
-#include <opencv2/core.hpp>
+#include <opencv2/core/core.hpp>
 class Metrics {
 private:
 	cv::Mat camera_matrix;

@@ -37,7 +37,6 @@
  */
 
 #include <sstream>
-#include <opencv2/core.hpp>
 #include "FileStorageModel.hpp"
 
 bool FileStorageModel::serialize(const std::string& filename) const {
@@ -61,20 +60,20 @@ bool FileStorageModel::serialize(const std::string& filename) const {
 
 	// write the 2D deformation weights
 	fs << "defs" << "[";
-	for (unsigned int n = 0; n < defw_.size(); ++n) {
+	for (size_t n = 0; n < defw_.size(); ++n) {
 		fs << defw_[n];
 	}
 	fs << "]";
 
 	// write the deeper indexing vectors
 	fs << "indexers" << "{";
-	const unsigned int ncomponents = filterid_.size();
-	for (unsigned int c = 0; c < ncomponents; ++c) {
+	const size_t ncomponents = filterid_.size();
+	for (size_t c = 0; c < ncomponents; ++c) {
 		std::ostringstream cstr;
 		cstr << "component-" << c;
 		fs << cstr.str() << "{";
-		const unsigned int nparts = filterid_[c].size();
-		for (unsigned int p = 0; p < nparts; ++p) {
+		const size_t nparts = filterid_[c].size();
+		for (size_t p = 0; p < nparts; ++p) {
 			std::ostringstream pstr;
 			pstr << "part-" << p;
 			fs << pstr.str() << "{";
@@ -116,29 +115,29 @@ bool FileStorageModel::deserialize(const std::string& filename) {
 
 	// read the 2D deformation weights
 	cv::FileNode defs = fs["defs"];
-	const unsigned int ndefs = defs.size();
+	const size_t ndefs = defs.size();
 	defw_.resize(ndefs);
-	for (unsigned int n = 0; n < ndefs; ++n) {
+	for (size_t n = 0; n < ndefs; ++n) {
 		defs[n] >> defw_[n];
 	}
 
 	// read the indexing vectors
 	cv::FileNode components = fs["indexers"];
-	const unsigned int ncomponents = components.size();
+	const size_t ncomponents = components.size();
 	parentid_.resize(ncomponents);
 	filterid_.resize(ncomponents);
 	biasid_.resize(ncomponents);
 	defid_.resize(ncomponents);
-	for (unsigned int c = 0; c < ncomponents; ++c) {
+	for (size_t c = 0; c < ncomponents; ++c) {
 		std::ostringstream cstr;
 		cstr << "component-" << c;
 		cv::FileNode parts = components[cstr.str()];
-		const unsigned int nparts = parts.size();
+		const size_t nparts = parts.size();
 		parentid_[c].resize(nparts);
 		filterid_[c].resize(nparts);
 		biasid_[c].resize(nparts);
 		defid_[c].resize(nparts);
-		for (unsigned int p = 0; p < nparts; ++p) {
+		for (size_t p = 0; p < nparts; ++p) {
 			std::ostringstream pstr;
 			pstr << "part-" << p;
 			cv::FileNode part = parts[pstr.str()];

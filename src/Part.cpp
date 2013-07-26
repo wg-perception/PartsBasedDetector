@@ -49,14 +49,14 @@ void Part::toVector(vectorMat& vec) {
 
 	// add my filters to the vector, then my children's, etc
 	int os = pos_ * nmixtures_;
-	for (unsigned int n = 0; n < nmixtures_; ++n) vec[os+n] = filters_[n];
-	for (unsigned int c = 0; c < children_.size(); ++c) children_[c].toVector(vec);
+	for (size_t n = 0; n < nmixtures_; ++n) vec[os+n] = filters_[n];
+	for (size_t c = 0; c < children_.size(); ++c) children_[c].toVector(vec);
 }
 
 
 static vectori find(vectori vals, int val) {
 	vectori idx;
-	for (unsigned int n = 0; n < vals.size(); ++n) if(vals[n] == val) idx.push_back(n);
+	for (size_t n = 0; n < vals.size(); ++n) if(vals[n] == val) idx.push_back(n);
 	return idx;
 }
 
@@ -73,7 +73,7 @@ static Part constructPartHierarchyRecursive(vector2DMat& filters, vectori& paren
 	if (cidx.size() == 0) return Part(bias, filters[self], self, children, level, ndescendants);
 
 	// otherwise, recursively create child Parts
-	for (unsigned int n = 0; n < cidx.size(); ++n) {
+	for (size_t n = 0; n < cidx.size(); ++n) {
 		Part child = constructPartHierarchyRecursive(filters, parents, level+1, cidx[n]);
 		ndescendants += (child.ndescendants()+1);
 		children.push_back(child);

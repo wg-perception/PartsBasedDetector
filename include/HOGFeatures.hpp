@@ -40,8 +40,8 @@
 #define HOGFEATURES_HPP_
 #include <vector>
 #include <cstdio>
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include "IFeatures.hpp"
 #include "types.hpp"
 
@@ -52,26 +52,26 @@ template<typename T>
 class HOGFeatures : public IFeatures {
 private:
 	//! the spatial binning size
-	unsigned int binsize_;
+	size_t binsize_;
 	//! the number of scales to compute features at
-	unsigned int nscales_;
+	size_t nscales_;
 	//! the length of the feature at each bin (histogram size)
-	unsigned int flen_;
+	size_t flen_;
 	//! the number of orientations to bin
-	unsigned int norient_;
+	size_t norient_;
 	//! the scales of the features
 	vectorf scales_;
 	//! the scaling factor between successive levels in the pyramid
 	float sfactor_;
 	//! the interval between half resolution scales
-	unsigned int interval_;
+	size_t interval_;
 
 	// private methods
 	void boundaryOcclusionFeature(cv::Mat& feature, const int flen, const int padsize);
 	template<typename IT> void features(const cv::Mat& im, cv::Mat& feature) const;
 public:
 	HOGFeatures() {}
-	HOGFeatures(unsigned int binsize, unsigned int nscales, unsigned int flen, unsigned int norient) :
+	HOGFeatures(size_t binsize, size_t nscales, size_t flen, size_t norient) :
 		binsize_(binsize), nscales_(nscales), flen_(flen), norient_(norient) {
 		// TODO: don't hard code this. Compute more intuitively from scales rather than interval
 		interval_ = nscales_;
@@ -81,8 +81,8 @@ public:
 	}
 	virtual ~HOGFeatures() {}
 	// get methods
-	unsigned int binsize(void) const { return binsize_; }
-	unsigned int nscales(void) const { return nscales_; }
+	size_t binsize(void) const { return binsize_; }
+	size_t nscales(void) const { return nscales_; }
 	vectorf scales(void) const { return scales_; }
 	void pyramid(const cv::Mat& im, vectorMat& pyrafeatures);
 };

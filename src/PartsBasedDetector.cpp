@@ -40,7 +40,6 @@
 #include "nms.hpp"
 #include "HOGFeatures.hpp"
 #include "SpatialConvolutionEngine.hpp"
-#include <cstdio>
 using namespace cv;
 using namespace std;
 
@@ -112,8 +111,8 @@ void PartsBasedDetector<T>::distributeModel(Model& model) {
 	convolution_engine_.reset(new SpatialConvolutionEngine(DataType<T>::type, model.flen()));
 
 	// make sure the filters are of the correct precision for the Feature engine
-	const unsigned int nfilters = model.filters().size();
-	for (unsigned int n = 0; n < nfilters; ++n) {
+	const size_t nfilters = model.filters().size();
+	for (size_t n = 0; n < nfilters; ++n) {
 		model.filters()[n].convertTo(model.filters()[n], DataType<T>::type);
 	}
 	convolution_engine_->setFilters(model.filters());

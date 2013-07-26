@@ -39,7 +39,7 @@
 #ifndef DYNAMICPROGRAM_HPP_
 #define DYNAMICPROGRAM_HPP_
 #include <vector>
-#include <opencv2/core.hpp>
+#include <opencv2/core/core.hpp>
 #include "Candidate.hpp"
 #include "DistanceTransform.hpp"
 #include "Model.hpp"
@@ -64,8 +64,8 @@ private:
 	//! the threshold for a positive detection
 	double thresh_;
 	DistanceTransform<T> dt_;
-	void distanceTransform1D(const T* src, T* dst, int* ptr, unsigned int n, T a, T b, int os);
-	void distanceTransform1DMat(const cv::Mat_<T>& src, cv::Mat_<T>& dst, cv::Mat_<int>& ptr, unsigned int N, T a, T b, int os);
+	void distanceTransform1D(const T* src, T* dst, int* ptr, size_t n, T a, T b, int os);
+	void distanceTransform1DMat(const cv::Mat_<T>& src, cv::Mat_<T>& dst, cv::Mat_<int>& ptr, size_t N, T a, T b, int os);
 public:
 	DynamicProgram() {}
 	DynamicProgram(double thresh) : thresh_(thresh) {}

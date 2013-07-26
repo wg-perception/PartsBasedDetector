@@ -38,8 +38,8 @@
 
 #ifndef VISUALIZE_HPP_
 #define VISUALIZE_HPP_
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <string>
 #include <vector>
 #include "Candidate.hpp"
@@ -62,7 +62,7 @@ public:
 	virtual ~Visualize() {}
 	// public methods
 	void candidates(const cv::Mat& im, const vectorCandidate& candidates, cv::Mat& canvas, bool display_confidence = false) const;
-	void candidates(const cv::Mat& im, const vectorCandidate& candidates, unsigned int N, cv::Mat& canvas, bool display_confidence = false) const;
+	void candidates(const cv::Mat& im, const vectorCandidate& candidates, size_t N, cv::Mat& canvas, bool display_confidence = false) const;
 	void candidates(const cv::Mat& im, const Candidate& candidate, cv::Mat& canvas, bool display_confidence = true) const;
 	void image(const cv::Mat& im) const;
 };

@@ -1,22 +1,50 @@
-/*
- * SpatialConvolutionEngine.cpp
+/* 
+ *  Software License Agreement (BSD License)
  *
- *  Created on: Oct 9, 2012
- *      Author: hiltonbristow
+ *  Copyright (c) 2013, Willow Garage, Inc.
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ * 
+ *  File:    SpatialConvolutionEngine.hpp
+ *  Author:  Hilton Bristow
+ *  Created: Oct 9, 2012 
  */
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#include <math.h>
-#include <assert.h>
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
+#include <cassert>
 #include "SpatialConvolutionEngine.hpp"
 using namespace std;
 using namespace cv;
 
-SpatialConvolutionEngine::SpatialConvolutionEngine(int type, unsigned int flen) :
+SpatialConvolutionEngine::SpatialConvolutionEngine(int type, size_t flen) :
 	type_(type), flen_(flen) {}
 
 SpatialConvolutionEngine::~SpatialConvolutionEngine() {
@@ -39,7 +67,7 @@ SpatialConvolutionEngine::~SpatialConvolutionEngine() {
  * @param pdf the response to return
  * @param stride the SVM weight length
  */
-void SpatialConvolutionEngine::convolve(const Mat& feature, vectorFilterEngine& filter, Mat& pdf, const unsigned int stride) {
+void SpatialConvolutionEngine::convolve(const Mat& feature, vectorFilterEngine& filter, Mat& pdf, const size_t stride) {
 
 	// error checking
 	assert(feature.depth() == type_);
@@ -54,7 +82,7 @@ void SpatialConvolutionEngine::convolve(const Mat& feature, vectorFilterEngine& 
 	Size fsize = featurev[0].size();
 	pdf = Mat::zeros(fsize, type_);
 
-	for (unsigned int c = 0; c < stride; ++c) {
+	for (size_t c = 0; c < stride; ++c) {
 		Mat pdfc(fsize, type_);
 		filter[c]->apply(featurev[c], pdfc, roi, offset, true);
 		pdf += pdfc;
@@ -74,16 +102,16 @@ void SpatialConvolutionEngine::convolve(const Mat& feature, vectorFilterEngine& 
 void SpatialConvolutionEngine::pdf(const vectorMat& features, vector2DMat& responses) {
 
 	// preallocate the output
-	const unsigned int M = features.size();
-	const unsigned int N = filters_.size();
+	const size_t M = features.size();
+	const size_t N = filters_.size();
 	responses.resize(M, vectorMat(N));
+
 	// iterate
 #ifdef _OPENMP
-	omp_set_num_threads(8);
 	#pragma omp parallel for
 #endif
-	for (unsigned int n = 0; n < N; ++n) {
-		for (unsigned int m = 0; m < M; ++m) {
+	for (size_t n = 0; n < N; ++n) {
+		for (size_t m = 0; m < M; ++m) {
 			Mat response;
 			convolve(features[m], filters_[n], response, flen_);
 			responses[m][n] = response;
@@ -100,19 +128,19 @@ void SpatialConvolutionEngine::pdf(const vectorMat& features, vector2DMat& respo
  */
 void SpatialConvolutionEngine::setFilters(const vectorMat& filters) {
 
-	const unsigned int N = filters.size();
+	const size_t N = filters.size();
 	filters_.clear();
 	filters_.resize(N);
 
 	// split each filter into separate channels, and create a filter engine
-	const unsigned int C = flen_;
-	for (unsigned int n = 0; n < N; ++n) {
+	const size_t C = flen_;
+	for (size_t n = 0; n < N; ++n) {
 		vectorMat filtervec;
 		std::vector<Ptr<FilterEngine> > filter_engines(C);
 		split(filters[n].reshape(C), filtervec);
 
 		// the first N-1 filters have zero-padding
-		for (unsigned int m = 0; m < C-1; ++m) {
+		for (size_t m = 0; m < C-1; ++m) {
 			Ptr<FilterEngine> fe = createLinearFilter(type_, type_,
 					filtervec[m], Point(-1,-1), 0, BORDER_CONSTANT, -1, Scalar(0,0,0,0));
 			filter_engines[m] = fe;

@@ -36,11 +36,6 @@
  *  Created: Jun 27, 2012
  */
 
-#include <iostream>
-#include <cstdio>
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/filesystem.hpp>
 #include "PartsBasedDetector.hpp"
 #include "Candidate.hpp"

@@ -36,9 +36,6 @@
  *  Created: Jun 21, 2012
  */
 
-#include <cstdio>
-#include <iostream>
-#include <limits>
 #include "Math.hpp"
 #include "DynamicProgram.hpp"
 using namespace cv;
@@ -71,8 +68,8 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 
 	// initialize the outputs, preallocate vectors to make them thread safe
 	// TODO: better initialisation of Ix, Iy, Ik
-	const unsigned int nscales = scores.size();
-	const unsigned int ncomponents = parts.ncomponents();
+	const size_t nscales = scores.size();
+	const size_t ncomponents = parts.ncomponents();
 	Ix.resize(nscales, vector3DMat(ncomponents));
 	Iy.resize(nscales, vector3DMat(ncomponents));
 	Ik.resize(nscales, vector3DMat(ncomponents));
@@ -83,11 +80,11 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for (unsigned int nc = 0; nc < nscales*ncomponents; ++nc) {
+	for (size_t nc = 0; nc < nscales*ncomponents; ++nc) {
 
 		// calculate the inner loop variables from the dual variables
-		const unsigned int n = floor(nc / ncomponents);
-		const unsigned int c = nc % ncomponents;
+		const size_t n = floor(nc / ncomponents);
+		const size_t c = nc % ncomponents;
 
 		// allocate the inner loop variables
 		Ix[n][c].resize(parts.nparts(c));
@@ -99,8 +96,8 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 
 			// get the component part (which may have multiple mixtures associated with it)
 			ComponentPart cpart = parts.component(c, p);
-			const unsigned int nmixtures  = cpart.nmixtures();
-			const unsigned int pnmixtures = cpart.parent().nmixtures();
+			const size_t nmixtures  = cpart.nmixtures();
+			const size_t pnmixtures = cpart.parent().nmixtures();
 			Ix[n][c][p].resize(pnmixtures);
 			Iy[n][c][p].resize(pnmixtures);
 			Ik[n][c][p].resize(pnmixtures);
@@ -110,7 +107,7 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 			vectorMat Ixp;
 			vectorMat Iyp;
 
-			for (unsigned int m = 0; m < nmixtures; ++m) {
+			for (size_t m = 0; m < nmixtures; ++m) {
 
 				// raw score outputs
 				Mat_<T> score_in, score_dt;
@@ -134,11 +131,11 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 				Iyp.push_back(Iy_dt);
 			}
 
-			for (unsigned int m = 0; m < pnmixtures; ++m) {
+			for (size_t m = 0; m < pnmixtures; ++m) {
 				vectorMat weighted;
 				// weight each of the child scores
 				// TODO: More elegant way of handling bias
-				for (unsigned int mm = 0; mm < nmixtures; ++mm) {
+				for (size_t mm = 0; mm < nmixtures; ++mm) {
 					weighted.push_back(scoresp[mm] + cpart.bias(mm)[m]);
 				}
 				// compute the max over the mixtures
@@ -168,7 +165,7 @@ void DynamicProgram<T>::min(Parts& parts, vector2DMat& scores, vector4DMat& Ix, 
 		T bias = root.bias(0)[0];
 		vectorMat weighted;
 		// weight each of the child scores
-		for (unsigned int m = 0; m < root.nmixtures(); ++m) {
+		for (size_t m = 0; m < root.nmixtures(); ++m) {
 			weighted.push_back(root.score(ncscores,m) + bias);
 		}
 		Math::reduceMax<T>(weighted, rootv[n][c], rooti[n][c]);
@@ -193,19 +190,19 @@ template<typename T>
 void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vector2DMat& rooti, const vectorf scales, const vector4DMat& Ix, const vector4DMat& Iy, const vector4DMat& Ik, vectorCandidate& candidates) {
 
 	// for each scale, and each component, traverse back down the tree to retrieve the part positions
-	const unsigned int nscales = scales.size();
+	const size_t nscales = scales.size();
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for (unsigned int n = 0; n < nscales; ++n) {
+	for (size_t n = 0; n < nscales; ++n) {
 		T scale = scales[n];
-		for (unsigned int c = 0; c < parts.ncomponents(); ++c) {
+		for (size_t c = 0; c < parts.ncomponents(); ++c) {
 
 			// get the scores and indices for this tree of parts
 			const vector2DMat& Iknc = Ik[n][c];
 			const vector2DMat& Ixnc = Ix[n][c];
 			const vector2DMat& Iync = Iy[n][c];
-			const unsigned int nparts = parts.nparts(c);
+			const size_t nparts = parts.nparts(c);
 
 			// threshold the root score
 			Mat over_thresh = rootv[n][c] > thresh_;
@@ -213,16 +210,16 @@ void DynamicProgram<T>::argmin(Parts& parts, const vector2DMat& rootv, const vec
 			vectorPoint inds;
 			Math::find(over_thresh, inds);
 
-			for (unsigned int i = 0; i < inds.size(); ++i) {
+			for (size_t i = 0; i < inds.size(); ++i) {
 				Candidate candidate;
 				candidate.setComponent(c);
 				vectori     xv(nparts);
 				vectori     yv(nparts);
 				vectori     mv(nparts);
-				for (unsigned int p = 0; p < nparts; ++p) {
+				for (size_t p = 0; p < nparts; ++p) {
 					ComponentPart part = parts.component(c, p);
 					// calculate the child's points from the parent's points
-					unsigned int x, y, m;
+					size_t x, y, m;
 					if (part.isRoot()) {
 						x = xv[0] = inds[i].x;
 						y = yv[0] = inds[i].y;
