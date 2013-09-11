@@ -120,6 +120,10 @@ void Visualize::candidates(const Mat& im, const Candidate& candidate, Mat& canva
 void Visualize::image(const Mat& im) const {
     Mat canvas;
     cvtColor(im, canvas, COLOR_RGB2BGR);
+#if (CV_MAJOR_VERSION < 3)
+	namedWindow(name_, CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO);
+#else
 	namedWindow(name_, WINDOW_AUTOSIZE | WINDOW_KEEPRATIO);
+#endif
 	imshow(name_, canvas);
 }

@@ -138,7 +138,11 @@ void HOGFeatures<T>::pyramid(const Mat& im, vectorMat& pyrafeatures) {
 			case CV_64F: features<double>(pyraimages[n], feature); break;
 			case CV_8U:  features<uint8_t>(pyraimages[n], feature); break;
 			case CV_16U: features<uint16_t>(pyraimages[n], feature); break;
+#if (CV_MAJOR_VERSION < 3)
+			default: CV_Error(CV_StsUnsupportedFormat, "Unsupported image type"); break;
+#else
 			default: CV_Error(cv::Error::StsUnsupportedFormat, "Unsupported image type"); break;
+#endif
 		}
 		//copyMakeBorder(feature, padded, 3, 3, 3*flen_, 3*flen_, BORDER_CONSTANT, 0);
 		//boundaryOcclusionFeature(padded, flen_, 3);
