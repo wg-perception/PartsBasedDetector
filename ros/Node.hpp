@@ -76,9 +76,17 @@ private:
 	typedef sensor_msgs::CameraInfo CameraInfo;
 	typedef sensor_msgs::CameraInfoConstPtr CameraInfoConstPtr;
 	typedef message_filters::Subscriber<CameraInfo> CameraInfoSubscriber;
+#if PCL_VERSION_COMPARE(<,1,7,0)
 	typedef message_filters::Subscriber<PointCloud> PointCloudSubscriber;
+#else
+	typedef message_filters::Subscriber<sensor_msgs::PointCloud2> PointCloudSubscriber;
+#endif
 	typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
+#if PCL_VERSION_COMPARE(<,1,7,0)
 			sensor_msgs::Image, PointCloud> KinectSyncPolicy;
+#else
+			sensor_msgs::Image, sensor_msgs::PointCloud2> KinectSyncPolicy;
+#endif
 	typedef visualization_msgs::MarkerArray MarkerArray;
 	typedef visualization_msgs::Marker Marker;
 	typedef geometry_msgs::Pose Pose;
@@ -156,6 +164,9 @@ public:
 	// callbacks
 	void depthCameraCallback(const CameraInfoConstPtr& info_msg);
 	void detectorCallback(const ImageConstPtr &msg_d,
-			const ImageConstPtr& msg_rgb,
-			const PointCloud::ConstPtr& msg_cloud);
+#if PCL_VERSION_COMPARE(<,1,7,0)
+			const ImageConstPtr& msg_rgb, const PointCloud::ConstPtr& msg_cloud);
+#else
+			const ImageConstPtr& msg_rgb, const sensor_msgs::PointCloud2::ConstPtr& msg_cloud_in);
+#endif
 };

@@ -41,6 +41,9 @@
 #include <ros/ros.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <pcl/common/centroid.h>
+#if PCL_VERSION_COMPARE(>=,1,7,0)
+#include <pcl/common/eigen.h>
+#endif
 #include "Candidate.hpp"
 #include "types.hpp"
 #include "Visualize.hpp"

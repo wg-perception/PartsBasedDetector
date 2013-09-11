@@ -3,8 +3,9 @@
 # -----------------------------------------------
 
 # if one Groovy
+find_package(PCL)
 if (${catkin_VERSION} VERSION_GREATER "0.5.28")
-find_package(catkin REQUIRED COMPONENTS catkin rosconsole cv_bridge image_geometry image_transport roscpp message_filters pcl pcl_ros)
+find_package(catkin REQUIRED COMPONENTS catkin rosconsole cv_bridge image_geometry image_transport roscpp message_filters pcl_ros)
 include_directories(${catkin_INCLUDE_DIRS})
 
 find_library(IMAGE_GEOMETRY_LIBS image_geometry PATH /opt/ros/groovy/lib)

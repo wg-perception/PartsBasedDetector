@@ -54,6 +54,10 @@
 #include "Rect3.hpp"
 #include "PointCloudClusterer.h"
 
+#if PCL_VERSION_COMPARE(>=,1,7,0)
+#include <pcl_conversions/pcl_conversions.h>
+#endif
+
 using ecto::tendrils;
 using ecto::spore;
 using object_recognition_core::db::ObjectId;
@@ -325,7 +329,14 @@ struct PartsBasedDetectorCell: public object_recognition_core::db::bases::ModelR
 			// Only one point of view for this object...
 			sensor_msgs::PointCloud2Ptr cluster_cloud (new sensor_msgs::PointCloud2());
 	        std::vector<sensor_msgs::PointCloud2ConstPtr> ros_clouds (1);
+
+#if PCL_VERSION_COMPARE(<,1,7,0)
 	        pcl::toROSMsg(clusters[object_it], *(cluster_cloud));
+#else
+        ::pcl::PCLPointCloud2 pcd_tmp;
+        ::pcl::toPCLPointCloud2(clusters[object_it], pcd_tmp);
+        pcl_conversions::fromPCL(pcd_tmp, *(cluster_cloud));
+#endif
 	        ros_clouds[0] = cluster_cloud;
 	        result.set_clouds(ros_clouds);
 

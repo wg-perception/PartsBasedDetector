@@ -36,6 +36,10 @@
 #include "Node.hpp"
 #include "PointCloudClusterer.h"
 
+#if PCL_VERSION_COMPARE(>=,1,7,0)
+#include <pcl_conversions/pcl_conversions.h>
+#endif
+
 using namespace cv;
 using namespace std;
 
@@ -138,9 +142,18 @@ void PartsBasedDetectorNode::depthCameraCallback(
 }
 
 void PartsBasedDetectorNode::detectorCallback(const ImageConstPtr& msg_d,
+#if PCL_VERSION_COMPARE(<,1,7,0)
 		const ImageConstPtr& msg_rgb, const PointCloud::ConstPtr& msg_cloud)
+#else
+		const ImageConstPtr& msg_rgb, const sensor_msgs::PointCloud2::ConstPtr& msg_cloud_in)
+#endif
 {
 	typedef PointCloudClusterer<PointType> PointCloudClusterer;
+
+#if PCL_VERSION_COMPARE(>=,1,7,0)
+        PointCloud::Ptr msg_cloud;
+        pcl::fromROSMsg(*msg_cloud_in, *msg_cloud);
+#endif
 
 	// UNPACK PREAMBLE
 	// update the stereo camera parameters from the depth and rgb camera info
@@ -227,6 +240,11 @@ void PartsBasedDetectorNode::detectorCallback(const ImageConstPtr& msg_d,
 		messageMask(candidates, image_rgb, msg_rgb);
 	if (cloud_pub_.getNumSubscribers() > 0)
 		messageClusters(clusters);
-	if (object_pose_pub_.getNumSubscribers() > 0)
+	if (object_pose_pub_.getNumSubscribers() > 0) {
+#if PCL_VERSION_COMPARE(>=,1,7,0)
+		messagePoses(pcl_conversions::fromPCL(msg_cloud->header), part_centers);
+#else
 		messagePoses(msg_cloud->header, part_centers);
+#endif
+        }
 }
