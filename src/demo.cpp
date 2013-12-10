@@ -36,6 +36,7 @@
  *  Created: Jun 27, 2012
  */
 
+#include <stdio.h>
 #include <boost/filesystem.hpp>
 #include "PartsBasedDetector.hpp"
 #include "Candidate.hpp"
