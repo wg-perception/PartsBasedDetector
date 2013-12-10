@@ -27,14 +27,8 @@ if (catkin_FOUND)
         find_package(object_recognition_core REQUIRED)
     endif()
     
-    if (${catkin_VERSION} VERSION_GREATER "0.5.28")
-        catkin_package(INCLUDE_DIRS include)
-    else()
-        catkin_stack()
-        catkin_project(${PROJECT_NAME}
-                       INCLUDE_DIRS include
-    )
-    endif()
+    catkin_package(INCLUDE_DIRS include)
+
     # deal with cvmatio
     find_package(cvmatio QUIET) 
     include_directories(SYSTEM ${cvmatio_INCLUDE_DIRS})
@@ -104,7 +98,7 @@ if (WITH_ROS OR WITH_ECTO)
 endif()
 
 # include the dependencies
-include_directories(SYSTEM  ${OPENCV_INCLUDE_DIRS}
+include_directories(SYSTEM  ${OpenCV_INCLUDE_DIRS}
                             ${Boost_INCLUDE_DIRS}
 )
 include_directories(include)
@@ -124,8 +118,7 @@ if(BUILD_DOC)
 endif()
 
 # add tests
-if(WITH_ECTO AND BUILD_TEST)
-  enable_testing()
+if(WITH_ECTO AND CATKIN_ENABLE_TESTING)
   add_subdirectory(test)
 endif()
 
