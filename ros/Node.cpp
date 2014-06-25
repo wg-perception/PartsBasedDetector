@@ -151,7 +151,7 @@ void PartsBasedDetectorNode::detectorCallback(const ImageConstPtr& msg_d,
 	typedef PointCloudClusterer<PointType> PointCloudClusterer;
 
 #if PCL_VERSION_COMPARE(>=,1,7,0)
-        PointCloud::Ptr msg_cloud;
+        PointCloud::Ptr msg_cloud(new PointCloud());
         pcl::fromROSMsg(*msg_cloud_in, *msg_cloud);
 #endif
 
