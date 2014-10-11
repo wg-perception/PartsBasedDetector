@@ -1,0 +1,35 @@
+<launch>
+
+    <!-- IMAGE PROC -->
+    <node pkg="image_proc" type="image_proc" name="image_proc">
+    </node>
+
+    <node pkg="nodelet" type="nodelet" name="downsample_rgb" args="standalone image_proc/crop_decimate">
+        <param name="decimation_x" type="int" value="4"/>
+        <param name="decimation_y" type="int" value="4"/>
+
+        <!-- remap input topics -->
+        <remap from="camera/image_raw" to="camera/rgb/image_raw"/>
+        <remap from="camera/image_info" to="camera/rgb/camera_info"/>
+        <!-- remap output topics -->
+        <remap from="camera_out/image_raw" to="image_rgb_in"/>
+        <remap from="camera_out/camera_info" to="depth_camera_info_in"/>
+    </node>
+    
+    <!-- ENABLE DEPTH REGISTRATION -->
+    <!--include filter="$(find openni_launch)/launch/openni.launch"/-->
+    <param name="/camera/depth_registration" type="bool" value="true" />
+
+    <!-- THE MODEL FILE TO LOAD -->
+    <arg name="model" default="$(find parts_based_detector)/models/Person_26parts.xml" />
+
+    <node pkg="parts_based_detector" name="parts_based_detector_node" type="parts_based_detector_node" output="screen">
+      <param name="model" type="string" value="$(arg model)"/>
+      <param name="remove_planes" type="bool" value="false"/>
+      <remap from="cloud_in" to="camera/depth_registered/points"/>
+      <!--<remap from="image_rgb_in" to="camera/rgb/image_raw"/>-->
+      <remap from="image_depth_in" to="camera/depth_registered/image_raw"/>
+      <remap from="depth_camera_info_in" to="camera/rgb/camera_info"/>
+    </node>
+
+</launch>

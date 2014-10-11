@@ -1,157 +1,142 @@
-project(PartsBasedDetector)
-# PartsBasedDetector CMakeLists.txt
-cmake_minimum_required(VERSION 2.8.5)
+cmake_minimum_required(VERSION 2.8.3)
+project(parts_based_detector)
 
-# -----------------------------------------------
-# USER DEFINED VARIABLES
-# -----------------------------------------------
-option(BUILD_EXECUTABLE "Build as executable to test functionality"                     ON)
-option(BUILD_DOC        "Build documentation with Doxygen"                              ON)
-option(WITH_OPENMP      "Build with OpenMP support for multithreading"                  ON)
-option(WITH_ECTO        "Build with ECTO bindings if building in a Catkin environment"  ON)
-option(WITH_ROS         "Build with ROS bindings if building in a Catkin environment"   ON)
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
+find_package(catkin REQUIRED COMPONENTS
+  cv_bridge
+  image_geometry
+  image_transport
+  message_filters
+  pcl_conversions
+  pcl_ros
+  roscpp
+)
 
-# -----------------------------------------------
-# CATKIN
-# -----------------------------------------------
-find_package(catkin QUIET)
-if (catkin_FOUND)
-    set(WITH_CATKIN ON)
-    set(BUILD_EXECUTABLE OFF)
-    project(object_recognition_by_parts)
-    # install targets for all things python
-    if (WITH_ECTO)
-        catkin_python_setup()
-        find_package(ecto REQUIRED)
-        find_package(ecto_pcl REQUIRED)
-        find_package(object_recognition_core REQUIRED)
-    endif()
-    
-    catkin_package(INCLUDE_DIRS include)
-
-    # deal with cvmatio
-    find_package(cvmatio QUIET) 
-    include_directories(SYSTEM ${cvmatio_INCLUDE_DIRS})
-else()
-    set(WITH_CATKIN OFF)
-    set(WITH_ECTO   OFF)
-    set(WITH_ROS    OFF)
-    project(PartsBasedDetector)
-    # find cvmatio manually
-    include_directories(../cvmatio/include)
-    find_library(cvmatio_LIBRARIES cvmatio PATHS ../cvmatio/lib)
-    if (cvmatio_LIBRARIES)
-        set(WITH_CVMATIO ON)
-    else()
-        set(WITH_CVMATIO OFF)
-    endif()
-endif()
-
-# -----------------------------------------------
-# COMPILER FLAGS
-# -----------------------------------------------
-
-# include all warning types
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable -pedantic")
-
-# set the build type
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
-        "Choose the type of build. Options are: None, Debug, Release, RelWithDebInfo, MinSizeRel"
-    FORCE)
-endif()
-
-# add OpenMP support
-if (WITH_OPENMP)
-    find_package(OpenMP QUIET)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   ${OpenMP_C_FLAGS}")
-    if (NOT OPENMP_FOUND)
-        set(WITH_OPENMP OFF)
-    endif()
-endif()
-
-# add vectorization support
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1")
-set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -msse4.1")
-
-# use highest level of optimization in Release mode
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -O3")
-endif ()
-
-# -----------------------------------------------
-# DEPENDENCIES
-# -----------------------------------------------
-# find the dependencies
-find_package(Boost COMPONENTS system filesystem signals REQUIRED)
 find_package(OpenCV REQUIRED)
 
-# if building ROS or Catkin bindings, we also need Eigen
-if (WITH_ROS OR WITH_ECTO)
-    set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-    find_package(Eigen REQUIRED)
-    include_directories(${EIGEN_INCLUDE_DIRS})
-    add_definitions(-DEIGEN_USE_NEW_STDVECTOR
-                    -DEIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET)
-endif()
+## System dependencies are found with CMake's conventions
+# find_package(Boost REQUIRED COMPONENTS system)
 
-# include the dependencies
-include_directories(SYSTEM  ${OpenCV_INCLUDE_DIRS}
-                            ${Boost_INCLUDE_DIRS}
+
+## Uncomment this if the package has a setup.py. This macro ensures
+## modules and global scripts declared therein get installed
+## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
+# catkin_python_setup()
+
+###################################
+## catkin specific configuration ##
+###################################
+## The catkin_package macro generates cmake config files for your package
+## Declare things to be passed to dependent projects
+## INCLUDE_DIRS: uncomment this if you package contains header files
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
+catkin_package(
+  INCLUDE_DIRS include
+#  LIBRARIES parts_based_detector
+#  CATKIN_DEPENDS cv_bridge image_geometry image_transport message_filters opencv2 pcl pcl_ros roscpp vision_opencv
+#  DEPENDS system_lib
 )
-include_directories(include)
 
+###########
+## Build ##
+###########
 
-# -----------------------------------------------
-# SUBDIRECTORIES
-# -----------------------------------------------
-# add the main executable/library
-add_subdirectory(src)
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+# include_directories(include)
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+)
 
-# add documentation
-if(BUILD_DOC)
-    find_package(Doxygen)
-    configure_file(${PROJECT_SOURCE_DIR}/doc/Doxyfile.in ${PROJECT_SOURCE_DIR}/doc/Doxyfile @ONLY)
-    add_custom_target(${PROJECT_NAME}_doc ALL ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/doc/Doxyfile)
-endif()
+## Declare a cpp library
 
-# add tests
-if(WITH_ECTO AND CATKIN_ENABLE_TESTING)
-  add_subdirectory(test)
-endif()
+set(project_CPP_FILES
+  src/Node.cpp
+  src/detector/DepthConsistency.cpp
+  src/detector/DynamicProgram.cpp
+  src/detector/FileStorageModel.cpp
+  src/detector/FourierConvolutionEngine.cpp
+  src/detector/HOGFeatures.cpp
+  src/detector/Messages.cpp
+  src/detector/nms.cpp
+  src/detector/PartsBasedDetector.cpp
+  src/detector/SearchSpacePruning.cpp
+  src/detector/SpatialConvolutionEngine.cpp
+  src/detector/StereoCameraModel.cpp
+  src/detector/Visualize.cpp
+)
 
-# add ecto cells
-if (WITH_ECTO AND ${ecto_FOUND} AND ${object_recognition_core_FOUND})
-    add_subdirectory(cells)
-    add_subdirectory(python)
-endif()
+add_library(${PROJECT_NAME}
+  ${project_CPP_FILES}
+)
 
-# add ROS bindings if need be
-# does not build yet due to missing dependencies
-#set(WITH_ROS OFF)
-if (WITH_ROS)
-    find_package(PCL REQUIRED)
-    include_directories(${PCL_INCLUDE_DIRS})
-    add_subdirectory(ros)
-endif()
+## Declare a cpp executable
+add_executable(${PROJECT_NAME}_node 
+  src/Node.cpp
+  ${project_CPP_FILES}
+)
 
+## Add cmake target dependencies of the executable/library
+## as an example, message headers may need to be generated before nodes
+# add_dependencies(parts_based_detector_node parts_based_detector_generate_messages_cpp)
 
-# -----------------------------------------------
-# BUILD SUMARY
-# -----------------------------------------------
-message("")
-message("---------------------------------------------")
-message(${PROJECT_NAME} " Configuration Summary")
-message("")
-message("Build type:                    ${CMAKE_BUILD_TYPE}")
-message("Building with Catkin:          ${WITH_CATKIN}")
-message("Building with ECTO bindings:   ${WITH_ECTO}")
-message("Building with ROS bindings:    ${WITH_ROS}")
-message("Build with cvmatio bindings:   ${WITH_CVMATIO}")
-message("Build with threading (OpenMP): ${WITH_OPENMP}")
-message("Build as executable:           ${BUILD_EXECUTABLE}")
-message("Build with documentation:      ${BUILD_DOC}")
-message("---------------------------------------------")
-message("")
+## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}_node
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
+)
+
+#############
+## Install ##
+#############
+
+# all install targets should use catkin DESTINATION variables
+# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+
+## Mark executable scripts (Python etc.) for installation
+## in contrast to setup.py, you can choose the destination
+# install(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark executables and/or libraries for installation
+# install(TARGETS parts_based_detector parts_based_detector_node
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark cpp header files for installation
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+# )
+
+## Mark other files for installation (e.g. launch and bag files, etc.)
+# install(FILES
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_parts_based_detector.cpp)
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+# endif()
+
+## Add folders to be run by python nosetests
+# catkin_add_nosetests(test)
+
+target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${OpenCV_LIBS})

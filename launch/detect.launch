@@ -2,18 +2,18 @@
     
     <!-- ENABLE DEPTH REGISTRATION -->
     <!--include filter="$(find openni_launch)/launch/openni.launch"/-->
-    <param name="/camera/depth_registration" type="bool" value="true" />
+    <param name="/camera/depth_registration" type="bool" value="true"/>
 
     <!-- THE MODEL FILE TO LOAD -->
-    <arg name="model" default="/path/to/model" />
+    <arg name="model" default="$(find parts_based_detector)/models/Person_26parts.xml"/>
 
-    <node pkg="object_recognition_by_parts" name="$(anon object_recognition_by_parts)" type="object_recognition_by_parts_node">
-      <param name="model" type="string" value="$(arg model)" />
-      <param name="remove_planes" type="bool" value="false" />
-      <remap from="cloud_in" to="camera/depth_registered/points" />
-      <remap from="image_rgb_in" to="camera/rgb/image_rect_color" />
-      <remap from="image_depth_in" to="camera/depth_registered/image_rect" /> 
-      <remap from="depth_camera_info_in" to="camera/depth_registered/camera_info" />  
+    <node pkg="parts_based_detector" name="parts_based_detector_node" type="parts_based_detector_node" output="screen">
+      <param name="model" type="string" value="$(arg model)"/>
+      <param name="remove_planes" type="bool" value="false"/>
+      <remap from="cloud_in" to="multisense/image_points2_color"/>
+      <!--<remap from="image_rgb_in" to="multisense/left/image_color"/>-->
+      <remap from="image_depth_in" to="multisense/depth"/>
+      <remap from="depth_camera_info_in" to="multisense/camera_info"/>
     </node>
 
 </launch>
