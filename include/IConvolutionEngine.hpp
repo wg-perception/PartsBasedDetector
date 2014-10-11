@@ -39,6 +39,7 @@
 #ifndef ICONVOLUTIONENGINE_HPP_
 #define ICONVOLUTIONENGINE_HPP_
 
+#include <iostream>
 #include "types.hpp"
 
 class IConvolutionEngine {

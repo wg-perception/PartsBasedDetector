@@ -71,7 +71,7 @@ public:
 			PointProjectFunc camera_model_projecter,
 			const typename PointCloud::ConstPtr cloud,
 			std::vector<Rect3d>& bounding_boxes,
-			std::vector<PointCloud>& parts_centers);
+			std::vector< std::vector<cv::Point3d> >& parts_centers);
 
 	/*! @brief this function uses the 3D bounding boxes to segment and extract a point cluster for each detected object
 	 *
@@ -90,8 +90,7 @@ public:
 	 * @param cloud the input point cloud
 	 * @param cloud_no_plane the filtered input cloud (planes removed)
 	 */
-	static void organizedMultiplaneSegmentation(const PointCloudConstPtr& cloud,
-			PointCloud& cloud_no_plane);
+	static void organizedMultiplaneSegmentation(const PointCloudConstPtr& cloud, PointCloud& cloud_no_plane);
 };
 
 // To instantiate the template
