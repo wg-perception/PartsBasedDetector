@@ -113,7 +113,7 @@ void HOGFeatures<T>::pyramid(const Mat& im, vectorMat& pyrafeatures) {
 	#endif
 	for (size_t i = 0; i < interval_; ++i) {
 		Mat scaled;
-		resize(im, scaled, imsize * (1.0f/pow(sfactor_,(int)i)));
+		resize(im, scaled, imsize * (float) (1.0f/pow(sfactor_,(int)i)));
 		pyraimages[i] = scaled;
 		scales_[i] = pow(sfactor_,(int)i)*binsize_;
 		// perform subsequent power of two scaling
