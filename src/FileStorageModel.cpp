@@ -146,7 +146,7 @@ bool FileStorageModel::deserialize(const std::string& filename) {
 			part["biasid"]   >> biasid_[c][p];
 
 			cv::FileNode defid = part["defid"];
-			if(defid.isInt())
+			if(!defid.isNone())
 				defid >> defid_[c][p];
 			else
 				defid_[c][p].push_back(0);
