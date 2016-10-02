@@ -40,6 +40,7 @@
 #define MATH_HPP_
 
 #include <cassert>
+#include <limits>
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include <iostream>
