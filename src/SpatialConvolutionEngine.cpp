@@ -84,7 +84,11 @@ void SpatialConvolutionEngine::convolve(const Mat& feature, vectorFilterEngine& 
 
 	for (size_t c = 0; c < stride; ++c) {
 		Mat pdfc(fsize, type_);
+#if CV_MAJOR_VERSION == 2
 		filter[c]->apply(featurev[c], pdfc, roi, offset, true);
+#else
+                filter[c]->apply(featurev[c], pdfc, cv::Size(roi.width,roi.height), offset);
+#endif
 		pdf += pdfc;
 	}
 }
@@ -136,7 +140,7 @@ void SpatialConvolutionEngine::setFilters(const vectorMat& filters) {
 	const size_t C = flen_;
 	for (size_t n = 0; n < N; ++n) {
 		vectorMat filtervec;
-		std::vector<Ptr<FilterEngine> > filter_engines(C);
+		vectorFilterEngine filter_engines(C);
 		split(filters[n].reshape(C), filtervec);
 
 		// the first N-1 filters have zero-padding

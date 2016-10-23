@@ -11,6 +11,7 @@ set(SRC_FILES   DepthConsistency.cpp
                 SearchSpacePruning.cpp
                 StereoCameraModel.cpp
                 Visualize.cpp
+                filter.cpp
                 nms.cpp
 )
 

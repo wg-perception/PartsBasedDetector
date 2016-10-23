@@ -41,6 +41,9 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#if CV_MAJOR_VERSION == 3
+#include "filterengine.hpp"
+#endif
 class MatlabIOContainer;
 class Candidate;
 
@@ -59,7 +62,7 @@ typedef std::vector<vectori>     	vector2Di;
 typedef std::vector<vectorf>   		vector2Df;
 typedef std::vector<vectorMat> 		vector2DMat;
 typedef std::vector<vectorMatlabIOContainer> vector2DMatlabIOContainer;
-typedef std::vector<std::vector<cv::Ptr<cv::FilterEngine> > > vector2DFilterEngine;
+typedef std::vector<vectorFilterEngine> vector2DFilterEngine;
 // 3D
 typedef std::vector<vector2Di>      vector3Di;
 typedef std::vector<vector2DMat>    vector3DMat;
