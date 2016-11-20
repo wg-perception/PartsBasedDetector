@@ -41,7 +41,9 @@
 //M*/
 
 #include "filterengine.hpp"
+#if CV_MAJOR_VERSION == 3
 #include <opencv2/imgproc/hal/hal.hpp>
+#endif
 
 #define  CV_MALLOC_ALIGN    16
 
