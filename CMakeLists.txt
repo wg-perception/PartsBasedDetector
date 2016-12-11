@@ -23,7 +23,6 @@ if (catkin_FOUND)
     if (WITH_ECTO)
         catkin_python_setup()
         find_package(ecto REQUIRED)
-        find_package(ecto_pcl REQUIRED)
         find_package(object_recognition_core REQUIRED)
     endif()
     

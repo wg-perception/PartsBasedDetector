@@ -43,8 +43,6 @@
 
 #include <object_recognition_core/common/pose_result.h>
 #include <object_recognition_core/db/ModelReader.h>
-#include <ecto_pcl/ecto_pcl.hpp>
-#include <ecto_pcl/pcl_cell.hpp>
 #include <pcl/point_cloud.h>
 #include <ecto_image_pipeline/pinhole_camera_model.h>
 
