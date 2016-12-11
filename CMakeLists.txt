@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 2.8.5)
 # USER DEFINED VARIABLES
 # -----------------------------------------------
 option(BUILD_EXECUTABLE "Build as executable to test functionality"                     ON)
-option(BUILD_DOC        "Build documentation with Doxygen"                              ON)
+option(BUILD_DOC        "Build documentation with Doxygen"                              OFF)
 option(WITH_OPENMP      "Build with OpenMP support for multithreading"                  ON)
 option(WITH_ECTO        "Build with ECTO bindings if building in a Catkin environment"  ON)
 option(WITH_ROS         "Build with ROS bindings if building in a Catkin environment"   ON)
