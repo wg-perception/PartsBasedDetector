@@ -40,10 +40,9 @@
 //
 //M*/
 
-#include "filterengine.hpp"
 #if CV_MAJOR_VERSION == 3
+#include "filterengine.hpp"
 #include <opencv2/imgproc/hal/hal.hpp>
-#endif
 
 #define  CV_MALLOC_ALIGN    16
 
@@ -4042,5 +4041,6 @@ cv::Ptr<cv::FilterEngine> cv::createLinearFilter( int _srcType, int _dstType,
         Ptr<BaseColumnFilter>(), _srcType, _dstType, _srcType,
         _rowBorderType, _columnBorderType, _borderValue );
 }
+#endif
 
 /* End of file. */
