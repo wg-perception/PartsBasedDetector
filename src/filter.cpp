@@ -40,6 +40,7 @@
 //
 //M*/
 
+#include "opencv2/core/version.hpp"
 #if CV_MAJOR_VERSION == 3
 #include "filterengine.hpp"
 #include <opencv2/imgproc/hal/hal.hpp>
