@@ -53,13 +53,6 @@ endif()
 # include all warning types
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable -pedantic")
 
-# set the build type
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
-        "Choose the type of build. Options are: None, Debug, Release, RelWithDebInfo, MinSizeRel"
-    FORCE)
-endif()
-
 # add OpenMP support
 if (WITH_OPENMP)
     find_package(OpenMP QUIET)
@@ -69,16 +62,6 @@ if (WITH_OPENMP)
         set(WITH_OPENMP OFF)
     endif()
 endif()
-
-# add vectorization support
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1")
-set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -msse4.1")
-
-# use highest level of optimization in Release mode
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -O3")
-endif ()
 
 # -----------------------------------------------
 # DEPENDENCIES
